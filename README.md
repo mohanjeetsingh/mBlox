@@ -1,6 +1,10 @@
 # xBlocks
 A simple JS to enable Elementor/Gutentor like blocks for Blogger. Basic scripting knowledge required - best suited for template designers and bloggers with scripting knowledge.
 
-Working on more detailed documentation...
+While originally intended for use on Blogger sites, this can be deployed on any site to retrieve and display content from Blogger/BlogSpot blogs and sites.
 
-PS: I'm a hobbyist. Been one for a long long time! But, still getting a hang of things around here. Any guidance, suggestions, feedback, etc. - heartile welcome :)
+The intent is to also create a Wordpress version of the same tool. The tool with use WP JSON feeds to display content from WP sites on WP and non-WP sites. I'm exploring the feasibility of the same. If you have knowledge and interest in collaborating, please get in touch with me.
+
+Meanwhile, once I'm done with making the current build deployment ready, I'll be working on creating a slightly more detailed documentation on the mBlocks site...
+
+PS: I'm a hobbyist designer and developer. Been one for a long long time! But, still getting a hang of things around here. Any guidance, suggestions, feedback, etc. - heartily welcome :)
