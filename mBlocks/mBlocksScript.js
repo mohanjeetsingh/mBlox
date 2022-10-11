@@ -181,7 +181,7 @@ function mBlocks(m) {
 
                         //TITLE - DISPLAY AND NORMAL
                         let hD = hN = "";
-                        (fTy == "q") ? (hN = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + ti + '</blockquote>') : (isH && (hD = '<h3 class="display-5 mx-lg-5 ' + (isL ? "opacity-50" : "opacity-75") + '">' + ti + '</h3>', hN = '<h5 class="card-title fw-normal ' + ((fTy == "t" || fTy == "l" || fTy == "p") ? 'text-' + iThm : "") + '">' + ti + '</h5>'));
+                        (fTy == "q") ? (hN = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + ti + '</blockquote>') : (isH && (hD = '<h3 class="display-5 mx-lg-5 ' + (isL ? "opacity-50" : "opacity-75") + '">' + ti + '</h3>', hN = '<h5 class="card-title fw-normal">' + ti + '</h5>'));
 
                         //COMMENT AUTHOR
                         (fTy == "q") && (sni += '<figcaption class="small text-muted">- ' + au + '</figcaption>');
@@ -191,7 +191,7 @@ function mBlocks(m) {
                             (z = c.replace(/<\S[^>]*>/g, "")).length > 70 && (z = z.substring(0, snS) + "...");
                             //console.log({ tit: T, it, c, z });
                             sni = '<summary class="list-unstyled' +
-                                (thm == "light" ? ' text-black-50' : ' text-white-50') +
+                                (thm == "light" ? ' text-muted' : ' opacity-75')+
                                 (fTy == "v" ? ' py-3 d-block mx-lg-5' : '') +
                                 (isL ? ' opacity-75' : '') +
                                 '">' + z + '</summary>';
@@ -231,7 +231,7 @@ function mBlocks(m) {
 
                             let iS = " object-fit:cover;height:100%!important;",
                                 iC = ' w-100 img-fluid',
-                                iSF = ' background:url(' + iU + ') fixed center center;background-size:cover;',
+                                iSF = ' background:url(' + iH + ') fixed center center;background-size:cover;',
                                 t = "";
                             switch (fTy) {
                                 case "p": iC = ar; break;
@@ -280,7 +280,7 @@ function mBlocks(m) {
                             b += '<div class="row  g-' + bG + ' mx-0';
                             isCa && ((b += ' carousel-item'), (p == 0) && (b += ' active'));
                             //isCa && console.log({ tit, bTy, fTy, p, b });
-                            //isC && (fTy == "t") && (b += ' col vstack');
+                            isC && (bTy == "l") && (b += ' col flex-grow-1');
                             (fTy != "v") && (!(isC && (fTy == "t" || fTy == "c")) && (b += ' pb-' + bG), (isCa || isNav) && (b += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             switch (bC) {
                                 case 1: b += ' row-cols-1">'; break;
@@ -309,7 +309,7 @@ function mBlocks(m) {
                         if (isH && fTy != "s" && fTy != "g") {
                                 switch (fTy) {
                                     case "t": isI && (b += '<div class="col-8">');
-                                    case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' bg-opacity-75 text-bg-' + thm) : '') + '">';
+                                    case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' bg-opacity-75 text-bg-' + thm) : ' text-'+ iThm) + '">';
                                         break;
                                     case "l": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>';
                                     case "c": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 p-5';
