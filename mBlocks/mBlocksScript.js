@@ -427,6 +427,21 @@ function mBlocks(m) {
                 //console.log(b);
             }//complete
         })//ajax
-    });//$
+    });//map
 }
-$(document).ready(function () { mBlocks('.mBlock') });
+//$(document).ready(function () { mBlocks('.mBlock') });
+
+let T;
+window.addEventListener("load", (event) => {
+    let options = {rootMargin: '500px',threshold: 0.0};
+    T=document.querySelectorAll(".mBlock");
+          let observer = new IntersectionObserver(cFn, options);
+    $(T).each(function (index) { observer.observe(T[index]);console.log(index) });
+}, false);
+
+function cFn (entries, observer) {
+    entries.forEach((entry) => {
+        console.log("cfn");
+        (entry.isIntersecting) && (console.log(entry), mBlocks(entry.target),observer.unobserve(entry.target))
+    });
+  };
