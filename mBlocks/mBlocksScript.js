@@ -308,8 +308,8 @@ function mBlocks(m) {
                         //TEXT
                         if (isH && fTy != "s" && fTy != "g") {
                                 switch (fTy) {
-                                    case "t": isI && (b += '<div class="col-8">');
-                                    case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' bg-opacity-75 text-bg-' + thm) : ' text-'+ iThm) + '">';
+                                    case "t": isI && (b += '<div class="col-8 h-100">');
+                                    case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' h-100 bg-opacity-75 text-bg-' + thm) : ' text-'+ iThm) + '">';
                                         break;
                                     case "l": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>';
                                     case "c": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 p-5';
@@ -429,12 +429,29 @@ function mBlocks(m) {
         })//ajax
     });//map
 }
-//$(document).ready(function () { mBlocks('.mBlock') });
+$(document).ready(function () { mBlocks('.mBlock') });
 
-let T;
+//Intersection Observer for Lazy Loading
+
+window.addEventListener("load", (event) => {
+    let options = {rootMargin: '500px',threshold: 0.0},
+    T=document.getElementsByClassName("mBlockL");
+let observer = new IntersectionObserver(cFn, options);
+    $(T).each((i) => { observer.observe(T[i])});
+}, false);
+
+function cFn (entries, observer) {
+    entries.forEach((entry) => {
+ if(entry.isIntersecting) {
+$(entry.target).hasClass("mBlockL") && mBlocks(entry.target);
+observer.unobserve(entry.target);
+}
+});
+  };
+
 window.addEventListener("load", (event) => {
     let options = {rootMargin: '500px',threshold: 0.0};
-    T=document.querySelectorAll(".mBlock");
+    T=document.getElementsByClassName(".mBlockL");
           let observer = new IntersectionObserver(cFn, options);
     $(T).each(function (index) { observer.observe(T[index]);console.log(index) });
 }, false);
@@ -445,3 +462,4 @@ function cFn (entries, observer) {
         (entry.isIntersecting) && (console.log(entry), mBlocks(entry.target),observer.unobserve(entry.target))
     });
   };
+
