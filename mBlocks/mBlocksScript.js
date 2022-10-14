@@ -21,6 +21,7 @@ function mBlocks(m) {
             isI = (-1 != t.search("i")),
             isS = (-1 != t.search("s")),
             isA = (-1 != t.search("a")),
+            isD = (-1 != t.search("d")),
             h = e.attr("data-iHeight") || (bTy == "v" ? "100vh" : (bTy == "s" ? "70vh" : "m")),
             bH = h == 'm' ? '' : "height:" + h + "!important;",
             S = e.attr("data-s") || 1,//stage - code defined
@@ -71,17 +72,18 @@ function mBlocks(m) {
                         isF = (e.attr("data-iFix") || "").toLowerCase() == "true",
                         isL = (e.attr("data-lowContrast") || "").toLowerCase() == "true",
                         isR = (e.attr("data-iBorder") || "").toLowerCase() == "true",
-                        mo = e.attr("data-moreText") || "",
                         cta = e.attr("data-CTAText") || "",
                         isC = (bTy == "l" || bTy == "s"),
                         tS = Math.ceil(toRe / bP);//total stages
                     let b = '',//block body
-                        fTy = bTy;
+                    mo = e.attr("data-moreText") || "",
+                    fTy = bTy;
                     //console.log(fe.feed.entry);
                     //console.log(fe.feed.link);
                     //console.log({tit,b,fe,toRe,nuSt});
 
                     (bP <= 1 || bTy == "l") && (isCa = false);
+                    (cTy == "comments") && (mo="");
                     if (isCa || isI) { var iW = window.innerWidth; }
 
                     //Image Resolution Setting
@@ -109,7 +111,7 @@ function mBlocks(m) {
 
                     if (typeof (bC) === "undefined") {
                         switch (bTy) {
-                            case "v": case "t": bC = 1; break;
+                            case "v":case "m": case "t": bC = 1; break;
                             case "p": bC = 3; break;
                             case "c": case "q": bC = 4; break;
                             case "g": bC = 5; break;
@@ -165,26 +167,37 @@ function mBlocks(m) {
 
                         //<< POST COMPONENT LIBRARY >>
                         //AUTHOR INFO
-                        isA && cTy != "comments" && ((au == "Anonymous" || au == "Unknown") ? (auur = "https://Mohanjeet.Blogspot.com", au = "Mohanjeet Singh") : (auur = it.author[0].uri.$t));
+                        let a = '';
+                        if (isA) {
+                            cTy != "comments" && ((au == "Anonymous" || au == "Unknown") ? (auur = "https://Mohanjeet.Blogspot.com", au = "Mohanjeet Singh") : (auur = it.author[0].uri.$t));
 
+                            //COMMENT AUTHOR
+                            switch (fTy) {
+                                case "q": a += '<figcaption class="small fw-lighter">- ' + au + '</figcaption>'; break;
+                                case "m": a += '<span class="small text-'+thm+'" rel="author">' + au + '</span>'; break;
+                            }
+                        }
+                        
                         //DATE
-                        /* O >> var o=it.published.$t,
-                          //                      c=o.substring(0,4),
-                            //                    m=o.substring(5,7),
-                              //                  h=o.substring(8,10),
+                        let d = '';
+                        if (isD) {
+                            const o = it.published.$t,
+                                //                      c=o.substring(0,4),
+                                //                    m=o.substring(5,7),
+                                //                  h=o.substring(8,10),
                                 //                u=month_format[parseInt(m,10)]+" "+h+", "+c,
                         
-                             var h=(it.published.$t,it.content.$t,it.published.$t),
-                                              v=h.split("T"),
-                                              m=" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][(v=v[0].split("-"))[1]-1]+" "+v[2]+", "+v[0];
-                                              */
+                                h = (it.published.$t, it.content.$t, it.published.$t);
+                          //  console.log(h);
+                            let v = h.split("T");
+                            d = " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][(v = v[0].split("-"))[1] - 1] + " " + v[2] + ", " + v[0];
+                            d = '<span class="small fw-lighter">'+(isA?' &#8226; ':'') + d + '</span>';
+                            // console.log(d);
+                        }
 
                         //TITLE - DISPLAY AND NORMAL
-                        let hD = hN = "";
-                        (fTy == "q") ? (hN = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + ti + '</blockquote>') : (isH && (hD = '<h3 class="display-5 mx-lg-5 ' + (isL ? "opacity-50" : "opacity-75") + '">' + ti + '</h3>', hN = '<h5 class="card-title fw-normal">' + ti + '</h5>'));
-
-                        //COMMENT AUTHOR
-                        (fTy == "q") && (sni += '<figcaption class="small text-muted">- ' + au + '</figcaption>');
+                        let hD = hN = hM= "";
+                        (fTy == "q") ? (hN = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + ti + '</blockquote>') : (isH && (hD = '<h3 class="display-5 mx-lg-5 ' + (isL ? "opacity-50" : "opacity-75") + '">' + ti + '</h3>', hN = '<h5 class="card-title fw-normal">' + ti + '</h5>',hM='<span class="d-block my-2">"' + ti+'"</span>'));
 
                         //SNIPPET
                         if (isS) {
@@ -235,14 +248,17 @@ function mBlocks(m) {
                                 t = "";
                             switch (fTy) {
                                 case "p": iC = ar; break;
+                                case "m":iS += ' height:3rem!important;width:3rem;';
+                                iSF += ' height:3rem!important;width:3rem;';
+                                iC = ' rounded-circle m-2'; break;
                                 case "q":
                                     iS += ' height:6rem!important;width:6rem;';
                                     iSF += ' height:6rem!important;width:6rem;';
                                     iC = ' rounded-circle mx-auto mt-3'; break;
                                 case "t": iC = " col-4 h-100"; break;
                                 case "s":
-                                    var v = (-1 !== iV.indexOf("img.youtube.com")) ? (iV.substr(iV.indexOf("/vi/") + 4, 11)) : "regular";
-                                    p == 0 && (imS = '<figure class="m-0' + iC + ' regular ' + (cor == " rounded" ? ' rounded-5 rounded-bottom' : cor) + '" style="' + iSF + bH + '" role="img" loading="lazy" aria-label="' + ti + ' image"' + t + '></figure>', t = '" data-toggle="tooltip" data-vidid="' + v + '"');
+                                    var vY = (-1 !== iV.indexOf("img.youtube.com")) ? (iV.substr(iV.indexOf("/vi/") + 4, 11)) : "regular";
+                                    p == 0 && (t = '" data-toggle="tooltip" data-vidid="' + vY + '"', imS = '<figure class="m-0' + iC +(cor == " rounded" ? ' rounded-5 rounded-bottom' : cor) + '" style="' + iSF + bH + '" role="img" loading="lazy" title="' + ti + '" aria-label="' + ti + ' image"' + t + '></figure>');
                                     iC += ar+' shadow-sm';
                                     break;
                                 case "v": iSF += bH; break;
@@ -255,18 +271,23 @@ function mBlocks(m) {
 
                         //CTA BUTTON (purely visual therefore button instead of a)
                         let B = "";
-                        if (cta != "" && fTy != "g") {
-                            B = '<button class="btn ' +
-                                ((cor != " rounded" || fTy == "p" || fTy == "q") ? 'rounded-0' : '') +
-                                (isL ? " opacity-50" : " opacity-75");
+                        if (cta != "") {
                             switch (fTy) {
-                                case "s": B += " p-3 px-lg-5 float-end"; break;
-                                case "v": B += ' p-2 px-4  mx-lg-5 mt-4'; break;
-                                case "p": case "q": B += ' py-2 px-3 w-100 text-end link-' + iThm; break;
-                                case "t": B += ' mt-3'; break;
-                                case "c": case "l": B += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
+                                case "g": break;
+                                case "m": B = '<span class="link-'+thm+' small">'+cta+'</span>' ; break;
+                                default:
+                                    B = '<button class="btn ' +
+                                        ((cor != " rounded" || fTy == "p" || fTy == "q") ? 'rounded-0' : '') +
+                                        (isL ? " opacity-50" : " opacity-75");
+                                    switch (fTy) {
+                                        case "s": B += " p-3 px-lg-5 float-end"; break;
+                                        case "v": B += ' p-2 px-4  mx-lg-5 mt-4'; break;
+                                        case "p": case "q": B += ' py-2 px-3 w-100 text-end link-' + iThm; break;
+                                        case "t": B += ' mt-3'; break;
+                                        case "c": case "l": B += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
+                                    }
+                                    B += ' border-0 btn-' + thm + '" role="button" title="' + ti + '">' + cta + '</button>';
                             }
-                            B += ' border-0 btn-' + thm + '" role="button" title="' + ti + '">' + cta + '</button>';
                         }
 
                         //CAROUSEL INDICATORS
@@ -294,20 +315,22 @@ function mBlocks(m) {
                         //console.log({tit,p,b});
 
                         //ARTICLE START
-                        b += '<article class="col d-inline-flex' + (fTy == "s" ? (' sPost" data-title="' + ti + '" data-link="' + li + '" data-summary="' + z + '" data-vidid="' + v + '" data-img="' + iV + '" data-toggle="tooltip"') : (fTy == "v" ?'" style='+bH+'"':'"')) + ' role="article">';
+                        b += '<article class="col d-inline-flex' + (fTy == "s" ? (' sPost" data-title="' + ti + '" data-link="' + li + '" data-summary="' + z + '" data-vidid="' + vY + '" data-img="' + iV + '" data-toggle="tooltip"') : (fTy == "v" ?'" style='+bH+'"':'"')) + ' role="article">';
 
                         //LINK START
-                        fTy != "s" && (b += '<a class="card overflow-hidden w-100 shadow-sm' +
-                            (fTy != "v" ? cor : ' rounded-0') +
-                            (isR ? (' border border-3 border-opacity-75 border-' + thm) : ' border-0') +
-                            ((fTy == "q" || fTy == "v") ? ' text-center h-100' : (fTy == "t" ? " row g-0" : ((fTy == "l" || fTy == "c" || fTy == "g") ? ar + (fTy == "l" ? ' mt-' + bG : '') : ""))) + '" href="' + li + '" title="' + ti + '">');
+                        fTy != "s" && (b += '<a class="overflow-hidden w-100 shadow-sm' +
+                        (fTy != "v" ? cor : ' rounded-0') +
+                        (fTy != "m" ? ' card' : ' text-bg-'+iThm) +
+                        (isR ? (' border border-3 border-opacity-75 border-' + thm) : ' border-0') +
+                            ((fTy == "q" || fTy == "v") ? ' text-center h-100' : ((fTy == "t"||fTy=="m") ? " row g-0" : ((fTy == "l" || fTy == "c" || fTy == "g") ? ar + (fTy == "l" ? ' mt-' + bG : '') : ""))) + '" href="' + li + '" title="' + ti + '">');
 
                         //IMAGE
                         isI && (b += im);
 
                         //TEXT
                         if (isH && fTy != "s" && fTy != "g") {
-                                switch (fTy) {
+                            switch (fTy) {
+                                case "m": b+= '<div class="col p-2 ps-0">'; break;
                                     case "t": isI && (b += '<div class="col-8 h-100">');
                                     case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' h-100 bg-opacity-75 text-bg-' + thm) : ' text-'+ iThm) + '">';
                                         break;
@@ -329,7 +352,8 @@ function mBlocks(m) {
                                         }
                                 }
 
-                                (fTy == "v") ? b += hD : b += hN;
+                                b += a+d;
+                                (fTy == "v") ? b += hD : (fTy=='m') ? b+=hM : b += hN;
                                 b += sni;
                                 !(fTy == "p" || fTy == "q") && (b += B);//CTA 
 
@@ -375,9 +399,9 @@ function mBlocks(m) {
                 }//if
                 else {
                     switch (cTy) {
-                        case "recent": e.append('<h2 class="text-center p-4 w-100">Nothing was posted recently!</h2>'); break;
-                        case "comments": e.append('<h2 class="text-center p-4 w-100">Be the first one to comment!</h2>'); break;
-                        default: e.append('<h2 class="text-center p-4 w-100">No content found for "' + la + '"!</h2>');
+                        case "recent": e.append('<h2 class="text-center p-4 w-100">Sorry! No recent updates.</h2>'); break;
+                        case "comments": e.append('<h2 class="text-center p-4 w-100">No comments. Start the conversation!</h2>'); break;
+                        default: e.append('<h2 class="text-center p-4 w-100">Sorry! No content found for "' + la + '"!</h2>');
                     }
                 } //console.log(b);
             },//success
@@ -408,19 +432,24 @@ function mBlocks(m) {
                     f.click(function () {
                         let e = $(this).attr("data-vidid");
                         if (e !== "regular") {
-                            i.html('<iframe src="https://www.youtube.com/embed/' + e + '?autoplay=1" allowfullscreen="" style="' + bH + 'width:100%;" frameborder="0"></iframe>'), i.fadeIn(0), f.fadeOut(0), c.fadeOut(0);
+                            i.html('<iframe src="https://www.youtube.com/embed/' + e + '?autoplay=1" allowfullscreen="" style="' + bH + 'width:100%;" frameborder="0"></iframe>'), i.fadeIn(0), f.fadeOut(0),c.fadeOut(0);
                         }
                     }),
                         e.find(".sPost").map(function () {
                             $(this).click(function () {
                                 const v = $(this).attr("data-vidid"),
                                     t = $(this).attr("data-title");
-                                (v.toLowerCase() != "regular") ? (ti = "Click here to load the video!") : (ti = t);
+                                let fi = f.find("svg")||false;
+                                if (v.toLowerCase() != "regular") {
+                                    ti = "Click here to load the video!";
+                                    (fi.length==0)?f.append('<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>'):fi.fadeIn(0);
+                                } else { ti = t; fi.fadeOut(0); }
+//                                console.log(fi);
                                 f.attr({ style: "background:url(" + $(this).attr("data-img") + ") center center;background-size:cover;" + bH, "data-vidid": v, title: ti, "aria-label": ti });
                                 i.fadeOut(0), f.fadeIn(0),
                                     c.fadeIn(0), c.find("h5").html(t), c.find("summary").html($(this).attr("data-summary")),
                                     F.find("a").attr({ href: $(this).attr("data-link"), title: t }), F.find("button").attr("title", t);
-                            })
+                                })
                         })
                 }
                 //(isCa)&&console.log(b);
@@ -432,7 +461,6 @@ function mBlocks(m) {
 $(document).ready(function () { mBlocks('.mBlock') });
 
 //Intersection Observer for Lazy Loading
-
 window.addEventListener("load", (event) => {
     let options = {rootMargin: '500px',threshold: 0.0},
     T=document.getElementsByClassName("mBlockL");
@@ -448,18 +476,3 @@ observer.unobserve(entry.target);
 }
 });
   };
-
-window.addEventListener("load", (event) => {
-    let options = {rootMargin: '500px',threshold: 0.0};
-    T=document.getElementsByClassName(".mBlockL");
-          let observer = new IntersectionObserver(cFn, options);
-    $(T).each(function (index) { observer.observe(T[index]);console.log(index) });
-}, false);
-
-function cFn (entries, observer) {
-    entries.forEach((entry) => {
-        console.log("cfn");
-        (entry.isIntersecting) && (console.log(entry), mBlocks(entry.target),observer.unobserve(entry.target))
-    });
-  };
-
