@@ -458,21 +458,3 @@ function mBlocks(m) {
         })//ajax
     });//map
 }
-$(document).ready(function () { mBlocks('.mBlock') });
-
-//Intersection Observer for Lazy Loading
-window.addEventListener("load", (event) => {
-    let options = {rootMargin: '500px',threshold: 0.0},
-    T=document.getElementsByClassName("mBlockL");
-let observer = new IntersectionObserver(cFn, options);
-    $(T).each((i) => { observer.observe(T[i])});
-}, false);
-
-function cFn (entries, observer) {
-    entries.forEach((entry) => {
- if(entry.isIntersecting) {
-$(entry.target).hasClass("mBlockL") && mBlocks(entry.target);
-observer.unobserve(entry.target);
-}
-});
-  };
