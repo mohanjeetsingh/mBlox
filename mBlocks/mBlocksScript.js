@@ -36,7 +36,7 @@ function mBlocks(m) {
             isCa = (e.attr("data-isCarousel") || "").toLowerCase() == "true",
             isNav = false,
             w = "",
-            f = si + "/feeds/",
+            f = si + "feeds/",
             cI = '';//carousel indicators
 
         //console.log(el);
