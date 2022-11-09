@@ -1,7 +1,8 @@
 /*!
  * mBlocks for Blogger
- * CIA.RealHappinessCenter.com
- * Copyright (c) 2022, Mohanjeet Singh
+ * Demo @ https://mBlocksForBloggers.blogspot.com/
+ * Agency @ https://CIA.RealHappinessCenter.com
+ * Copyright (c) 2022, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
 function mBlocks(m) {
@@ -9,9 +10,9 @@ function mBlocks(m) {
         /* SETTINGS PULLED FROM USER PLACEMENT + VALIDATION + DEFAULT SETTINGS APPLICATION */
         const
             e = $(this),
-            la = e.attr("data-label") || "Label name missing",
+            la = e.attr("data-label") || "Label Name missing",
             cTy = (e.attr("data-contentType") || "recent").toLowerCase(),// should be comments/label/recent
-            l = e.attr("data-feed") || "",//blogspot site url - default or custom
+            si = e.attr("data-feed") || "",//blogspot site url - default or custom
             T = e.attr("data-title") || "",
             D = e.attr("data-description") || "",
             ty = (e.attr("data-type") || "v-ih").toLowerCase(),
@@ -35,7 +36,7 @@ function mBlocks(m) {
             isCa = (e.attr("data-isCarousel") || "").toLowerCase() == "true",
             isNav = false,
             w = "",
-            f = l + "/feeds/",
+            f = si + "/feeds/",
             cI = '';//carousel indicators
 
         //console.log(el);
@@ -169,7 +170,7 @@ function mBlocks(m) {
                         //AUTHOR INFO
                         let a = '';
                         if (isA) {
-                            cTy != "comments" && ((au == "Anonymous" || au == "Unknown") ? (auur = "https://Mohanjeet.Blogspot.com", au = "Mohanjeet Singh") : (auur = it.author[0].uri.$t));
+                            cTy != "comments" && ((au == "Anonymous" || au == "Unknown") ? (auur = si) : (auur = it.author[0].uri.$t));
 
                             //COMMENT AUTHOR
                             switch (fTy) {
