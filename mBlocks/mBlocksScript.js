@@ -400,9 +400,9 @@ function mBlocks(m) {
                 }//if
                 else {
                     switch (cTy) {
-                        case "recent": e.append('<h2 class="text-center p-4 w-100">Sorry! No recent updates.</h2>'); break;
-                        case "comments": e.append('<h2 class="text-center p-4 w-100">No comments. Start the conversation!</h2>'); break;
-                        default: e.append('<h2 class="text-center p-4 w-100">Sorry! No content found for "' + la + '"!</h2>');
+                        case "recent": e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No recent updates.</h2>'); break;
+                        case "comments": e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">No comments. Start the conversation!</h2>'); break;
+                        default: e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No content found for "' + la + '"!</h2>');
                     }
                 } //console.log(b);
             },//success
