@@ -12,7 +12,7 @@ function mBlocks(m) {
             e = $(this),
             la = e.attr("data-label") || "Label Name missing",
             cTy = (e.attr("data-contentType") || "recent").toLowerCase(),// should be comments/label/recent
-            si = e.attr("data-feed") || "",//blogspot site url - default or custom
+            si = e.attr("data-feed") || "/",//blogspot site url - default or custom
             T = e.attr("data-title") || "",
             D = e.attr("data-description") || "",
             ty = (e.attr("data-type") || "v-ih").toLowerCase(),
