@@ -18,6 +18,7 @@ function mBlocks(m) {
             ty = (e.attr("data-type") || "v-ih").toLowerCase(),
             bTy = ty.substring(0, 1),//block type
             t = ty.substring(1),
+            thm = (e.attr("data-theme") || "light").toLowerCase(),// [light, dark, primary,secondary] 
             isH = (-1 != t.search("h")),
             isI = (-1 != t.search("i")),
             isS = (-1 != t.search("s")),
@@ -66,7 +67,6 @@ function mBlocks(m) {
                         snS = e.attr("data-snippetSize") || 150,
                         cor = ((e.attr("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
                         tva = (e.attr("data-textVAlign") || (bTy == 'v' ? "middle" : (bTy == 'l' ? "bottom" : 'overlay'))).toLowerCase(),
-                        thm = (e.attr("data-theme") || "light").toLowerCase(),// [light, dark, primary] 
                         iThm = (thm == "light" ? "primary" : "light"),//theme inverse
                         ar = " ratio ratio-" + (e.attr("data-ar") || "1x1").toLowerCase(),// [1x1,4x3,3x4,16:9,9:16,21:9,9:21]
                         bG = e.attr("data-gutter") || ((bTy == "v") ? 0 : 3),
@@ -400,9 +400,9 @@ function mBlocks(m) {
                 }//if
                 else {
                     switch (cTy) {
-                        case "recent": e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No recent updates.</h2>'); break;
-                        case "comments": e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">No comments. Start the conversation!</h2>'); break;
-                        default: e.append('<h2 class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No content found for "' + la + '"!</h2>');
+                        case "recent": e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No recent updates.</div>'); break;
+                        case "comments": e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>'); break;
+                        default: e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No content found for "' + la + '"!</div>');
                     }
                 } //console.log(b);
             },//success
