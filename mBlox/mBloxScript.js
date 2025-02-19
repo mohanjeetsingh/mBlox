@@ -1,8 +1,8 @@
 /*!
- * mBlocks for Blogger
- * Demo @ https://mBlocksForBloggers.blogspot.com/
+ * mBlox for Blogger
+ * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
- * Copyright (c) 2022, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
+ * Copyright (c) 2025, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
 function mBlocks(m) {
@@ -107,7 +107,7 @@ function mBlocks(m) {
                         e.attr("data-s", S);
 
                         //BLOCK HEADER - TITLE & DESCRIPTION
-                        (T != "") && e.append('<div class="text-center m-0 bg-' + thm + ' py-5"><h4 class="display-6 text-' + iThm + ' py-3 m-0 ' + (isL ? "opacity-50" : "") + '">' + T + '</h4>' + ((D != "") ? ('<span class="pb-3 text-black-50">' + D + '</span>') : '') + '</div>');
+                        (T != "") && e.append('<div class="text-center m-0 bg-' + thm + ' py-5"><h4 class="display-5 fw-bold text-' + iThm + ' py-3 m-0 ' + (isL ? "opacity-50" : "") + '">' + T + '</h4>' + ((D != "") ? ('<span class="pb-3 text-black-50">' + D + '</span>') : '') + '</div>');
                     }
 
                     if (typeof (bC) === "undefined") {
