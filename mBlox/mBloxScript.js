@@ -9,6 +9,7 @@
 function mBlocks(m) {
     $(m).map(function () {
         /* CONSTANTS */
+        // Defines the single-character codes used in data attributes for various settings.
         const C = {
             TYPE: { VERTICAL: 'v', MINIMAL: 'm', TEXT: 't', PHOTO: 'p', CARD: 'c', QUOTE: 'q', GALLERY: 'g', LIST: 'l', SHOWCASE: 's' },
             CONTENT: { RECENT: 'recent', COMMENTS: 'comments' },
@@ -19,17 +20,18 @@ function mBlocks(m) {
         };
 
         /* SETTINGS PULLED FROM USER PLACEMENT + VALIDATION + DEFAULT SETTINGS APPLICATION */
+        // These settings are pulled from the `data-*` attributes on the mBlock element itself.
         const
             element = $(this),
             label = element.attr("data-label") || "Label Name missing",
-            contentType = (element.attr("data-contentType") || C.CONTENT.RECENT).toLowerCase(),// should be comments/label/recent
-            siteUrl = element.attr("data-feed") || "/",//blogspot site url - default or custom
+            contentType = (element.attr("data-contentType") || C.CONTENT.RECENT).toLowerCase(),// Can be comments, label, or recent.
+            siteUrl = element.attr("data-feed") || "/",// The root URL of the blogspot site.
             title = element.attr("data-title") || "",
             description = element.attr("data-description") || "",
-            typeAttr = (element.attr("data-type") || "v-ih").toLowerCase(),
-            blockType = typeAttr.substring(0, 1),//block type
-            typeFlags = typeAttr.substring(1),
-            theme = (element.attr("data-theme") || C.THEME.LIGHT).toLowerCase(),// [light, dark, primary,secondary] 
+            typeAttr = (element.attr("data-type") || "v-ih").toLowerCase(), // e.g., "v-ihs" for Vertical, Image, Header, Snippet
+            blockType = typeAttr.substring(0, 1),// The primary block type (v, s, l, etc.)
+            typeFlags = typeAttr.substring(1),// The flags for content parts (i, h, s, a, d)
+            theme = (element.attr("data-theme") || C.THEME.LIGHT).toLowerCase(),
             hasHeader = (-1 != typeFlags.search(C.FLAG.HEADER)),
             hasImage = (-1 != typeFlags.search(C.FLAG.IMAGE)),
             hasSnippet = (-1 != typeFlags.search(C.FLAG.SNIPPET)),
@@ -37,21 +39,21 @@ function mBlocks(m) {
             hasDate = (-1 != typeFlags.search(C.FLAG.DATE)),
             imageHeight = element.attr("data-iHeight") || (blockType == C.TYPE.VERTICAL ? "100vh" : (blockType == C.TYPE.SHOWCASE ? "70vh" : "m")),
             blockHeightStyle = imageHeight == 'm' ? '' : "height:" + imageHeight + "!important;",
-            stage = element.attr("data-s") || 1,//stage - code defined
-            isFirstInstance = (element.attr("data-s") === undefined),//first instance - code defined
+            stage = element.attr("data-s") || 1,// Used for paginating through posts.
+            isFirstInstance = (element.attr("data-s") === undefined),// Checks if this is the first time the block is being loaded.
             postsPerPage = parseInt(element.attr("data-posts") || 3),
             blockId = element.closest(".widget-content").parent(".widget").attr("ID") || (title + typeAttr + label);
         let
-            isBlurred = (element.attr("data-iBlur") == "true") ? true : (element.attr("data-iBlur") == "false" ? false : (hasHeader && (-1 == $.inArray(blockType, [C.TYPE.SHOWCASE, C.TYPE.LIST, C.TYPE.TEXT, C.TYPE.PHOTO, C.TYPE.QUOTE])))), //(default - true for non-image-only objects),
-            columnCount = element.attr("data-cols"),//
-            rowCount = parseInt(element.attr("data-rows") || 1),//
+            isBlurred = (element.attr("data-iBlur") == "true") ? true : (element.attr("data-iBlur") == "false" ? false : (hasHeader && (-1 == $.inArray(blockType, [C.TYPE.SHOWCASE, C.TYPE.LIST, C.TYPE.TEXT, C.TYPE.PHOTO, C.TYPE.QUOTE])))), // Default blur is true for most content-heavy blocks.
+            columnCount = element.attr("data-cols"),
+            rowCount = parseInt(element.attr("data-rows") || 1),
             isCarousel = (element.attr("data-isCarousel") || "").toLowerCase() == "true",
-            isNav = false,
+            isNav = false, // Flag to determine if carousel-style navigation is needed without the carousel itself.
             wrapper = "",
             feedUrl = siteUrl + "feeds/",
-            carouselIndicators = '';//carousel indicators
+            carouselIndicators = '';
 
-        //FEED SETTING
+        //FEED SETTING: Construct the correct Blogger JSON feed URL based on the desired content type.
         switch (contentType) {
             case C.CONTENT.RECENT: feedUrl += "posts"; hasImage ? (feedUrl += "/default") : (feedUrl += "/summary"); break;
             case C.CONTENT.COMMENTS: feedUrl += "comments"; hasImage ? (feedUrl += "/default") : (feedUrl += "/summary"); break;
@@ -59,36 +61,37 @@ function mBlocks(m) {
         }
         feedUrl += "?alt=json-in-script&start-index=" + ((stage - 1) * postsPerPage + 1) + "&max-results=" + postsPerPage;
 
-        //JSON PULL
+        //JSON PULL: Fetch the data from the Blogger feed.
         $.ajax({
             url: feedUrl,
             type: "get",
             dataType: "jsonp",
             success: function (fe) {
                 if (fe.feed.entry) {
-                    const postCount = fe.feed.entry.length,//Total number of actual posts in feed
+                    // These consts are defined within the success callback as they depend on the returned feed data.
+                    const postCount = fe.feed.entry.length,
                         totalResults = fe.feed.openSearch$totalResults.$t,
                         snippetSize = element.attr("data-snippetSize") || 150,
                         cornerStyle = ((element.attr("data-corner") || "").toLowerCase() == C.CORNER.SHARP) ? " rounded-0" : " rounded",
                         textAlignV = (element.attr("data-textVAlign") || (blockType == C.TYPE.VERTICAL ? C.V_ALIGN.MIDDLE : (blockType == C.TYPE.LIST ? C.V_ALIGN.BOTTOM : C.V_ALIGN.OVERLAY))).toLowerCase(),
-                        inverseTheme = (theme == C.THEME.LIGHT ? "primary" : C.THEME.LIGHT),//theme inverse
-                        aspectRatio = " ratio ratio-" + (element.attr("data-ar") || "1x1").toLowerCase(),// [1x1,4x3,3x4,16:9,9:16,21:9,9:21]
+                        inverseTheme = (theme == C.THEME.LIGHT ? "primary" : C.THEME.LIGHT),
+                        aspectRatio = " ratio ratio-" + (element.attr("data-ar") || "1x1").toLowerCase(),
                         gutter = element.attr("data-gutter") || ((blockType == C.TYPE.VERTICAL) ? 0 : 3),
                         isImageFixed = (element.attr("data-iFix") || "").toLowerCase() == "true",
                         isLowContrast = (element.attr("data-lowContrast") || "").toLowerCase() == "true",
                         isRounded = (element.attr("data-iBorder") || "").toLowerCase() == "true",
                         ctaText = element.attr("data-CTAText") || "",
-                        isCompound = (blockType == C.TYPE.LIST || blockType == C.TYPE.SHOWCASE),
-                        totalStages = Math.ceil(totalResults / postsPerPage);//total stages
-                    let blockBodyHtml = '',//block body
+                        isCompound = (blockType == C.TYPE.LIST || blockType == C.TYPE.SHOWCASE), // Compound blocks have special layout rules.
+                        totalStages = Math.ceil(totalResults / postsPerPage);
+                    let blockBodyHtml = '',
                     moreText = element.attr("data-moreText") || "",
-                    finalItemType = blockType;
+                    finalItemType = blockType; // The item type can change within a loop (e.g., for List type).
 
                     (postsPerPage <= 1 || blockType == C.TYPE.LIST) && (isCarousel = false);
                     (contentType == C.CONTENT.COMMENTS) && (moreText="");
                     if (isCarousel || hasImage) { var innerWidth = window.innerWidth; }
 
-                    //Image Resolution Setting
+                    //Image Resolution Setting: Calculate the optimal image size based on container width and column count.
                     let imageSize = 100;
                     if (hasImage && !isBlurred) {
                         if (isImageFixed) { imageSize = innerWidth; } else {
@@ -104,13 +107,13 @@ function mBlocks(m) {
                         imageSize = Math.ceil(imageSize / 100) * 100;
                     }
 
+                    // On the first load of this block, add the main title and description header.
                     if (isFirstInstance) {
                         element.attr("data-s", stage);
-
-                        //BLOCK HEADER - TITLE & DESCRIPTION
                         (title != "") && element.append('<div class="text-center m-0 bg-' + theme + ' py-5"><h4 class="display-5 fw-bold text-' + inverseTheme + ' py-3 m-0 ' + (isLowContrast ? "opacity-50" : "") + '">' + title + '</h4>' + ((description != "") ? ('<span class="pb-3 text-black-50">' + description + '</span>') : '') + '</div>');
                     }
 
+                    // Set default column counts based on block type if not specified by the user.
                     if (typeof (columnCount) === "undefined") {
                         switch (blockType) {
                             case C.TYPE.VERTICAL:case C.TYPE.MINIMAL: case C.TYPE.TEXT: columnCount = 1; break;
@@ -133,9 +136,10 @@ function mBlocks(m) {
                         else { activeColumns = columnCount; }
 
                         (rowCount > Math.ceil(postCount / columnCount)) && (rowCount = Math.ceil(postCount / columnCount));
+                        // If the number of posts is less than or equal to what can be displayed on one screen, disable the carousel and enable simple navigation instead.
                         (postCount <= (activeColumns * rowCount)) && (isCarousel = false, isNav = true);
                     }
-                    //CAROUSEL OPEN
+                    
                     if (isCarousel) {
                         carouselIndicators = document.createElement("div");
                         $(carouselIndicators).addClass('carousel-indicators');
@@ -150,19 +154,23 @@ function mBlocks(m) {
                     m.appendTo(element).attr({ "data-bs-ride": "carousel" });
                     wrapper.className = ('overflow-hidden bg-' + theme + (blockType == C.TYPE.SHOWCASE ? ' sFeature' : "") + ((isCarousel || isNav) ? (' st' + stage + ' carousel carousel-fade') : ""));
 
-                    //FEED LOOP FOR POSTS
+                    //== FEED LOOP FOR POSTS ==
+                    // This is the main loop that iterates over each post from the feed and builds the corresponding HTML.
                     for (let p = 0; p < postCount; p++) {
                         const item = fe.feed.entry[p],
                             itemTitle = item.title.$t,
                             itemContent = (hasSnippet || hasImage) && (("content" in item) ? item.content.$t : (("summary" in item) ? (item.summary.$t) : (("summary" in b_rc) ? (item.summary.$t) : "")));
                         let authorName = item.author[0].name.$t, snippetHtml = tempSnippetText = "";
 
+                        // For the "List" block type, the first post is treated differently (as a Text type), and subsequent posts are Cards.
                         (blockType == C.TYPE.LIST) && p > 0 && (hasHeader ? (finalItemType = C.TYPE.TEXT, columnCount--) : finalItemType = C.TYPE.CARD);
 
+                        //<< POST COMPONENT LIBRARY >>
+                        // Each section below builds a piece of the final post HTML (Author, Date, Title, etc.)
+                        
                         let authorHtml = '';
                         if (hasAuthor) {
                             contentType != C.CONTENT.COMMENTS && ((authorName == "Anonymous" || authorName == "Unknown") ? (auur = siteUrl) : (auur = item.author[0].uri.$t));
-
                             switch (finalItemType) {
                                 case C.TYPE.QUOTE: authorHtml += '<figcaption class="small fw-lighter">- ' + authorName + '</figcaption>'; break;
                                 case C.TYPE.MINIMAL: authorHtml += '<span class="small text-'+theme+'" rel="author">' + authorName + '</span>'; break;
@@ -316,11 +324,11 @@ function mBlocks(m) {
                                 blockBodyHtml += authorHtml+dateHtml;
                                 (finalItemType == C.TYPE.VERTICAL) ? blockBodyHtml += headerDisplay : (finalItemType==C.TYPE.MINIMAL) ? blockBodyHtml+=headerMinimal : blockBodyHtml += headerNormal;
                                 blockBodyHtml += snippetHtml;
-                                !(finalItemType == C.TYPE.PHOTO || finalItemType == C.TYPE.QUOTE) && (blockBodyHtml += buttonHtml);//CTA 
+                                !(finalItemType == C.TYPE.PHOTO || finalItemType == C.TYPE.QUOTE) && (blockBodyHtml += buttonHtml);
 
                                 blockBodyHtml += '</div>';
                                 finalItemType == C.TYPE.TEXT && hasImage && (blockBodyHtml += '</div>');
-                                (finalItemType == C.TYPE.PHOTO || finalItemType == C.TYPE.QUOTE) && (blockBodyHtml += buttonHtml);//CTA - card footer type
+                                (finalItemType == C.TYPE.PHOTO || finalItemType == C.TYPE.QUOTE) && (blockBodyHtml += buttonHtml);
                             }
                         finalItemType != C.TYPE.SHOWCASE && (blockBodyHtml += '</a>');
                         blockBodyHtml += '</article>';
