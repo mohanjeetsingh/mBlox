@@ -92,7 +92,7 @@ The `data-type` attribute is a powerful way to control the appearance of each po
 *   **Format**: `[base]-[modifiers]` (e.g., `s-ihs`)
 
 **Base Types (first character):**
-*   `v`: **V**ertical / Cover
+*   `v`: co**V**er
 *   `s`: **S**howcase
 *   `l`: **L**ist
 *   `c`: **C**ard
