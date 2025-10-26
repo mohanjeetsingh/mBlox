@@ -1,7 +1,8 @@
 /*!
  * mBlocks for Blogger
  * CIA.RealHappinessCenter.com
- * Copyright (c) 2022, Mohanjeet Singh
+ * @version 1.0.0
+ * Copyright (c) 2022-2025, Mohanjeet Singh
  * Released under the MIT license
  */
 
@@ -15,7 +16,7 @@ function loadScripts(m, s) {
 
         j.onload = () => {
             const e = document.createElement('script');
-            e.src = 'mBlocksScript.js';
+            e.src = 'mBloxScript.js';
             document.head.append(e);
 
             e.onload = () => { mBlocks(m); s = !1; }
