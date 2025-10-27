@@ -61,29 +61,29 @@ Customize mBlox using the following `data-*` attributes on your placeholder elem
 
 | Attribute | Description | Default | Example |
 |---|---|---|---|
-| `data-contenttype` | Type of content to fetch. Options: `recent`, `label`, `comments`. | `recent` | `label` |
-| `data-label` | The label name to fetch posts from. Required if `data-contenttype` is `label`. | `Label Name missing` | `Articles` |
-| `data-feed` | The full URL of the Blogger blog to fetch from. | `/` (current site) | `https://mohanjeet.blogspot.com/` |
-| `data-posts` | Number of posts to fetch per block/page. | `3` | `6` |
-| `data-type` | Defines the visual style. A combination of a base type and modifiers (e.g., `s-ihs`). See **Types** below. | `v-ih` | `s-ihs` |
-| `data-title` | A title for the block, displayed in a header section. | `""` | `Latest News` |
-| `data-description` | A subtitle or description for the block header. | `""` | `Check out our recent updates.` |
-| `data-theme` | The color scheme for the block. Options: `light`, `dark`, `primary`, `secondary`. | `light` | `dark` |
-| `data-isCarousel` | Set to `true` to display posts in a carousel. | `false` | `true` |
+| `data-ar` | Aspect ratio for images/cards. E.g., `1x1`, `16x9`, `4x3`. | `1x1` | `16x9` |
 | `data-cols` | Number of columns in the grid. Defaults vary by `data-type`. | Varies | `4` |
-| `data-rows` | Number of rows per carousel slide. | `1` | `2` |
-| `data-moreText` | Text for a link to the original blog/label page. If empty, no link is shown. | `""` | `View All` |
+| `data-contenttype` | Type of content to fetch. Options: `recent`, `label`, `comments`. | `recent` | `label` |
+| `data-corner` | Corner style. Options: `rounded` (default), `sharp`. | `rounded` | `sharp` |
 | `data-CTAText` | Text for a call-to-action button on each post item. | `""` | `Read More` |
-| `data-iHeight` | Sets a fixed height for images/blocks. Accepts any CSS height value. | Varies by type | `70vh` |
-| `data-iFix` | Set to `true` to use images as fixed backgrounds (`background-attachment: fixed`). | `false` | `true` |
+| `data-description` | A subtitle or description for the block header. | `""` | `Check out our recent updates.` |
+| `data-feed` | The full URL of the Blogger blog to fetch from. | `/` (current site) | `https://mohanjeet.blogspot.com/` |
+| `data-gutter` | Gutter spacing between grid items (Bootstrap gutter value 0-5). | Varies | `3` |
 | `data-iBlur` | Set to `true` to apply a blur filter to images. | Varies by type | `true` |
 | `data-iBorder` | Set to `true` to add a border around post items. | `false` | `true` |
-| `data-ar` | Aspect ratio for images/cards. E.g., `1x1`, `16x9`, `4x3`. | `1x1` | `16x9` |
-| `data-corner` | Corner style. Options: `rounded` (default), `sharp`. | `rounded` | `sharp` |
-| `data-gutter` | Gutter spacing between grid items (Bootstrap gutter value 0-5). | Varies | `3` |
-| `data-textVAlign` | Vertical alignment of text on cards. Options: `top`, `middle`, `bottom`, `overlay`. | Varies by type | `bottom` |
+| `data-iFix` | Set to `true` to use images as fixed backgrounds (`background-attachment: fixed`). | `false` | `true` |
+| `data-iHeight` | Sets a fixed height for images/blocks. Accepts any CSS height value. | Varies by type | `70vh` |
+| `data-isCarousel` | Set to `true` to display posts in a carousel. | `false` | `true` |
+| `data-label` | The label name to fetch posts from. Required if `data-contenttype` is `label`. | `Label Name missing` | `Articles` |
 | `data-lowContrast` | Set to `true` to reduce the opacity of some text elements for a lower contrast look. | `false` | `true` |
+| `data-moreText` | Text for a link to the original blog/label page. If empty, no link is shown. | `""` | `View All` |
+| `data-posts` | Number of posts to fetch per block/page. | `3` | `6` |
+| `data-rows` | Number of rows per carousel slide. | `1` | `2` |
 | `data-snippetSize` | The maximum number of characters for the post snippet. | `150` | `100` |
+| `data-textVAlign` | Vertical alignment of text on cards. Options: `top`, `middle`, `bottom`, `overlay`. | Varies by type | `bottom` |
+| `data-theme` | The color scheme for the block. Options: `light`, `dark`, `primary`, `secondary`. | `light` | `dark` |
+| `data-title` | A title for the block, displayed in a header section. | `""` | `Latest News` |
+| `data-type` | Defines the visual style. A combination of a base type and modifiers (e.g., `s-ihs`). See **Types** below. | `v-ih` | `s-ihs` |
 
 ### `data-type` Explained
 

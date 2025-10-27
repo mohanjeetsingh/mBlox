@@ -11,7 +11,7 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
 ## Modernization & Best Practices
 
 - [ ] **Plan jQuery Removal:** The project relies heavily on jQuery. For long-term maintainability and performance, create a plan to incrementally replace jQuery functions with native browser APIs (e.g., `$.ajax` with `fetch`, `$(selector)` with `document.querySelector`).
-- [ ] **Use `let` and `const`:** Replace all `var` declarations with modern `let` (for variables that will be reassigned) and `const` (for variables that won't).
+- [x] **Use `let` and `const`:** Replace all `var` declarations with modern `let` (for variables that will be reassigned) and `const` (for variables that won't).
 - [ ] **Simplify Complex Ternary Operators:** Some ternary statements are nested or very complex. For clarity, rewrite them as standard `if/else` statements.
 
 

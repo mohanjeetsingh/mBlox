@@ -44,7 +44,13 @@ function mBlocks(m) {
             postsPerPage = parseInt(element.attr("data-posts") || 3),
             blockId = element.closest(".widget-content").parent(".widget").attr("ID") || (title + typeAttr + label);
         let
-            isBlurred = (element.attr("data-iBlur") == "true") ? true : (element.attr("data-iBlur") == "false" ? false : (hasHeader && (-1 == $.inArray(blockType, [C.TYPE.SHOWCASE, C.TYPE.LIST, C.TYPE.TEXT, C.TYPE.PHOTO, C.TYPE.QUOTE])))), // Default blur is true for most content-heavy blocks.
+            isBlurred = (() => {
+                const dataBlur = element.attr("data-iBlur");
+                if (dataBlur === "true") return true;
+                if (dataBlur === "false") return false;
+                // Default blur is true for most content-heavy blocks.
+                return hasHeader && ![C.TYPE.SHOWCASE, C.TYPE.LIST, C.TYPE.TEXT, C.TYPE.PHOTO, C.TYPE.QUOTE].includes(blockType);
+            })(),
             columnCount = element.attr("data-cols"),
             rowCount = parseInt(element.attr("data-rows") || 1),
             isCarousel = (element.attr("data-isCarousel") || "").toLowerCase() == "true",
@@ -237,7 +243,7 @@ function mBlocks(m) {
                                     imageClass = ' rounded-circle mx-auto mt-3'; break;
                                 case C.TYPE.TEXT: imageClass = " col-4 h-100"; break;
                                 case C.TYPE.SHOWCASE:
-                                    var videoIdYoutube = (-1 !== videoThumbUrl.indexOf("img.youtube.com")) ? (videoThumbUrl.substr(videoThumbUrl.indexOf("/vi/") + 4, 11)) : "regular";
+                                    const videoIdYoutube = (-1 !== videoThumbUrl.indexOf("img.youtube.com")) ? (videoThumbUrl.substr(videoThumbUrl.indexOf("/vi/") + 4, 11)) : "regular";
                                     p == 0 && (t = '" data-toggle="tooltip" data-vidid="' + videoIdYoutube + '"', imageShowcaseHtml = '<figure class="m-0' + imageClass +(cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle) + '" style="' + imageStyleFixed + blockHeightStyle + '" role="img" loading="lazy" title="' + itemTitle + '" aria-label="' + itemTitle + ' image"' + t + '></figure>');
                                     imageClass += aspectRatio+' shadow-sm';
                                     break;
@@ -350,10 +356,10 @@ function mBlocks(m) {
                     let navHtml = "";
                     (!(moreText == "" && blockType == C.TYPE.VERTICAL)) && (navHtml += '<nav aria-label="Page navigation" class="st' + stage + ' w-100 pe-5 py-5 pagination justify-content-end bg-' + theme + '">');
                     if (moreText != "") {
-                        for (i = 0; i < fe.feed.link.length; i++) {
-                            var linkItem = fe.feed.link[i];
+                        for (let i = 0; i < fe.feed.link.length; i++) {
+                            const linkItem = fe.feed.link[i];
                             if ("alternate" == linkItem.rel) {
-                                var moreLink = linkItem.href;
+                                const moreLink = linkItem.href;
                                 navHtml += '<a class="text-bg-' + theme + ' border-0 ' + (isLowContrast ? "opacity-50" : "opacity-75") + '" href="' + moreLink + '?&max-results=12" title="Click for More">' + moreText + ' <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>';
                             }
                         }
@@ -405,7 +411,7 @@ function mBlocks(m) {
                                 featureIframe.fadeOut(0), featureFigure.fadeIn(0),
                                     featureContent.fadeIn(0), featureContent.find("h5").html(t), featureContent.find("summary").html($(this).attr("data-summary")),
                                     featureContainer.find("a").attr({ href: $(this).attr("data-link"), title: t }), featureContainer.find("button").attr("title", t);
-                                })
+                            })
                         })
                 }
             }
