@@ -1,0 +1,8 @@
+# Set default behavior, in case users don't have core.autocrlf set.
+* text=auto
+
+# Declare text files that should always have LF line endings on commit.
+*.js   text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
