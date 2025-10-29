@@ -38,7 +38,8 @@ function mBlocks(m) {
             containsNavigation = false,
             contentWrapper = "",
             feedURL = siteURL + "feeds/",
-            carouselIndicators = '';//carousel indicators
+            carouselIndicators = '',//carousel indicators
+            actualColumnCount = 0;
 
         //console.log(el);
         //           console.log({tit,l,cor,thm,tva});
@@ -125,8 +126,6 @@ function mBlocks(m) {
 
                     //CAROUSEL COLUMNS ADJUSTMENT TO WINDOW SIZE
                     if (isCarousel) {
-                        let actualColumnCount = 0;
-
                         if (windowInnerWidth < 576) { columnCount < 5 ? actualColumnCount = 1 : (columnCount == 5 ? actualColumnCount = 2 : actualColumnCount = 3); }
                         else if (windowInnerWidth < 768) { columnCount < 4 ? actualColumnCount = 1 : (columnCount == 4 ? actualColumnCount = 2 : (columnCount == 5 ? actualColumnCount = 3 : actualColumnCount = 4)); }
                         else if (windowInnerWidth < 992) { columnCount == 3 ? actualColumnCount = 2 : (columnCount == 4 ? actualColumnCount = 3 : actualColumnCount = 4); }
@@ -218,7 +217,7 @@ function mBlocks(m) {
                         for (let z = 0; z < post.link.length; z++) if ("alternate" == post.link[z].rel) { postURL = post.link[z].href; break; }
                         //                        console.log({tit},it.link[z].rel,it.link.length);
 
-                        //IMAGE SETTINGS
+                        //IMAGE & VIDEO SETTINGS
                         let imageCode ="", videoThumbnailURL = "", showcaseImageCode = "";
                         if (containsImage) {
                             let imageURL = noImg, highResImageURL = noImg;
@@ -250,6 +249,11 @@ function mBlocks(m) {
                                 fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
                                 tooltipAttributes = "";
                             switch (finalType) {
+                                case "s":
+                                    let videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
+                                    postID == 0 && (tooltipAttributes = '" data-toggle="tooltip" data-vidid="' + videoID + '"', showcaseImageCode = '<figure class="m-0' + imageBSClass +(cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle) + '" style="' + fixedImageStyle + articleHeight + '" role="img" loading="lazy" title="' + postTitle + '" aria-label="' + postTitle + ' image"' + tooltipAttributes + '></figure>');
+                                    imageBSClass += aspectRatio+' shadow-sm';
+                                    break;
                                 case "p": imageBSClass = aspectRatio; break;
                                 case "m":imageCoverStyle += ' height:3rem!important;width:3rem;';
                                 fixedImageStyle += ' height:3rem!important;width:3rem;';
@@ -259,11 +263,6 @@ function mBlocks(m) {
                                     fixedImageStyle += ' height:6rem!important;width:6rem;';
                                     imageBSClass = ' rounded-circle mx-auto mt-3'; break;
                                 case "t": imageBSClass = " col-4 h-100"; break;
-                                case "s":
-                                    let videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
-                                    postID == 0 && (tooltipAttributes = '" data-toggle="tooltip" data-vidid="' + videoID + '"', showcaseImageCode = '<figure class="m-0' + imageBSClass +(cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle) + '" style="' + fixedImageStyle + articleHeight + '" role="img" loading="lazy" title="' + postTitle + '" aria-label="' + postTitle + ' image"' + tooltipAttributes + '></figure>');
-                                    imageBSClass += aspectRatio+' shadow-sm';
-                                    break;
                                 case "v": fixedImageStyle += articleHeight; break;
                             }
                             blurImage && !(contentType == "comments") && (imageBSClass += ' blur-5');
@@ -317,6 +316,7 @@ function mBlocks(m) {
                         }
                         //console.log({tit,p,b});
 
+                        let videoID = "regular"; // Declare videoID in a higher scope
                         //ARTICLE START
                         blockBody += '<article class="col d-inline-flex' + (finalType == "s" ? (' sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-toggle="tooltip"') : (finalType == "v" ?'" style='+articleHeight+'"':'"')) + ' role="article">';
 
