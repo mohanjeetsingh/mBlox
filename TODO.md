@@ -35,12 +35,13 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
 
     ### Stage 3: Incremental DOM Manipulation and Event Handling
     In this stage, we'll replace jQuery DOM and event methods one by one.
-    - [ ] **HTML Parsing:** Replace `$("<div>").html(itemContent)` with `new DOMParser().parseFromString(itemContent, 'text/html')`. Then use `querySelector` on the resulting document to find elements.
-    - [ ] **DOM Traversal:** Replace `.find()`, `.closest()`, and `.parent()` with their native equivalents: `querySelector()`, `.closest()`, and `.parentElement`.
-    - [ ] **DOM Creation & Insertion:** Replace `$(document.createElement(...))` with `document.createElement(...)`. Replace `.append()`, `.appendTo()`, `.before()`, `.after()` with native methods like `element.append()`, `parent.appendChild()`, and `element.insertAdjacentHTML()`.
-    - [ ] **Class Manipulation:** Replace `.addClass()`, `.removeClass()` with `element.classList.add()`, `element.classList.remove()`.
-    - [ ] **Event Handling:** Replace `.click()` and `.unbind().click()` with `element.addEventListener()`. For unbinding, you may need to store the listener function in a variable so it can be passed to `removeEventListener()`. This is especially important for the navigation and "Showcase" click handlers.
-    - [ ] **Chained Methods:** Replace chained jQuery calls like `element.find(".foo").click(...)` with native equivalents, e.g., `element.querySelector(".foo").addEventListener('click', ...)`.
+    **[COMPLETED]** In this stage, we'll replace jQuery DOM and event methods one by one.
+    - [x] **HTML Parsing:** Replace `$("<div>").html(itemContent)` with `new DOMParser().parseFromString(itemContent, 'text/html')`. Then use `querySelector` on the resulting document to find elements.
+    - [x] **DOM Traversal:** Replace `.find()`, `.closest()`, and `.parent()` with their native equivalents: `querySelector()`, `.closest()`, and `.parentElement`.
+    - [x] **DOM Creation & Insertion:** Replace `$(document.createElement(...))` with `document.createElement(...)`. Replace `.append()`, `.appendTo()`, `.before()`, `.after()` with native methods like `element.append()`, `parent.appendChild()`, and `element.insertAdjacentHTML()`.
+    - [x] **Class Manipulation:** Replace `.addClass()`, `.removeClass()` with `element.classList.add()`, `element.classList.remove()`.
+    - [x] **Event Handling:** Replace `.click()` and `.unbind().click()` with `element.addEventListener()`. For unbinding, you may need to store the listener function in a variable so it can be passed to `removeEventListener()`. This is especially important for the navigation and "Showcase" click handlers.
+    - [x] **Chained Methods:** Replace chained jQuery calls like `element.find(".foo").click(...)` with native equivalents, e.g., `element.querySelector(".foo").addEventListener('click', ...)`.
 
     > **Checkpoint:** After each sub-step in this stage, verify that the layout, carousels, and click events are all working as expected.
 

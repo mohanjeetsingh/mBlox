@@ -55,7 +55,6 @@ function mBlocks(m) {
             BLOCK_TYPE_COMMENT = 'm';
 
         const
-            element = $(rawElement), // jQuery-wrapped element for remaining legacy code.
             dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
             contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
             siteURL = rawElement.getAttribute("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
@@ -83,7 +82,8 @@ function mBlocks(m) {
         const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
         
         const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
-        const mBlockID = element.closest(".widget-content").parent(".widget").attr("ID") || (dataTitle + dataType + dataLabel); // Unique ID for the block
+        const widget = rawElement.closest(".widget");
+        const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block
         
         let blurImage;
         const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
@@ -164,7 +164,7 @@ function mBlocks(m) {
 
                         //BLOCK HEADER - TITLE & DESCRIPTION
                         // Appends the main title and description for the entire block if provided.
-                        if (dataTitle) element.append(`<div class="text-center m-0 bg-${dataTheme} py-5"><h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${lowContrast ? "opacity-50" : ""}">${dataTitle}</h4>${(dataDescription != "") ? `<span class="pb-3 text-black-50">${dataDescription}</span>` : ''}</div>`);
+                        if (dataTitle) rawElement.insertAdjacentHTML('beforeend', `<div class="text-center m-0 bg-${dataTheme} py-5"><h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${lowContrast ? "opacity-50" : ""}">${dataTitle}</h4>${(dataDescription != "") ? `<span class="pb-3 text-black-50">${dataDescription}</span>` : ''}</div>`);
                     }
 
                     if (columnCount === null) { // Only set default if data-cols is not present at all
@@ -219,16 +219,16 @@ function mBlocks(m) {
                     if (isCarousel) {
                         carouselIndicators = document.createElement("div");
                         carouselIndicators.classList.add('carousel-indicators');
-                        (blockType != BLOCK_TYPE_COVER) && ($(carouselIndicators).addClass('position-relative m-0'));
+                        if (blockType != BLOCK_TYPE_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
                     }(isCarousel || containsNavigation) && (blockBody += `<div class="carousel-inner">`);
 
                     // --- Block Body Wrapper ---
                     // Creates the main container for the block content.
                     contentWrapper = document.createElement('div');
                     contentWrapper.id = 'm' + mBlockID;
-                    const mBlockCode = $(contentWrapper);
-                    mBlockCode.appendTo(rawElement).attr({ "data-bs-ride": "carousel" });
+                    rawElement.appendChild(contentWrapper);
                     contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_TYPE_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
+                    contentWrapper.setAttribute("data-bs-ride", "carousel");
 
                     // === POST PROCESSING LOOP ===
                     // Iterates through each post from the feed to build its HTML.
@@ -297,7 +297,8 @@ function mBlocks(m) {
                         let highResImageURL = noImg; // Declare here to ensure it's in scope
                         if (containsImage) {
                             let imageURL = noImg;
-                            let contentParser = $("<div>").html(postSnippet);
+                            // Stage 3 jQuery Removal: Use DOMParser for HTML string parsing.
+                            const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
                             if (contentType == 'comments') {
                                 imageURL = post.author[0].gd$image.src;
                                 if (imageURL.match("blogblog.com")) imageURL = noImg;
@@ -309,7 +310,8 @@ function mBlocks(m) {
                                     (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) && (videoThumbnailURL = videoThumbnailURL.replace("/default.jpg", "/maxresdefault.jpg"));
                                 }
                                 if (postSnippet.indexOf("<img") > -1) {
-                                    imageURL = contentParser.find("img:first").attr("src");
+                                    const firstImage = contentParser.querySelector("img");
+                                    imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
                                     if (-1 !== imageURL.indexOf("/s72-c")) highResImageURL = imageURL.replace("/s72-c", "/s1600");
                                     else if (-1 !== imageURL.indexOf("/w640-h424")) highResImageURL = imageURL.replace("/w640-h424", "/s1600");
                                     else highResImageURL = imageURL;
@@ -368,11 +370,11 @@ function mBlocks(m) {
                         }
 
                         // --- Carousel Indicators ---
-                        if (isCarousel && (postID % (actualColumnCount * blockRows) == 0)) $(carouselIndicators).append(`<button type="button" data-bs-target="#m${mBlockID}" data-bs-slide-to="${postID / (actualColumnCount * blockRows)}" class="bg-${inverseTheme}${postID == 0 ? ' active" aria-current="true"' : '"'} aria-label="Slide ${postID / (actualColumnCount * blockRows) + 1}"></button>`);
+                        if (isCarousel && (postID % (actualColumnCount * blockRows) == 0)) carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#m${mBlockID}" data-bs-slide-to="${postID / (actualColumnCount * blockRows)}" class="bg-${inverseTheme}${postID == 0 ? ' active" aria-current="true"' : '"'} aria-label="Slide ${postID / (actualColumnCount * blockRows) + 1}"></button>`);
 
                         // --- Showcase Block Specific ---
                         // The first post of a showcase block is handled separately to create the large featured image area.
-                        if (finalType === BLOCK_TYPE_SHOWCASE && firstInstance && postID === 0) mBlockCode.before(`<div class="feature-image card border-0 text-center bg-${dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${inverseTheme}" href="${postURL}" title="${postTitle}">${((containsHeader) ? `<div class="sContent card-img-overlay rounded-0 ${(cornerStyle == " rounded" ? "rounded-top" : "")} mx-md-5 p-3 px-lg-5 bg-${dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>` : "")}${((containsImage || callToAction != "") ? ctaButtonCode : "")}</a></div>`);
+                        if (finalType === BLOCK_TYPE_SHOWCASE && firstInstance && postID === 0) contentWrapper.insertAdjacentHTML('beforebegin', `<div class="feature-image card border-0 text-center bg-${dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${inverseTheme}" href="${postURL}" title="${postTitle}">${((containsHeader) ? `<div class="sContent card-img-overlay rounded-0 ${(cornerStyle == " rounded" ? "rounded-top" : "")} mx-md-5 p-3 px-lg-5 bg-${dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>` : "")}${((containsImage || callToAction != "") ? ctaButtonCode : "")}</a></div>`);
 
                         // --- Item Wrapper ---
                         // Creates a new row/carousel-item wrapper when needed.
@@ -451,10 +453,10 @@ function mBlocks(m) {
                         previousButtonCode = `<button class="carousel-control-prev link-secondary${(containsNavigation ? " nav-prev" : " pb-5")}" type="button" title="Click for Previous" data-bs-target="#m${mBlockID}" data-bs-slide="prev" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg><span class="visually-hidden">Previous</span></button>`, nextButtonCode = `<button class="carousel-control-next link-secondary${(containsNavigation ? " nav-next" : " pb-5")}" title="Click for Next" type="button" data-bs-target="#m${mBlockID}" data-bs-slide="next" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg><span class="visually-hidden">Next</span></button>`;
                         blockBody += isCarousel ? (previousButtonCode + nextButtonCode) : "";
                         // Append all generated HTML to the main container.
-                        mBlockCode.append(blockBody);
-                        if (isCarousel) mBlockCode.append(carouselIndicators);
-                        if (containsNavigation) { if (stageID > 1) mBlockCode.append(previousButtonCode); if (stageID < totalStages) mBlockCode.append(nextButtonCode); }
-                    } else { mBlockCode.append(blockBody); }
+                        contentWrapper.insertAdjacentHTML('beforeend', blockBody);
+                        if (isCarousel) contentWrapper.appendChild(carouselIndicators);
+                        if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButtonCode); }
+                    } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
                     //BLOCK FOOTER - JUMP-LINK
                     let footerNavCode = ``;
@@ -469,56 +471,110 @@ function mBlocks(m) {
                         }
                     }
                     if (!(moreText === "" && blockType === BLOCK_TYPE_COVER)) footerNavCode += `</nav>`;
-                    mBlockCode.after(footerNavCode);
+                    contentWrapper.insertAdjacentHTML('afterend', footerNavCode);
                 }//if
                 else {
                     switch (contentType) { // Handle cases where the feed is empty
-                        case "recent": element.append(`<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
-                        case "comments": element.append(`<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
-                        default: element.append(`<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No content found for "${dataLabel}"!</div>`);
+                        case "recent": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
+                        case "comments": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
+                        default: rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No content found for "${dataLabel}"!</div>`);
                     }
                 } 
             },//success
             complete: function () {
+                const fadeIn = (el) => { if (!el) return; el.style.opacity = 0; el.style.display = 'block'; (function fade() { let val = parseFloat(el.style.opacity); if (!((val += .1) > 1)) { el.style.opacity = val; requestAnimationFrame(fade); } })(); };
+                const fadeOut = (el) => { if (!el) return; el.style.opacity = 1; (function fade() { if ((el.style.opacity -= .1) < 0) { el.style.display = "none"; } else { requestAnimationFrame(fade); } })(); };
+
                 // --- Navigation Event Handlers ---
                 if (containsNavigation) {
-                    element.find(".nav-prev").unbind('click').click(function () {
+                    const prevButton = rawElement.querySelector(".nav-prev");
+                    const prevNav = function() {
                         const currentStage = (rawElement.getAttribute("data-s"));
                         rawElement.setAttribute("data-s", +currentStage - 1);
-                        element.find(".st" + currentStage).fadeOut(); element.find(".st" + (currentStage - 1)).fadeIn();
-                    });
-                    element.find(".nav-next").unbind('click').click(function () {
+                        fadeOut(rawElement.querySelector(".st" + currentStage));
+                        fadeIn(rawElement.querySelector(".st" + (currentStage - 1)));
+                        prevButton.removeEventListener('click', prevNav); // Unbind
+                    };
+                    if (prevButton) prevButton.addEventListener('click', prevNav);
+
+                    const nextButton = rawElement.querySelector(".nav-next");
+                    const nextNav = function() {
                         const currentStage = (rawElement.getAttribute("data-s"));
-                        element.find(".st" + currentStage).fadeOut();
                         rawElement.setAttribute("data-s", +currentStage + 1);
-                        (element.find(".st" + (+currentStage + 1)).length == 0) ? mBlocks(element) : element.find(".st" + (+currentStage + 1)).fadeIn();
-                    });
+                        fadeOut(rawElement.querySelector(".st" + currentStage));
+                        const nextStageEl = rawElement.querySelector(".st" + (+currentStage + 1));
+                        if (nextStageEl) {
+                            fadeIn(nextStageEl);
+                        } else {
+                            mBlocks(rawElement);
+                        }
+                        nextButton.removeEventListener('click', nextNav); // Unbind
+                    };
+                    if (nextButton) nextButton.addEventListener('click', nextNav);
                 }//if
                 // --- Showcase Block Interactivity ---
                 if (blockType == BLOCK_TYPE_SHOWCASE) { // Special click handlers for showcase items
-                    const featuredImageNode = element.find(".feature-image");
-                    const figureNode = featuredImageNode.find("figure"), iFrameNode = featuredImageNode.find(".sIframe"), contentNode = featuredImageNode.find(".sContent");
-                    figureNode.click(function () {
-                        let clickedVideoID = $(this).attr("data-vidid");
+                    const featuredImageNode = rawElement.querySelector(".feature-image");
+                    if (!featuredImageNode) return;
+
+                    const figureNode = featuredImageNode.querySelector("figure");
+                    const iFrameNode = featuredImageNode.querySelector(".sIframe");
+                    const contentNode = featuredImageNode.querySelector(".sContent");
+
+                    if (figureNode) figureNode.addEventListener('click', function() {
+                        let clickedVideoID = this.getAttribute("data-vidid");
                         if (clickedVideoID !== "regular") {
-                            iFrameNode.html(`<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${articleHeight}width:100%;" frameborder="0"></iframe>`), iFrameNode.fadeIn(0), figureNode.fadeOut(0),contentNode.fadeOut(0);
+                            iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${articleHeight}width:100%;" frameborder="0"></iframe>`;
+                            fadeIn(iFrameNode);
+                            fadeOut(figureNode);
+                            if(contentNode) fadeOut(contentNode);
                         }
-                    }),
-                        element.find(".sPost").map(function () {
-                            $(this).click(function () {
-                                const videoID = $(this).attr("data-vidid"),
-                                    postTitle = $(this).attr("data-title");
-                                let playIcon = figureNode.find("svg")||false;
+                    });
+
+                    rawElement.querySelectorAll(".sPost").forEach(sPost => {
+                        sPost.addEventListener('click', function() {
+                            const videoID = this.getAttribute("data-vidid");
+                            const postTitle = this.getAttribute("data-title");
+                            let playIcon = figureNode ? figureNode.querySelector("svg") : null;
+
+                            if (figureNode) {
+                                let videoTitle = postTitle;
                                 if (videoID.toLowerCase() != "regular") {
                                     videoTitle = "Click here to load the video!";
-                                    (playIcon.length==0)?figureNode.append(`<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`):playIcon.fadeIn(0);
-                                } else { videoTitle = postTitle; playIcon.fadeOut(0); }
-                                figureNode.attr({ style: `background:url(${$(this).attr("data-img-high")}) center center;background-size:cover;${articleHeight}`, "data-vidid": videoID, title: videoTitle, "aria-label": videoTitle });
-                                iFrameNode.fadeOut(0), figureNode.fadeIn(0),
-                                    contentNode.fadeIn(0), contentNode.find("h5").html(postTitle), contentNode.find("summary").html($(this).attr("data-summary")),
-                                    featuredImageNode.find("a").attr({ href: $(this).attr("data-link"), title: postTitle }), featuredImageNode.find("button").attr("title", postTitle);
-                                })
-                        })
+                                    if (!playIcon) {
+                                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
+                                    } else {
+                                        fadeIn(playIcon);
+                                    }
+                                } else { 
+                                    if (playIcon) fadeOut(playIcon); 
+                                }
+                                figureNode.setAttribute("title", videoTitle);
+                                figureNode.setAttribute("aria-label", videoTitle);
+                                figureNode.style.background = `url(${this.getAttribute("data-img-high")}) center center`;
+                                figureNode.style.backgroundSize = 'cover';
+                                figureNode.setAttribute("data-vidid", videoID);
+                            }
+
+                            fadeOut(iFrameNode);
+                            fadeIn(figureNode);
+                            if(contentNode) {
+                                fadeIn(contentNode);
+                                const h5 = contentNode.querySelector("h5");
+                                if (h5) h5.innerHTML = postTitle;
+                                const summary = contentNode.querySelector("summary");
+                                if (summary) summary.innerHTML = this.getAttribute("data-summary");
+                            }
+
+                            const link = featuredImageNode.querySelector("a");
+                            if (link) {
+                                link.setAttribute("href", this.getAttribute("data-link"));
+                                link.setAttribute("title", postTitle);
+                            }
+                            const button = featuredImageNode.querySelector("button");
+                            if (button) button.setAttribute("title", postTitle);
+                        });
+                    });
                 }
             }//complete
         })//ajax
