@@ -6,7 +6,14 @@
  * Released under the MIT license
  */
 
-// Stage 2 jQuery Removal: Native JSONP helper to replace $.ajax for JSONP calls.
+/**
+ * Fetches data from a URL using the JSONP technique.
+ * This is a lightweight, native replacement for jQuery's $.ajax with dataType: 'jsonp'.
+ * @param {string} url The URL to request, which should support a JSONP callback.
+ * @param {object} options Configuration for the request.
+ * @param {function(object)} options.success Callback function to execute on successful data retrieval.
+ * @param {function} options.complete Callback function to execute when the request finishes (either success or error).
+ */
 function fetchJSONP(url, options) {
     const callbackName = `jsonp_callback_${Math.round(100000 * Math.random())}`;
     const script = document.createElement('script');
@@ -38,9 +45,15 @@ function fetchJSONP(url, options) {
 
     document.head.appendChild(script);
 }
-function mBlocks(m) {
+
+/**
+ * Initializes and renders dynamic content blocks based on data attributes.
+ * It fetches Blogger post or comment data and displays it in various layouts.
+ * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
+ */
+function mBlocks(blockItem) {
     // Stage 1 jQuery Removal: Use native JS for element selection and looping.
-    const elements = (typeof m === 'string') ? document.querySelectorAll(m) : [m];
+    const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
     elements.forEach(function (rawElement) {
         const // Constants for block types, improving readability over single-character strings.
@@ -54,6 +67,7 @@ function mBlocks(m) {
             BLOCK_TYPE_QUOTE = 'q',
             BLOCK_TYPE_COMMENT = 'm';
 
+        // --- Block Configuration Parsing ---
         const
             dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
             contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
@@ -61,7 +75,7 @@ function mBlocks(m) {
             dataTitle = rawElement.getAttribute("data-title") || "", // Optional title for the block
             dataDescription = rawElement.getAttribute("data-description") || "", // Optional description for the block
             dataType = (rawElement.getAttribute("data-type") || "v-ih").toLowerCase(), // Combined type and component string (e.g., "s-ihs")
-            blockType = dataType.substring(0, 1),// The base layout type (v, s, l, c, etc.)
+            blockType = dataType.substring(0, 1), // The base layout type (v, s, l, c, etc.)
             componentList = dataType.substring(1), // The components to display (i, h, s, a, d) 
             dataTheme = (rawElement.getAttribute("data-theme") || "light").toLowerCase(),// Color theme [light, dark, primary, secondary]
             showHeader = componentList.includes("h"), // 'h' for heading/title
@@ -70,6 +84,7 @@ function mBlocks(m) {
             showAuthor = componentList.includes("a"), // 'a' for author
             showDate = componentList.includes("d"); // 'd' for date
         
+        // Determine the height of the section, with specific defaults for cover and showcase types.
         let sectionHeight = rawElement.getAttribute("data-iHeight");
         if (!sectionHeight) {
             if (blockType === BLOCK_TYPE_COVER) sectionHeight = "100vh";
@@ -77,13 +92,14 @@ function mBlocks(m) {
             else sectionHeight = "m";
         }
 
+        // --- Pagination and Identity ---
         const stageID = rawElement.getAttribute("data-s") || 1; // For paginated navigation, tracks the current page/stage
         const firstInstance = !rawElement.hasAttribute("data-s"); // Is this the first time the block is being loaded?
         const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
         
         const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
         const widget = rawElement.closest(".widget");
-        const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block
+        const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
         
         let blurImage;
         const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
@@ -96,6 +112,7 @@ function mBlocks(m) {
             const excludedBlurTypes = [BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_STACK, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_QUOTE];
             blurImage = showHeader && !excludedBlurTypes.includes(blockType);
         }
+        // --- Layout and Feed Configuration ---
         let
             columnCount = rawElement.getAttribute("data-cols"), // Number of columns for the grid
             blockRows = parseInt(rawElement.getAttribute("data-rows") || "1", 10), // Number of rows per carousel slide
@@ -103,10 +120,10 @@ function mBlocks(m) {
             containsNavigation = false,
             contentWrapper = "",
             feedURL = siteURL + "feeds/",
-            carouselIndicators = '',//carousel indicators
+            carouselIndicators = '',// HTML for carousel indicators
             actualColumnCount = 0;
 
-        //FEED SETTING
+        // --- Feed URL Construction ---
         switch (contentType) { // Construct the feed URL based on content type
             case "recent":
                 feedURL += "posts";
@@ -123,7 +140,7 @@ function mBlocks(m) {
         }
         feedURL += `?alt=json-in-script&start-index=${(stageID - 1) * postsPerBlock + 1}&max-results=${postsPerBlock}`;
 
-        //JSON PULL
+        // --- Data Fetching ---
         fetchJSONP(feedURL, {
             success: function (response) {
                 if (response.feed.entry) {
@@ -141,7 +158,7 @@ function mBlocks(m) {
                     }
                     const
                         aspectRatio = ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,// Aspect ratio for media [1x1, 4x3, 16x9, etc.]
-                        bsGutter = rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
+                        gutterSize = rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
                         isImageFixed = (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true", // Use fixed background images
                         lowContrast = (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true", // Lower contrast for text/elements
                         hasRoundedBorder = (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true", // Add a border around items
@@ -149,7 +166,7 @@ function mBlocks(m) {
                         isComplexLayout = (blockType == BLOCK_TYPE_LIST || blockType == BLOCK_TYPE_SHOWCASE), // Flag for layouts with special structures
                         totalStages = Math.ceil(totalPostsAvailable / postsPerBlock);// Total pages/stages available for navigation
                     let blockBody = '',//block body
-                    moreText = rawElement.getAttribute("data-moreText") || "",
+                    moreText = rawElement.getAttribute("data-moreText") || "", // Text for the "View All" link in the footer.
                     finalType = blockType;
 
                     // Disable carousel for single-post blocks or list-style blocks
@@ -169,7 +186,7 @@ function mBlocks(m) {
                     if (firstInstance) {
                         rawElement.setAttribute("data-s", stageID);
 
-                        //BLOCK HEADER - TITLE & DESCRIPTION
+                        // --- Block Header (Title & Description) ---
                         // Appends the main title and description for the entire block if provided.
                         if (dataTitle) rawElement.insertAdjacentHTML('beforeend', `<div class="text-center m-0 bg-${dataTheme} py-5"><h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${lowContrast ? "opacity-50" : ""}">${dataTitle}</h4>${(dataDescription != "") ? `<span class="pb-3 text-black-50">${dataDescription}</span>` : ''}</div>`);
                     }
@@ -190,7 +207,7 @@ function mBlocks(m) {
                     }
 
                     // --- Image Resolution Calculation ---
-                    // Determines the optimal image resolution to request based on column count and window size to save bandwidth.
+                    // Determines the optimal image resolution to request from Blogger's servers based on column count and window size to save bandwidth.
                     let imageResolution = 100;
                     if (showImage && !blurImage) {
                         if (isImageFixed) {
@@ -210,7 +227,7 @@ function mBlocks(m) {
 
 
                     // --- Carousel Column Calculation ---
-                    // Adjusts the number of visible columns in a carousel based on the screen width for responsiveness.
+                    // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
                     if (isCarousel) {
                         if (windowInnerWidth < 576) { columnCount < 5 ? actualColumnCount = 1 : (columnCount == 5 ? actualColumnCount = 2 : actualColumnCount = 3); }
                         else if (windowInnerWidth < 768) { columnCount < 4 ? actualColumnCount = 1 : (columnCount == 4 ? actualColumnCount = 2 : (columnCount == 5 ? actualColumnCount = 3 : actualColumnCount = 4)); }
@@ -218,7 +235,7 @@ function mBlocks(m) {
                         else if (windowInnerWidth < 1200) { (columnCount > 4) && (columnCount == 5 ? actualColumnCount = 4 : actualColumnCount = 5); }
                         else { actualColumnCount = columnCount; }
 
-                        // If there aren't enough posts to fill a slide, disable carousel and enable simple navigation.
+                        // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
                         if (blockRows > Math.ceil(postsInFeed / columnCount)) blockRows = Math.ceil(postsInFeed / columnCount);
                         if (postsInFeed <= (actualColumnCount * blockRows)) { isCarousel = false; containsNavigation = true; }
                     }
@@ -229,7 +246,7 @@ function mBlocks(m) {
                         if (blockType != BLOCK_TYPE_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
                     }(isCarousel || containsNavigation) && (blockBody += `<div class="carousel-inner">`);
 
-                    // --- Block Body Wrapper ---
+                    // --- Main Content Wrapper ---
                     // Creates the main container for the block content.
                     contentWrapper = document.createElement('div');
                     contentWrapper.id = 'm' + mBlockID;
@@ -237,17 +254,18 @@ function mBlocks(m) {
                     contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_TYPE_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
                     contentWrapper.setAttribute("data-bs-ride", "carousel");
 
-                    // === POST PROCESSING LOOP ===
+                    // =========================== POST PROCESSING LOOP ===========================
                     // Iterates through each post from the feed to build its HTML.
                     for (let postID = 0; postID < postsInFeed; postID++) {
                         const post = response.feed.entry[postID],
                             postTitle = post.title.$t,
-                            postSnippet = (showSnippet || showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? (post.summary.$t) : (("summary" in b_rc) ? (post.summary.$t) : "")));
+                            postSnippet = (showSnippet || showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""));
                         let postAuthor = post.author[0].name.$t, snippetText="", snippetCode = "";
 
                         // --- List Block Type Transformation ---
-                        // For a 'list' block, the first post (postID 0) uses the 'l' style. Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style.
-                        if (blockType === BLOCK_TYPE_LIST && postID > 0) {
+                        // For a 'list' block, the first post (postID 0) uses the 'l' style. 
+                        // Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style for a more complex layout.
+                        if (blockType === BLOCK_TYPE_LIST && postID > 0) { 
                             if (showHeader) { finalType = BLOCK_TYPE_STACK; columnCount--; } 
                             else { finalType = BLOCK_TYPE_CARD; }
                         }
@@ -257,7 +275,7 @@ function mBlocks(m) {
                         if (showAuthor) {
                             if (contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? siteURL : post.author[0].uri.$t;
 
-                            //COMMENT AUTHOR
+                            // Author display varies by block type.
                             switch (finalType) {
                                 case BLOCK_TYPE_QUOTE: authorCode += `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`; break;
                                 case BLOCK_TYPE_COMMENT: authorCode += `<span class="small text-${dataTheme}" rel="author">${postAuthor}</span>`; break;
@@ -289,15 +307,15 @@ function mBlocks(m) {
 
                         // --- Post Link ---
                         let postURL = "";
-                        for (let z = 0; z < post.link.length; z++) if ("alternate" == post.link[z].rel) { postURL = post.link[z].href; break; }
+                        for (let linkIndex = 0; linkIndex < post.link.length; linkIndex++) if ("alternate" == post.link[linkIndex].rel) { postURL = post.link[linkIndex].href; break; }
 
                         // --- Image & Video Processing ---
                         // Extracts image or video thumbnail from the post content.
                         let imageCode = "", videoThumbnailURL = "", showcaseImageCode = "";
                         let highResImageURL = noImg; // Declare here to ensure it's in scope
                         if (showImage) {
-                            let imageURL = noImg;
-                            // Stage 3 jQuery Removal: Use DOMParser for HTML string parsing.
+                            let imageURL = noImg;                            
+                            // Use DOMParser for robust HTML string parsing to find images/videos.
                             const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
                             if (contentType == 'comments') {
                                 imageURL = post.author[0].gd$image.src;
@@ -306,11 +324,12 @@ function mBlocks(m) {
                             else {
                                 // Check for YouTube embeds to get a high-quality thumbnail.
                                 if (postSnippet.indexOf("//www.youtube.com/embed/") > -1) {
-                                    videoThumbnailURL = post.media$thumbnail.url;//v-mThumb	
+                                    videoThumbnailURL = post.media$thumbnail.url;
                                     (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) && (videoThumbnailURL = videoThumbnailURL.replace("/default.jpg", "/maxresdefault.jpg"));
                                 }
                                 if (postSnippet.indexOf("<img") > -1) {
                                     const firstImage = contentParser.querySelector("img");
+                                    // Extract image URL and attempt to get a higher resolution version from Blogger's image server.
                                     imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
                                     if (-1 !== imageURL.indexOf("/s72-c")) highResImageURL = imageURL.replace("/s72-c", "/s1600");
                                     else if (-1 !== imageURL.indexOf("/w640-h424")) highResImageURL = imageURL.replace("/w640-h424", "/s1600");
@@ -379,10 +398,10 @@ function mBlocks(m) {
                         // --- Item Wrapper ---
                         // Creates a new row/carousel-item wrapper when needed.
                         if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_TYPE_LIST && postID == 1)) {
-                            blockBody += `<div class="row  g-${bsGutter} mx-0`;
+                            blockBody += `<div class="row  g-${gutterSize} mx-0`;
                             if (isCarousel) { blockBody += ' carousel-item'; if (postID === 0) blockBody += ' active'; }
                             isComplexLayout && (blockType == BLOCK_TYPE_LIST) && (blockBody += ' col flex-grow-1');
-                            (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ` pb-${bsGutter}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
+                            (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             switch (columnCount) {
                                 case 1: blockBody += ' row-cols-1">'; break;
                                 case 2: blockBody += ' row-cols-1 row-cols-sm-1 row-cols-md-2">'; break;
@@ -399,7 +418,7 @@ function mBlocks(m) {
                         blockBody += `<article class="col d-inline-flex${(finalType == BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == BLOCK_TYPE_COVER ? `" style="${articleHeight}"` : '"'))} role="article">`;
 
                         // Link wrapper for the entire article (except for showcase items)
-                        if (finalType !== BLOCK_TYPE_SHOWCASE) blockBody += `<a class="overflow-hidden w-100 shadow-sm${(finalType != BLOCK_TYPE_COVER ? cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${inverseTheme}`)}${(hasRoundedBorder ? ` border border-3 border-opacity-75 border-${dataTheme}` : ' border-0')}${((finalType == BLOCK_TYPE_QUOTE || finalType == BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == BLOCK_TYPE_STACK||finalType==BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == BLOCK_TYPE_LIST || finalType == BLOCK_TYPE_CARD || finalType == BLOCK_TYPE_GALLERY) ? `${aspectRatio}${(finalType == BLOCK_TYPE_LIST ? ` mt-${bsGutter}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
+                        if (finalType !== BLOCK_TYPE_SHOWCASE) blockBody += `<a class="overflow-hidden w-100 shadow-sm${(finalType != BLOCK_TYPE_COVER ? cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${inverseTheme}`)}${(hasRoundedBorder ? ` border border-3 border-opacity-75 border-${dataTheme}` : ' border-0')}${((finalType == BLOCK_TYPE_QUOTE || finalType == BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == BLOCK_TYPE_STACK||finalType==BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == BLOCK_TYPE_LIST || finalType == BLOCK_TYPE_CARD || finalType == BLOCK_TYPE_GALLERY) ? `${aspectRatio}${(finalType == BLOCK_TYPE_LIST ? ` mt-${gutterSize}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
 
                         //IMAGE
                         if (showImage) blockBody += imageCode; // Add image HTML if it exists
@@ -446,7 +465,7 @@ function mBlocks(m) {
                     }// End of post processing loop
 
                     if (isCarousel || containsNavigation) {
-                        blockBody += `</div>`;
+                        blockBody += `</div>`; // Close carousel-inner
 
                         // --- Carousel/Pagination Navigation ---
                         let previousButtonCode ="", nextButtonCode = "";
@@ -458,12 +477,12 @@ function mBlocks(m) {
                         if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButtonCode); }
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
-                    //BLOCK FOOTER - JUMP-LINK
+                    // --- Block Footer (More Link) ---
                     let footerNavCode = ``;
                     if (!(moreText === "" && blockType === BLOCK_TYPE_COVER)) footerNavCode += `<nav aria-label="Page navigation" class="st${stageID} w-100 pe-5 py-5 pagination justify-content-end bg-${dataTheme}">`;
                     if (moreText != "") {
-                        for (i = 0; i < response.feed.link.length; i++) {
-                            let feedURL = response.feed.link[i];
+                        for (let linkIndex = 0; linkIndex < response.feed.link.length; linkIndex++) {
+                            let feedURL = response.feed.link[linkIndex];
                             if ("alternate" == feedURL.rel) {
                                 let moreLinkURL = feedURL.href;
                                 footerNavCode += `<a class="text-bg-${dataTheme} border-0 ${lowContrast ? "opacity-50" : "opacity-75"}" href="${moreLinkURL}?&max-results=12" title="Click for More">${moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>`;
@@ -473,7 +492,7 @@ function mBlocks(m) {
                     if (!(moreText === "" && blockType === BLOCK_TYPE_COVER)) footerNavCode += `</nav>`;
                     contentWrapper.insertAdjacentHTML('afterend', footerNavCode);
                 }//if
-                else {
+                else { // If response.feed.entry is empty or doesn't exist
                     switch (contentType) { // Handle cases where the feed is empty
                         case "recent": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
                         case "comments": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
@@ -482,12 +501,13 @@ function mBlocks(m) {
                 } 
             },//success
             complete: function () {
+                // Helper functions for fade animations
                 const fadeIn = (el) => { if (!el) return; el.style.opacity = 0; el.style.display = 'block'; (function fade() { let val = parseFloat(el.style.opacity); if (!((val += .1) > 1)) { el.style.opacity = val; requestAnimationFrame(fade); } })(); };
                 const fadeOut = (el) => { if (!el) return; el.style.opacity = 1; (function fade() { if ((el.style.opacity -= .1) < 0) { el.style.display = "none"; } else { requestAnimationFrame(fade); } })(); };
 
                 // --- Navigation Event Handlers ---
                 if (containsNavigation) {
-                    const prevButton = rawElement.querySelector(".nav-prev");
+                    const prevButton = rawElement.querySelector(".nav-prev"); // Previous button for simple navigation
                     const prevNav = function() {
                         const currentStage = (rawElement.getAttribute("data-s"));
                         rawElement.setAttribute("data-s", +currentStage - 1);
@@ -497,7 +517,7 @@ function mBlocks(m) {
                     };
                     if (prevButton) prevButton.addEventListener('click', prevNav);
 
-                    const nextButton = rawElement.querySelector(".nav-next");
+                    const nextButton = rawElement.querySelector(".nav-next"); // Next button for simple navigation
                     const nextNav = function() {
                         const currentStage = (rawElement.getAttribute("data-s"));
                         rawElement.setAttribute("data-s", +currentStage + 1);
@@ -506,6 +526,7 @@ function mBlocks(m) {
                         if (nextStageEl) {
                             fadeIn(nextStageEl);
                         } else {
+                            // If the next stage doesn't exist in the DOM, fetch it.
                             mBlocks(rawElement);
                         }
                         nextButton.removeEventListener('click', nextNav); // Unbind
@@ -513,7 +534,7 @@ function mBlocks(m) {
                     if (nextButton) nextButton.addEventListener('click', nextNav);
                 }//if
                 // --- Showcase Block Interactivity ---
-                if (blockType == BLOCK_TYPE_SHOWCASE) { // Special click handlers for showcase items
+                if (blockType == BLOCK_TYPE_SHOWCASE) {
                     const featuredImageNode = rawElement.querySelector(".feature-image");
                     if (!featuredImageNode) return;
 
@@ -521,6 +542,7 @@ function mBlocks(m) {
                     const iFrameNode = featuredImageNode.querySelector(".sIframe");
                     const contentNode = featuredImageNode.querySelector(".sContent");
 
+                    // Handle clicks on the main featured image, especially for playing videos.
                     if (figureNode) figureNode.addEventListener('click', function() {
                         let clickedVideoID = this.getAttribute("data-vidid");
                         if (clickedVideoID !== "regular") {
@@ -531,13 +553,15 @@ function mBlocks(m) {
                         }
                     });
 
-                    rawElement.querySelectorAll(".sPost").forEach(sPost => {
-                        sPost.addEventListener('click', function() {
+                    // Handle clicks on the smaller thumbnail posts to update the main featured area.
+                    rawElement.querySelectorAll(".sPost").forEach(showcasePost => {
+                        showcasePost.addEventListener('click', function() {
                             const videoID = this.getAttribute("data-vidid");
                             const postTitle = this.getAttribute("data-title");
                             let playIcon = figureNode ? figureNode.querySelector("svg") : null;
 
                             if (figureNode) {
+                                // Update the main figure with the new post's data (image, title, video ID).
                                 let videoTitle = postTitle;
                                 if (videoID.toLowerCase() != "regular") {
                                     videoTitle = "Click here to load the video!";
@@ -559,6 +583,7 @@ function mBlocks(m) {
                             fadeOut(iFrameNode);
                             fadeIn(figureNode);
                             if(contentNode) {
+                                // Update the content overlay with the new post's title and snippet.
                                 fadeIn(contentNode);
                                 const h5 = contentNode.querySelector("h5");
                                 if (h5) h5.innerHTML = postTitle;
@@ -566,6 +591,7 @@ function mBlocks(m) {
                                 if (summary) summary.innerHTML = this.getAttribute("data-summary");
                             }
 
+                            // Update the link and button titles.
                             const link = featuredImageNode.querySelector("a");
                             if (link) {
                                 link.setAttribute("href", this.getAttribute("data-link"));

@@ -8,14 +8,20 @@
 
 let isFirstScriptLoad = !0;
 
-function loadScripts(m, s) {
-    if (s) {
-        const e = document.createElement('script');
-        e.src = 'mBloxScript.js';
-        document.head.append(e);
+/**
+ * Loads the main mBloxScript.js file if it's the first call, then initializes the blocks.
+ * Subsequent calls directly initialize blocks without reloading the script.
+ * @param {string|HTMLElement} blockItem The selector or element to pass to mBlocks.
+ * @param {boolean} isFirstLoad A flag indicating if this is the first time scripts are being loaded.
+ */
+function loadScripts(blockItem, isFirstLoad) {
+    if (isFirstLoad) {
+        const scriptElement = document.createElement('script');
+        scriptElement.src = 'mBloxScript.js';
+        document.head.append(scriptElement);
 
-        e.onload = () => { mBlocks(m); s = !1; }
-    } else { console.log(s,m); mBlocks(m); }
+        scriptElement.onload = () => { mBlocks(blockItem); isFirstLoad = !1; }
+    } else { console.log(isFirstLoad,blockItem); mBlocks(blockItem); }
 }
 
 //Intersection Observer for Lazy Loading
@@ -23,12 +29,17 @@ window.addEventListener("load", (event) => {
     document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock',isFirstScriptLoad));
 
     const options = { rootMargin: '500px', threshold: 0.0 },
-        T = document.getElementsByClassName("mBlockL");
-    let observer = new IntersectionObserver(cFn, options);
-    Array.prototype.forEach.call(T, function (m) { observer.observe(m) });
+        lazyLoadTargets = document.getElementsByClassName("mBlockL");
+    let observer = new IntersectionObserver(intersectionCallback, options);
+    Array.prototype.forEach.call(lazyLoadTargets, function (observedElement) { observer.observe(observedElement) });
 }, false);
 
-const cFn = (entries, observer) => {
+/**
+ * Callback function for the IntersectionObserver.
+ * @param {IntersectionObserverEntry[]} entries An array of entries, each representing a target element.
+ * @param {IntersectionObserver} observer The observer instance.
+ */
+const intersectionCallback = (entries, observer) => {
     entries.forEach((entry) => {
         if (entry.isIntersecting) {
             (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target,isFirstScriptLoad));
