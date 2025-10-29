@@ -2,7 +2,7 @@
  * mBlocks for Blogger
  * CIA.RealHappinessCenter.com
  * @version 1.0.0
- * Copyright (c) 2022-2025, Mohanjeet Singh
+ * Copyright (c) 2022-2024, Mohanjeet Singh
  * Released under the MIT license
  */
 

@@ -17,8 +17,8 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
 
 ## Low Priority
 
-- [ ] **Create Constants for Magic Strings:** Instead of using strings like `"v"`, `"s"`, `"l"` directly in the code, define them as constants with meaningful names (e.g., `const BLOCK_TYPE_COVER = 'v';`).
-- [ ] **Update Copyright Year:** Consider making the copyright year in the file headers dynamic or a range (e.g., 2022-2025).
+- [x] **Create Constants for Magic Strings:** Instead of using strings like `"v"`, `"s"`, `"l"` directly in the code, define them as constants with meaningful names (e.g., `const BLOCK_TYPE_COVER = 'v';`).
+- [x] **Update Copyright Year:** Consider making the copyright year in the file headers dynamic or a range (e.g., 2022-2025).
 
 
 - [ ] **Remove jQuery Dependency:** The project relies heavily on jQuery. For long-term maintainability and performance, replace jQuery functions with native browser APIs (`fetch`, `querySelector`, etc.).

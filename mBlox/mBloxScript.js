@@ -2,12 +2,23 @@
  * mBlox for Blogger
  * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
- * Copyright (c) 2025, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
+ * Copyright (c) 2022-2024, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
 function mBlocks(m) {
     $(m).map(function () {
         /* SETTINGS PULLED FROM USER PLACEMENT + VALIDATION + DEFAULT SETTINGS APPLICATION */
+        const
+            BLOCK_TYPE_COVER = 'v',
+            BLOCK_TYPE_SHOWCASE = 's',
+            BLOCK_TYPE_LIST = 'l',
+            BLOCK_TYPE_CARD = 'c',
+            BLOCK_TYPE_GALLERY = 'g',
+            BLOCK_TYPE_PANCAKE = 'p',
+            BLOCK_TYPE_STACK = 't',
+            BLOCK_TYPE_QUOTE = 'q',
+            BLOCK_TYPE_COMMENT = 'm';
+
         const
             element = $(this),
             dataLabel = element.attr("data-label") || "Label Name missing",
@@ -24,14 +35,14 @@ function mBlocks(m) {
             containsSnippet = componentList.includes("s"),
             containsAuthor = componentList.includes("a"),
             containsDate = componentList.includes("d"),
-            sectionHeight = element.attr("data-iHeight") || (blockType == "v" ? "100vh" : (blockType == "s" ? "70vh" : "m")),
+            sectionHeight = element.attr("data-iHeight") || (blockType == BLOCK_TYPE_COVER ? "100vh" : (blockType == BLOCK_TYPE_SHOWCASE ? "70vh" : "m")),
             articleHeight = sectionHeight == 'm' ? '' : "height:" + sectionHeight + "!important;",
             stageID = element.attr("data-s") || 1,//stage - code defined
             firstInstance = (element.attr("data-s") === undefined),//first instance - code defined
             postsPerBlock = parseInt(element.attr("data-posts") || 3),
             mBlockID = element.closest(".widget-content").parent(".widget").attr("ID") || (dataTitle + dataType + dataLabel);
         let
-            blurImage = (element.attr("data-iBlur") == "true") ? true : (element.attr("data-iBlur") == "false" ? false : (containsHeader && (-1 == $.inArray(blockType, ["s", "l", "t", "p", "q"])))), //(default - true for non-image-only objects),
+            blurImage = (element.attr("data-iBlur") == "true") ? true : (element.attr("data-iBlur") == "false" ? false : (containsHeader && (-1 == $.inArray(blockType, [BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_STACK, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_QUOTE])))), //(default - true for non-image-only objects),
             columnCount = element.attr("data-cols"),//
             blockRows = parseInt(element.attr("data-rows") || 1),//
             isCarousel = (element.attr("data-isCarousel") || "").toLowerCase() == "true",
@@ -75,7 +86,7 @@ function mBlocks(m) {
                         lowContrast = (element.attr("data-lowContrast") || "").toLowerCase() == "true",
                         hasRoundedBorder = (element.attr("data-iBorder") || "").toLowerCase() == "true",
                         callToAction = element.attr("data-CTAText") || "",
-                        isComplexLayout = (blockType == "l" || blockType == "s"),
+                        isComplexLayout = (blockType == BLOCK_TYPE_LIST || blockType == BLOCK_TYPE_SHOWCASE),
                         totalStages = Math.ceil(totalPostsAvailable / postsPerBlock);//total stages
                     let blockBody = '',//block body
                     moreText = element.attr("data-moreText") || "",
@@ -84,7 +95,7 @@ function mBlocks(m) {
                     //console.log(fe.feed.link);
                     //console.log({tit,b,fe,toRe,nuSt});
 
-                    (postsPerBlock <= 1 || blockType == "l") && (isCarousel = false);
+                    (postsPerBlock <= 1 || blockType == BLOCK_TYPE_LIST) && (isCarousel = false);
                     (contentType == "comments") && (moreText="");
                     
                     let windowInnerWidth = 0;
@@ -115,12 +126,12 @@ function mBlocks(m) {
 
                     if (typeof (columnCount) === "undefined") {
                         switch (blockType) {
-                            case "v":case "m": case "t": columnCount = 1; break;
-                            case "p": columnCount = 3; break;
-                            case "c": case "q": columnCount = 4; break;
-                            case "g": columnCount = 5; break;
-                            case "l": columnCount = 2; break;
-                            case "s": columnCount = 6; break;
+                            case BLOCK_TYPE_COVER:case BLOCK_TYPE_COMMENT: case BLOCK_TYPE_STACK: columnCount = 1; break;
+                            case BLOCK_TYPE_PANCAKE: columnCount = 3; break;
+                            case BLOCK_TYPE_CARD: case BLOCK_TYPE_QUOTE: columnCount = 4; break;
+                            case BLOCK_TYPE_GALLERY: columnCount = 5; break;
+                            case BLOCK_TYPE_LIST: columnCount = 2; break;
+                            case BLOCK_TYPE_SHOWCASE: columnCount = 6; break;
                         }
                     } else { columnCount = parseInt(columnCount); (columnCount < 1) && (columnCount = 1); (columnCount > 6) && (columnCount = 6); }
 
@@ -140,7 +151,7 @@ function mBlocks(m) {
                     if (isCarousel) {
                         carouselIndicators = document.createElement("div");
                         $(carouselIndicators).addClass('carousel-indicators');
-                        (blockType != "v") && ($(carouselIndicators).addClass('position-relative m-0'));
+                        (blockType != BLOCK_TYPE_COVER) && ($(carouselIndicators).addClass('position-relative m-0'));
                     }
                     (isCarousel || containsNavigation) && (blockBody += '<div class="carousel-inner">');
 
@@ -151,7 +162,7 @@ function mBlocks(m) {
                     contentWrapper.id = 'm' + mBlockID;
                     const mBlockCode = $(contentWrapper);
                     mBlockCode.appendTo(element).attr({ "data-bs-ride": "carousel" });
-                    contentWrapper.className = ('overflow-hidden bg-' + dataTheme + (blockType == "s" ? ' sFeature' : "") + ((isCarousel || containsNavigation) ? (' st' + stageID + ' carousel carousel-fade') : ""));
+                    contentWrapper.className = ('overflow-hidden bg-' + dataTheme + (blockType == BLOCK_TYPE_SHOWCASE ? ' sFeature' : "") + ((isCarousel || containsNavigation) ? (' st' + stageID + ' carousel carousel-fade') : ""));
                     //console.log({tit,l,b,bP,bC});
                     //console.log(fe.feed.entry);
 
@@ -165,7 +176,7 @@ function mBlocks(m) {
                         //console.log({tit,p,fTy,bTy,fC,bC});
 
                         //LIST
-                        (blockType == "l") && postID > 0 && (containsHeader ? (finalType = "t", columnCount--) : finalType = "c");
+                        (blockType == BLOCK_TYPE_LIST) && postID > 0 && (containsHeader ? (finalType = BLOCK_TYPE_STACK, columnCount--) : finalType = BLOCK_TYPE_CARD);
 
                         //<< POST COMPONENT LIBRARY >>
                         //AUTHOR INFO
@@ -175,8 +186,8 @@ function mBlocks(m) {
 
                             //COMMENT AUTHOR
                             switch (finalType) {
-                                case "q": authorCode += '<figcaption class="small fw-lighter">- ' + postAuthor + '</figcaption>'; break;
-                                case "m": authorCode += '<span class="small text-'+dataTheme+'" rel="author">' + postAuthor + '</span>'; break;
+                                case BLOCK_TYPE_QUOTE: authorCode += '<figcaption class="small fw-lighter">- ' + postAuthor + '</figcaption>'; break;
+                                case BLOCK_TYPE_COMMENT: authorCode += '<span class="small text-'+dataTheme+'" rel="author">' + postAuthor + '</span>'; break;
                             }
                         }
                         
@@ -199,7 +210,7 @@ function mBlocks(m) {
 
                         //TITLE - DISPLAY AND NORMAL
                         let displayHeaderCode = "", normalHeaderCode = "", commentHeaderCode = "";
-                        (finalType == "q") ? (normalHeaderCode = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + postTitle + '</blockquote>') : (containsHeader && (displayHeaderCode = '<h3 class="display-5 mx-lg-5 ' + (lowContrast ? "opacity-50" : "opacity-75") + '">' + postTitle + '</h3>', normalHeaderCode = '<h5 class="card-title fw-normal">' + postTitle + '</h5>',commentHeaderCode='<span class="d-block my-2">"' + postTitle+'"</span>'));
+                        (finalType == BLOCK_TYPE_QUOTE) ? (normalHeaderCode = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + postTitle + '</blockquote>') : (containsHeader && (displayHeaderCode = '<h3 class="display-5 mx-lg-5 ' + (lowContrast ? "opacity-50" : "opacity-75") + '">' + postTitle + '</h3>', normalHeaderCode = '<h5 class="card-title fw-normal">' + postTitle + '</h5>',commentHeaderCode='<span class="d-block my-2">"' + postTitle+'"</span>'));
 
                         //SNIPPET
                         if (containsSnippet) {
@@ -207,7 +218,7 @@ function mBlocks(m) {
                             //console.log({ tit: T, it, c, z });
                             snippetCode = '<summary class="list-unstyled' +
                                 (dataTheme == "light" ? ' text-muted' : ' opacity-75')+
-                                (finalType == "v" ? ' py-3 d-block mx-lg-5' : '') +
+                                (finalType == BLOCK_TYPE_COVER ? ' py-3 d-block mx-lg-5' : '') +
                                 (lowContrast ? ' opacity-75' : '') +
                                 '">' + snippetText + '</summary>';
                         }
@@ -249,21 +260,21 @@ function mBlocks(m) {
                                 fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
                                 tooltipAttributes = "";
                             switch (finalType) {
-                                case "s":
+                                case BLOCK_TYPE_SHOWCASE:
                                     let videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                                     postID == 0 && (tooltipAttributes = '" data-toggle="tooltip" data-vidid="' + videoID + '"', showcaseImageCode = '<figure class="m-0' + imageBSClass +(cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle) + '" style="' + fixedImageStyle + articleHeight + '" role="img" loading="lazy" title="' + postTitle + '" aria-label="' + postTitle + ' image"' + tooltipAttributes + '></figure>');
                                     imageBSClass += aspectRatio+' shadow-sm';
                                     break;
-                                case "p": imageBSClass = aspectRatio; break;
-                                case "m":imageCoverStyle += ' height:3rem!important;width:3rem;';
+                                case BLOCK_TYPE_PANCAKE: imageBSClass = aspectRatio; break;
+                                case BLOCK_TYPE_COMMENT:imageCoverStyle += ' height:3rem!important;width:3rem;';
                                 fixedImageStyle += ' height:3rem!important;width:3rem;';
                                 imageBSClass = ' rounded-circle m-2'; break;
-                                case "q":
+                                case BLOCK_TYPE_QUOTE:
                                     imageCoverStyle += ' height:6rem!important;width:6rem;';
                                     fixedImageStyle += ' height:6rem!important;width:6rem;';
                                     imageBSClass = ' rounded-circle mx-auto mt-3'; break;
-                                case "t": imageBSClass = " col-4 h-100"; break;
-                                case "v": fixedImageStyle += articleHeight; break;
+                                case BLOCK_TYPE_STACK: imageBSClass = " col-4 h-100"; break;
+                                case BLOCK_TYPE_COVER: fixedImageStyle += articleHeight; break;
                             }
                             blurImage && !(contentType == "comments") && (imageBSClass += ' blur-5');
 
@@ -275,18 +286,18 @@ function mBlocks(m) {
                         let ctaButtonCode = "";
                         if (callToAction != "") {
                             switch (finalType) {
-                                case "g": break;
-                                case "m": ctaButtonCode = '<span class="link-'+dataTheme+' small">'+callToAction+'</span>' ; break;
+                                case BLOCK_TYPE_GALLERY: break;
+                                case BLOCK_TYPE_COMMENT: ctaButtonCode = '<span class="link-'+dataTheme+' small">'+callToAction+'</span>' ; break;
                                 default:
                                     ctaButtonCode = '<button class="btn ' +
-                                        ((cornerStyle != " rounded" || finalType == "p" || finalType == "q") ? 'rounded-0' : '') +
+                                        ((cornerStyle != " rounded" || finalType == BLOCK_TYPE_PANCAKE || finalType == BLOCK_TYPE_QUOTE) ? 'rounded-0' : '') +
                                         (lowContrast ? " opacity-50" : " opacity-75");
                                     switch (finalType) {
-                                        case "s": ctaButtonCode += " p-3 px-lg-5 float-end"; break;
-                                        case "v": ctaButtonCode += ' p-2 px-4  mx-lg-5 mt-4'; break;
-                                        case "p": case "q": ctaButtonCode += ' py-2 px-3 w-100 text-end link-' + inverseTheme; break;
-                                        case "t": ctaButtonCode += ' mt-3'; break;
-                                        case "c": case "l": ctaButtonCode += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
+                                        case BLOCK_TYPE_SHOWCASE: ctaButtonCode += " p-3 px-lg-5 float-end"; break;
+                                        case BLOCK_TYPE_COVER: ctaButtonCode += ' p-2 px-4  mx-lg-5 mt-4'; break;
+                                        case BLOCK_TYPE_PANCAKE: case BLOCK_TYPE_QUOTE: ctaButtonCode += ' py-2 px-3 w-100 text-end link-' + inverseTheme; break;
+                                        case BLOCK_TYPE_STACK: ctaButtonCode += ' mt-3'; break;
+                                        case BLOCK_TYPE_CARD: case BLOCK_TYPE_LIST: ctaButtonCode += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
                                     }
                                     ctaButtonCode += ' border-0 btn-' + dataTheme + '" role="button" title="' + postTitle + '">' + callToAction + '</button>';
                             }
@@ -296,15 +307,15 @@ function mBlocks(m) {
                         isCarousel && (postID % (actualColumnCount * blockRows) == 0) && ($(carouselIndicators).append('<button type="button" data-bs-target="#m' + mBlockID + '" data-bs-slide-to="' + postID / (actualColumnCount * blockRows) + '" class="bg-' + inverseTheme + (postID == 0 ? (' active" aria-current="true"') : '"') + ' aria-label="Slide ' + (postID / (actualColumnCount * blockRows) + 1) + '"></button>'));
 
                         //SHOWCASE
-                        finalType == "s" && firstInstance && postID == 0 && mBlockCode.before('<div class="feature-image card border-0 text-center bg-' + dataTheme + ' overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>' + showcaseImageCode + '<a class="link-' + inverseTheme + '" href="' + postURL + '" title="' + postTitle + '">' + ((containsHeader) ? ('<div class="sContent card-img-overlay rounded-0 ' + (cornerStyle == " rounded" && "rounded-top") + ' mx-md-5 p-3 px-lg-5 bg-' + dataTheme + ' mt-auto" style="height:fit-content;">' + normalHeaderCode + ' ' + snippetCode + '</div>') : "") + ((containsImage || callToAction != "") ? ctaButtonCode : "") + '</a></div>');
+                        finalType == BLOCK_TYPE_SHOWCASE && firstInstance && postID == 0 && mBlockCode.before('<div class="feature-image card border-0 text-center bg-' + dataTheme + ' overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>' + showcaseImageCode + '<a class="link-' + inverseTheme + '" href="' + postURL + '" title="' + postTitle + '">' + ((containsHeader) ? ('<div class="sContent card-img-overlay rounded-0 ' + (cornerStyle == " rounded" && "rounded-top") + ' mx-md-5 p-3 px-lg-5 bg-' + dataTheme + ' mt-auto" style="height:fit-content;">' + normalHeaderCode + ' ' + snippetCode + '</div>') : "") + ((containsImage || callToAction != "") ? ctaButtonCode : "") + '</a></div>');
 
                         //WRAPPER - CAROUSEL & CONTENT
-                        if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == "l" && postID == 1)) {
+                        if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_TYPE_LIST && postID == 1)) {
                             blockBody += '<div class="row  g-' + bsGutter + ' mx-0';
                             isCarousel && ((blockBody += ' carousel-item'), (postID == 0) && (blockBody += ' active'));
                             //isCa && console.log({ tit, bTy, fTy, p, b });
-                            isComplexLayout && (blockType == "l") && (blockBody += ' col flex-grow-1');
-                            (finalType != "v") && (!(isComplexLayout && (finalType == "t" || finalType == "c")) && (blockBody += ' pb-' + bsGutter), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
+                            isComplexLayout && (blockType == BLOCK_TYPE_LIST) && (blockBody += ' col flex-grow-1');
+                            (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ' pb-' + bsGutter), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             switch (columnCount) {
                                 case 1: blockBody += ' row-cols-1">'; break;
                                 case 2: blockBody += ' row-cols-1 row-cols-sm-1 row-cols-md-2">'; break;
@@ -318,27 +329,27 @@ function mBlocks(m) {
 
                         let videoID = "regular"; // Declare videoID in a higher scope
                         //ARTICLE START
-                        blockBody += '<article class="col d-inline-flex' + (finalType == "s" ? (' sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-toggle="tooltip"') : (finalType == "v" ?'" style='+articleHeight+'"':'"')) + ' role="article">';
+                        blockBody += '<article class="col d-inline-flex' + (finalType == BLOCK_TYPE_SHOWCASE ? (' sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-toggle="tooltip"') : (finalType == BLOCK_TYPE_COVER ?'" style='+articleHeight+'"':'"')) + ' role="article">';
 
                         //LINK START
-                        finalType != "s" && (blockBody += '<a class="overflow-hidden w-100 shadow-sm' +
-                        (finalType != "v" ? cornerStyle : ' rounded-0') +
-                        (finalType != "m" ? ' card' : ' text-bg-'+inverseTheme) +
+                        finalType != BLOCK_TYPE_SHOWCASE && (blockBody += '<a class="overflow-hidden w-100 shadow-sm' +
+                        (finalType != BLOCK_TYPE_COVER ? cornerStyle : ' rounded-0') +
+                        (finalType != BLOCK_TYPE_COMMENT ? ' card' : ' text-bg-'+inverseTheme) +
                         (hasRoundedBorder ? (' border border-3 border-opacity-75 border-' + dataTheme) : ' border-0') +
-                            ((finalType == "q" || finalType == "v") ? ' text-center h-100' : ((finalType == "t"||finalType=="m") ? " row g-0" : ((finalType == "l" || finalType == "c" || finalType == "g") ? aspectRatio + (finalType == "l" ? ' mt-' + bsGutter : '') : ""))) + '" href="' + postURL + '" title="' + postTitle + '">');
+                            ((finalType == BLOCK_TYPE_QUOTE || finalType == BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == BLOCK_TYPE_STACK||finalType==BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == BLOCK_TYPE_LIST || finalType == BLOCK_TYPE_CARD || finalType == BLOCK_TYPE_GALLERY) ? aspectRatio + (finalType == BLOCK_TYPE_LIST ? ' mt-' + bsGutter : '') : ""))) + '" href="' + postURL + '" title="' + postTitle + '">');
 
                         //IMAGE
                         containsImage && (blockBody += imageCode);
 
                         //TEXT
-                        if (containsHeader && finalType != "s" && finalType != "g") {
+                        if (containsHeader && finalType != BLOCK_TYPE_SHOWCASE && finalType != BLOCK_TYPE_GALLERY) {
                             switch (finalType) {
-                                case "m": blockBody+= '<div class="col p-2 ps-0">'; break;
-                                    case "t": containsImage && (blockBody += '<div class="col-8 h-100">');
-                                    case "p": case "q": blockBody += '<div class="card-body' + (dataTheme != "light" && (finalType == "p" || (blockType == "l" && finalType == "t")) ? (' h-100 bg-opacity-75 text-bg-' + dataTheme) : ' text-'+ inverseTheme) + '">';
+                                case BLOCK_TYPE_COMMENT: blockBody+= '<div class="col p-2 ps-0">'; break;
+                                    case BLOCK_TYPE_STACK: containsImage && (blockBody += '<div class="col-8 h-100">');
+                                    case BLOCK_TYPE_PANCAKE: case BLOCK_TYPE_QUOTE: blockBody += '<div class="card-body' + (dataTheme != "light" && (finalType == BLOCK_TYPE_PANCAKE || (blockType == BLOCK_TYPE_LIST && finalType == BLOCK_TYPE_STACK)) ? (' h-100 bg-opacity-75 text-bg-' + dataTheme) : ' text-'+ inverseTheme) + '">';
                                         break;
-                                    case "l": blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>';
-                                    case "c": blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 rounded-0 p-5';
+                                    case BLOCK_TYPE_LIST: blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>';
+                                    case BLOCK_TYPE_CARD: blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 rounded-0 p-5';
                                         switch (textVerticalAlign) {
                                             case "top": blockBody += ' h-auto">'; break;
                                             case "middle": blockBody += ' h-auto top-50 translate-middle-y">'; break;
@@ -346,7 +357,7 @@ function mBlocks(m) {
                                             case "overlay": blockBody += '">'; break;
                                         }
                                         break;
-                                    case "v": finalType == "v" && (blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ' + ((cornerStyle == " rounded" && textVerticalAlign != "overlay") ? ' rounded-5' : cornerStyle) + ' start-50 translate-middle');
+                                    case BLOCK_TYPE_COVER: finalType == BLOCK_TYPE_COVER && (blockBody += '<div class="text-bg-' + dataTheme + ' bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ' + ((cornerStyle == " rounded" && textVerticalAlign != "overlay") ? ' rounded-5' : cornerStyle) + ' start-50 translate-middle');
                                         switch (textVerticalAlign) {
                                             case "top": blockBody += '-x mt-5">'; break;
                                             case "middle": blockBody += ' top-50">'; break;
@@ -356,15 +367,15 @@ function mBlocks(m) {
                                 }
 
                                 blockBody += authorCode+dateCode;
-                                (finalType == "v") ? blockBody += displayHeaderCode : (finalType=='m') ? blockBody+=commentHeaderCode : blockBody += normalHeaderCode;
+                                (finalType == BLOCK_TYPE_COVER) ? blockBody += displayHeaderCode : (finalType==BLOCK_TYPE_COMMENT) ? blockBody+=commentHeaderCode : blockBody += normalHeaderCode;
                                 blockBody += snippetCode;
-                                !(finalType == "p" || finalType == "q") && (blockBody += ctaButtonCode);//CTA 
+                                !(finalType == BLOCK_TYPE_PANCAKE || finalType == BLOCK_TYPE_QUOTE) && (blockBody += ctaButtonCode);//CTA 
 
                                 blockBody += '</div>';
-                                finalType == "t" && containsImage && (blockBody += '</div>');
-                                (finalType == "p" || finalType == "q") && (blockBody += ctaButtonCode);//CTA - card footer type
+                                finalType == BLOCK_TYPE_STACK && containsImage && (blockBody += '</div>');
+                                (finalType == BLOCK_TYPE_PANCAKE || finalType == BLOCK_TYPE_QUOTE) && (blockBody += ctaButtonCode);//CTA - card footer type
                             }//TEXT
-                        finalType != "s" && (blockBody += '</a>');
+                        finalType != BLOCK_TYPE_SHOWCASE && (blockBody += '</a>');
                         blockBody += '</article>';
 
                         (postID == (postsInFeed - 1) || (isCarousel && (postID % (actualColumnCount * blockRows) == (actualColumnCount * blockRows - 1)))) && (blockBody += '</div>');
@@ -386,7 +397,7 @@ function mBlocks(m) {
                     //BLOCK FOOTER - JUMP-LINK
                     //console.log((!(!isMo && bTy=='v')),ty);
                     let footerNavCode = "";
-                    (!(moreText == "" && blockType == 'v')) && (footerNavCode += '<nav aria-label="Page navigation" class="st' + stageID + ' w-100 pe-5 py-5 pagination justify-content-end bg-' + dataTheme + '">');
+                    (!(moreText == "" && blockType == BLOCK_TYPE_COVER)) && (footerNavCode += '<nav aria-label="Page navigation" class="st' + stageID + ' w-100 pe-5 py-5 pagination justify-content-end bg-' + dataTheme + '">');
                     if (moreText != "") {
                         for (i = 0; i < response.feed.link.length; i++) {
                             let feedURL = response.feed.link[i];
@@ -397,7 +408,7 @@ function mBlocks(m) {
                             }
                         }
                     }
-                    (!(moreText == "" && blockType == 'v')) && (footerNavCode += '</nav>');
+                    (!(moreText == "" && blockType == BLOCK_TYPE_COVER)) && (footerNavCode += '</nav>');
                     mBlockCode.after(footerNavCode);
                 }//if
                 else {
@@ -429,7 +440,7 @@ function mBlocks(m) {
                     });
                 }//if
                 //SHOWCASE
-                if (blockType == "s") {
+                if (blockType == BLOCK_TYPE_SHOWCASE) {
                     const featuredImageNode = element.find(".feature-image");
                     const figureNode = featuredImageNode.find("figure"), iFrameNode = featuredImageNode.find(".sIframe"), contentNode = featuredImageNode.find(".sContent");
                     figureNode.click(function () {
