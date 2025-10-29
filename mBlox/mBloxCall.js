@@ -10,17 +10,11 @@ let s = !0;
 
 function loadScripts(m, s) {
     if (s) {
-        const j = document.createElement('script');
-        j.src = 'res/bundles/jquery.min.js';
-        document.head.append(j);
+        const e = document.createElement('script');
+        e.src = 'mBloxScript.js';
+        document.head.append(e);
 
-        j.onload = () => {
-            const e = document.createElement('script');
-            e.src = 'mBloxScript.js';
-            document.head.append(e);
-
-            e.onload = () => { mBlocks(m); s = !1; }
-        }
+        e.onload = () => { mBlocks(m); s = !1; }
     } else { console.log(s,m); mBlocks(m); }
 }
 
