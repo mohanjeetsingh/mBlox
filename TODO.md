@@ -5,8 +5,7 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
 ## Modernization & Best Practices
 
 - [ ] **Plan jQuery Removal:** The project relies heavily on jQuery. For long-term maintainability and performance, create a plan to incrementally replace jQuery functions with native browser APIs (e.g., `$.ajax` with `fetch`, `$(selector)` with `document.querySelector`).
-- [ ] **Simplify Complex Ternary Operators:** Some ternary statements are nested or very complex. For clarity, rewrite them as standard `if/else` statements.
-
+- [x] **Simplify Complex Ternary Operators:** Some ternary statements are nested or very complex. For clarity, rewrite them as standard `if/else` statements.
 
 - [ ] **Remove jQuery Dependency:** The project relies heavily on jQuery. For long-term maintainability and performance, replace jQuery functions with native browser APIs (`fetch`, `querySelector`, etc.).
 
