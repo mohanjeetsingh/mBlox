@@ -2,570 +2,460 @@
  * mBlox for Blogger
  * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
- * @version 1.0.0
- * Copyright (c) 2022-2025, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
+ * Copyright (c) 2025, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
 function mBlocks(m) {
     $(m).map(function () {
-        /* CONSTANTS */
-        // Defines the single-character codes used in data attributes for various settings.
-        const C = {
-            TYPE: { VERTICAL: 'v', MINIMAL: 'm', TEXT: 't', PHOTO: 'p', CARD: 'c', QUOTE: 'q', GALLERY: 'g', LIST: 'l', SHOWCASE: 's' },
-            CONTENT: { RECENT: 'recent', COMMENTS: 'comments' },
-            THEME: { LIGHT: 'light' },
-            V_ALIGN: { MIDDLE: 'middle', BOTTOM: 'bottom', OVERLAY: 'overlay' },
-            CORNER: { SHARP: 'sharp' },
-            FLAG: { HEADER: 'h', IMAGE: 'i', SNIPPET: 's', AUTHOR: 'a', DATE: 'd' }
-        };
-
         /* SETTINGS PULLED FROM USER PLACEMENT + VALIDATION + DEFAULT SETTINGS APPLICATION */
-        // These settings are pulled from the `data-*` attributes on the mBlock element itself.
         const
-            element = $(this),
-            label = element.attr("data-label") || "Label Name missing",
-            contentType = (element.attr("data-contentType") || C.CONTENT.RECENT).toLowerCase(),// Can be comments, label, or recent.
-            siteUrl = element.attr("data-feed") || "/",// The root URL of the blogspot site.
-            title = element.attr("data-title") || "",
-            description = element.attr("data-description") || "",
-            typeAttr = (element.attr("data-type") || "v-ih").toLowerCase(), // e.g., "v-ihs" for Vertical, Image, Header, Snippet
-            blockType = typeAttr.substring(0, 1),// The primary block type (v, s, l, etc.)
-            typeFlags = typeAttr.substring(1),// The flags for content parts (i, h, s, a, d)
-            theme = (element.attr("data-theme") || C.THEME.LIGHT).toLowerCase(),
-            hasHeader = (-1 != typeFlags.search(C.FLAG.HEADER)),
-            hasImage = (-1 != typeFlags.search(C.FLAG.IMAGE)),
-            hasSnippet = (-1 != typeFlags.search(C.FLAG.SNIPPET)),
-            hasAuthor = (-1 != typeFlags.search(C.FLAG.AUTHOR)),
-            hasDate = (-1 != typeFlags.search(C.FLAG.DATE)),
-            imageHeight = element.attr("data-iHeight") || (blockType == C.TYPE.VERTICAL ? "100vh" : (blockType == C.TYPE.SHOWCASE ? "70vh" : "m")),
-            blockHeightStyle = imageHeight == 'm' ? '' : `height:${imageHeight}!important;`,
-            stage = element.attr("data-s") || 1,// Used for paginating through posts.
-            isFirstInstance = (element.attr("data-s") === undefined),// Checks if this is the first time the block is being loaded.
-            postsPerPage = parseInt(element.attr("data-posts") || 3),
-            blockId = element.closest(".widget-content").parent(".widget").attr("ID") || (title + typeAttr + label);
+            e = $(this),
+            la = e.attr("data-label") || "Label Name missing",
+            cTy = (e.attr("data-contentType") || "recent").toLowerCase(),// should be comments/label/recent
+            si = e.attr("data-feed") || "/",//blogspot site url - default or custom
+            T = e.attr("data-title") || "",
+            D = e.attr("data-description") || "",
+            ty = (e.attr("data-type") || "v-ih").toLowerCase(),
+            bTy = ty.substring(0, 1),//block type
+            t = ty.substring(1),
+            thm = (e.attr("data-theme") || "light").toLowerCase(),// [light, dark, primary,secondary] 
+            isH = (-1 != t.search("h")),
+            isI = (-1 != t.search("i")),
+            isS = (-1 != t.search("s")),
+            isA = (-1 != t.search("a")),
+            isD = (-1 != t.search("d")),
+            h = e.attr("data-iHeight") || (bTy == "v" ? "100vh" : (bTy == "s" ? "70vh" : "m")),
+            bH = h == 'm' ? '' : "height:" + h + "!important;",
+            S = e.attr("data-s") || 1,//stage - code defined
+            i1 = (e.attr("data-s") === undefined),//first instance - code defined
+            bP = parseInt(e.attr("data-posts") || 3),
+            mID = e.closest(".widget-content").parent(".widget").attr("ID") || (T + ty + la);
         let
-            isBlurred = (() => {
-                const dataBlur = element.attr("data-iBlur");
-                if (dataBlur === "true") return true;
-                if (dataBlur === "false") return false;
-                // Default blur is true for most content-heavy blocks.
-                return hasHeader && ![C.TYPE.SHOWCASE, C.TYPE.LIST, C.TYPE.TEXT, C.TYPE.PHOTO, C.TYPE.QUOTE].includes(blockType);
-            })(),
-            columnCount = element.attr("data-cols"),
-            rowCount = parseInt(element.attr("data-rows") || 1),
-            isCarousel = (element.attr("data-isCarousel") || "").toLowerCase() == "true",
-            isNav = false, // Flag to determine if carousel-style navigation is needed without the carousel itself.
-            wrapper = "",
-            feedUrl = siteUrl + "feeds/",
-            carouselIndicators = '';
+            isB = (e.attr("data-iBlur") == "true") ? true : (e.attr("data-iBlur") == "false" ? false : (isH && (-1 == $.inArray(bTy, ["s", "l", "t", "p", "q"])))), //(default - true for non-image-only objects),
+            bC = e.attr("data-cols"),//
+            bR = parseInt(e.attr("data-rows") || 1),//
+            isCa = (e.attr("data-isCarousel") || "").toLowerCase() == "true",
+            isNav = false,
+            w = "",
+            f = si + "feeds/",
+            cI = '';//carousel indicators
 
-        //FEED SETTING: Construct the correct Blogger JSON feed URL based on the desired content type.
-        switch (contentType) {
-            case C.CONTENT.RECENT: feedUrl += "posts"; hasImage ? (feedUrl += "/default") : (feedUrl += "/summary"); break;
-            case C.CONTENT.COMMENTS: feedUrl += "comments"; hasImage ? (feedUrl += "/default") : (feedUrl += "/summary"); break;
-            default: feedUrl += `posts/default/-/` + label;
+        //console.log(el);
+        //           console.log({tit,l,cor,thm,tva});
+        //console.log({tit,mID,isL,cuSt});
+        //console.log({bTy,isH,isI,isS,isC});
+        //console.log({tit,isCa,isH,isS,isI,isCTA,isMo,isB});
+
+        //FEED SETTING
+        switch (cTy) {
+            case "recent": f += "posts"; isI ? (f += "/default") : (f += "/summary"); break;
+            case "comments": f += "comments"; isI ? (f += "/default") : (f += "/summary"); break;
+            default: f += "posts"; isI ? (f += "/default") : (f += "/summary"); f += "/-/" + la;
         }
-        feedUrl += `?alt=json-in-script&start-index=${((stage - 1) * postsPerPage + 1)}&max-results=${postsPerPage}`;
+        f += "?alt=json-in-script&start-index=" + ((S - 1) * bP + 1) + "&max-results=" + bP;
+        //console.log({tit,f,l,isI});
 
-        //JSON PULL: Fetch the data from the Blogger feed.
+        //JSON PULL
         $.ajax({
-            url: feedUrl,
+            url: f,
             type: "get",
             dataType: "jsonp",
             success: function (fe) {
                 if (fe.feed.entry) {
-                    // These consts are defined within the success callback as they depend on the returned feed data.
-                    const postCount = fe.feed.entry.length,
-                        totalResults = fe.feed.openSearch$totalResults.$t,
-                        snippetSize = element.attr("data-snippetSize") || 150,
-                        cornerStyle = ((element.attr("data-corner") || "").toLowerCase() == C.CORNER.SHARP) ? " rounded-0" : " rounded",
-                        textAlignV = (element.attr("data-textVAlign") || (blockType == C.TYPE.VERTICAL ? C.V_ALIGN.MIDDLE : (blockType == C.TYPE.LIST ? C.V_ALIGN.BOTTOM : C.V_ALIGN.OVERLAY))).toLowerCase(),
-                        inverseTheme = (theme == C.THEME.LIGHT ? "primary" : C.THEME.LIGHT),
-                        aspectRatio = ` ratio ratio-${(element.attr("data-ar") || "1x1").toLowerCase()}`,
-                        gutter = element.attr("data-gutter") || ((blockType == C.TYPE.VERTICAL) ? 0 : 3),
-                        isImageFixed = (element.attr("data-iFix") || "").toLowerCase() == "true",
-                        isLowContrast = (element.attr("data-lowContrast") || "").toLowerCase() == "true",
-                        isRounded = (element.attr("data-iBorder") || "").toLowerCase() == "true",
-                        ctaText = element.attr("data-CTAText") || "",
-                        isCompound = (blockType == C.TYPE.LIST || blockType == C.TYPE.SHOWCASE), // Compound blocks have special layout rules.
-                        totalStages = Math.ceil(totalResults / postsPerPage);
-                    let blockBodyHtml = '',
-                    moreText = element.attr("data-moreText") || "",
-                    finalItemType = blockType; // The item type can change within a loop (e.g., for List type).
+                    const l = fe.feed.entry.length,//Total number of actual posts in feed
+                        toRe = fe.feed.openSearch$totalResults.$t,
+                        snS = e.attr("data-snippetSize") || 150,
+                        cor = ((e.attr("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
+                        tva = (e.attr("data-textVAlign") || (bTy == 'v' ? "middle" : (bTy == 'l' ? "bottom" : 'overlay'))).toLowerCase(),
+                        iThm = (thm == "light" ? "primary" : "light"),//theme inverse
+                        ar = " ratio ratio-" + (e.attr("data-ar") || "1x1").toLowerCase(),// [1x1,4x3,3x4,16:9,9:16,21:9,9:21]
+                        bG = e.attr("data-gutter") || ((bTy == "v") ? 0 : 3),
+                        isF = (e.attr("data-iFix") || "").toLowerCase() == "true",
+                        isL = (e.attr("data-lowContrast") || "").toLowerCase() == "true",
+                        isR = (e.attr("data-iBorder") || "").toLowerCase() == "true",
+                        cta = e.attr("data-CTAText") || "",
+                        isC = (bTy == "l" || bTy == "s"),
+                        tS = Math.ceil(toRe / bP);//total stages
+                    let b = '',//block body
+                    mo = e.attr("data-moreText") || "",
+                    fTy = bTy;
+                    //console.log(fe.feed.entry);
+                    //console.log(fe.feed.link);
+                    //console.log({tit,b,fe,toRe,nuSt});
 
-                    (postsPerPage <= 1 || blockType == C.TYPE.LIST) && (isCarousel = false);
-                    (contentType == C.CONTENT.COMMENTS) && (moreText="");
-                    if (isCarousel || hasImage) { var innerWidth = window.innerWidth; }
+                    (bP <= 1 || bTy == "l") && (isCa = false);
+                    (cTy == "comments") && (mo="");
+                    if (isCa || isI) { var iW = window.innerWidth; }
 
-                    //Image Resolution Setting: Calculate the optimal image size based on container width and column count.
-                    let imageSize = 100;
-                    if (hasImage && !isBlurred) {
-                        if (isImageFixed) { imageSize = innerWidth; } else {
-                            switch (columnCount) {
-                                case 1: imageSize = innerWidth;
-                                case 2: innerWidth < 768 ? imageSize = innerWidth : imageSize = innerWidth / 2;
-                                case 3: innerWidth < 768 ? imageSize = innerWidth : (innerWidth < 992 ? imageSize = innerWidth / 2 : imageSize = innerWidth / 3);
-                                case 4: innerWidth < 576 ? imageSize = innerWidth : (innerWidth < 768 ? imageSize = innerWidth / 2 : (innerWidth < 992 ? imageSize = innerWidth / 3 : imageSize = innerWidth / 4));
-                                case 5: innerWidth < 576 ? imageSize = innerWidth / 2 : (innerWidth < 768 ? imageSize = innerWidth / 3 : (innerWidth < 1200 ? imageSize = innerWidth / 4 : imageSize = innerWidth / 5));
-                                case 6: innerWidth < 576 ? imageSize = innerWidth / 3 : (innerWidth < 992 ? imageSize = innerWidth / 4 : (innerWidth < 1200 ? imageSize = innerWidth / 5 : imageSize = innerWidth / 6));
+                    //Image Resolution Setting
+                    let s = 100;
+                    if (isI && !isB) {
+                        if (isF) { s = iW; } else {
+                            switch (bC) {
+                                case 1: s = iW;
+                                case 2: iW < 768 ? s = iW : s = iW / 2;
+                                case 3: iW < 768 ? s = iW : (iW < 992 ? s = iW / 2 : s = iW / 3);
+                                case 4: iW < 576 ? s = iW : (iW < 768 ? s = iW / 2 : (iW < 992 ? s = iW / 3 : s = iW / 4));
+                                case 5: iW < 576 ? s = iW / 2 : (iW < 768 ? s = iW / 3 : (iW < 1200 ? s = iW / 4 : s = iW / 5));
+                                case 6: iW < 576 ? s = iW / 3 : (iW < 992 ? s = iW / 4 : (iW < 1200 ? s = iW / 5 : s = iW / 6));
                             }
                         }
-                        imageSize = Math.ceil(imageSize / 100) * 100;
+                        s = Math.ceil(s / 100) * 100;
                     }
 
-                    // On the first load of this block, add the main title and description header.
-                    if (isFirstInstance) {
-                        element.attr("data-s", stage);
-                        if (title) {
-                            const headerHTML = `
-    <div class="text-center m-0 bg-${theme} py-5">
-        <h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${isLowContrast ? "opacity-50" : ""}">
-            ${title}
-        </h4>
-        ${description ? `<span class="pb-3 text-black-50">${description}</span>` : ''}
-    </div>
-`;
-                            element.append(headerHTML);
-                        }
+                    if (i1) {
+                        e.attr("data-s", S);
+
+                        //BLOCK HEADER - TITLE & DESCRIPTION
+                        (T != "") && e.append('<div class="text-center m-0 bg-' + thm + ' py-5"><h4 class="display-5 fw-bold text-' + iThm + ' py-3 m-0 ' + (isL ? "opacity-50" : "") + '">' + T + '</h4>' + ((D != "") ? ('<span class="pb-3 text-black-50">' + D + '</span>') : '') + '</div>');
                     }
 
-                    // Set default column counts based on block type if not specified by the user.
-                    if (typeof (columnCount) === "undefined") {
-                        switch (blockType) {
-                            case C.TYPE.VERTICAL:case C.TYPE.MINIMAL: case C.TYPE.TEXT: columnCount = 1; break;
-                            case C.TYPE.PHOTO: columnCount = 3; break;
-                            case C.TYPE.CARD: case C.TYPE.QUOTE: columnCount = 4; break;
-                            case C.TYPE.GALLERY: columnCount = 5; break;
-                            case C.TYPE.LIST: columnCount = 2; break;
-                            case C.TYPE.SHOWCASE: columnCount = 6; break;
+                    if (typeof (bC) === "undefined") {
+                        switch (bTy) {
+                            case "v":case "m": case "t": bC = 1; break;
+                            case "p": bC = 3; break;
+                            case "c": case "q": bC = 4; break;
+                            case "g": bC = 5; break;
+                            case "l": bC = 2; break;
+                            case "s": bC = 6; break;
                         }
-                    } else { columnCount = parseInt(columnCount); (columnCount < 1) && (columnCount = 1); (columnCount > 6) && (columnCount = 6); }
+                    } else { bC = parseInt(bC); (bC < 1) && (bC = 1); (bC > 6) && (bC = 6); }
 
                     //CAROUSEL COLUMNS ADJUSTMENT TO WINDOW SIZE
-                    if (isCarousel) {
-                        var activeColumns = 0;
+                    if (isCa) {
+                        var aC = 0;
 
-                        if (innerWidth < 576) { columnCount < 5 ? activeColumns = 1 : (columnCount == 5 ? activeColumns = 2 : activeColumns = 3); }
-                        else if (innerWidth < 768) { columnCount < 4 ? activeColumns = 1 : (columnCount == 4 ? activeColumns = 2 : (columnCount == 5 ? activeColumns = 3 : activeColumns = 4)); }
-                        else if (innerWidth < 992) { columnCount == 3 ? activeColumns = 2 : (columnCount == 4 ? activeColumns = 3 : activeColumns = 4); }
-                        else if (innerWidth < 1200) { (columnCount > 4) && (columnCount == 5 ? activeColumns = 4 : activeColumns = 5); }
-                        else { activeColumns = columnCount; }
+                        if (iW < 576) { bC < 5 ? aC = 1 : (bC == 5 ? aC = 2 : aC = 3); }
+                        else if (iW < 768) { bC < 4 ? aC = 1 : (bC == 4 ? aC = 2 : (bC == 5 ? aC = 3 : aC = 4)); }
+                        else if (iW < 992) { bC == 3 ? aC = 2 : (bC == 4 ? aC = 3 : aC = 4); }
+                        else if (iW < 1200) { (bC > 4) && (bC == 5 ? aC = 4 : aC = 5); }
+                        else { aC = bC; }
+                        //console.log({tit,iW,bC,aC});
 
-                        (rowCount > Math.ceil(postCount / columnCount)) && (rowCount = Math.ceil(postCount / columnCount));
-                        // If the number of posts is less than or equal to what can be displayed on one screen, disable the carousel and enable simple navigation instead.
-                        (postCount <= (activeColumns * rowCount)) && (isCarousel = false, isNav = true);
+                        (bR > Math.ceil(l / bC)) && (bR = Math.ceil(l / bC));
+                        (l <= (aC * bR)) && (isCa = false, isNav = true);
                     }
-                    
-                    if (isCarousel) {
-                        carouselIndicators = document.createElement("div");
-                        $(carouselIndicators).addClass('carousel-indicators');
-                        (blockType != C.TYPE.VERTICAL) && ($(carouselIndicators).addClass('position-relative m-0'));
+                    //CAROUSEL OPEN
+                    if (isCa) {
+                        cI = document.createElement("div");
+                        $(cI).addClass('carousel-indicators');
+                        (bTy != "v") && ($(cI).addClass('position-relative m-0'));
                     }
-                    (isCarousel || isNav) && (blockBodyHtml += '<div class="carousel-inner">');
+                    (isCa || isNav) && (b += '<div class="carousel-inner">');
+
+                    //console.log({tit,bC,aC,bP,bR,l,toRe,isCa,isNav});
 
                     //BLOCK BODY WRAPPER
-                    wrapper = document.createElement('div');
-                    wrapper.id = 'm' + blockId;
-                    const m = $(wrapper);
-                    m.appendTo(element).attr({ "data-bs-ride": "carousel" });
-                    wrapper.className = `overflow-hidden bg-${theme}${blockType === C.TYPE.SHOWCASE ? ' sFeature' : ''}${isCarousel || isNav ? ` st${stage} carousel carousel-fade` : ''}`;
+                    w = document.createElement('div');
+                    w.id = 'm' + mID;
+                    const m = $(w);
+                    m.appendTo(e).attr({ "data-bs-ride": "carousel" });
+                    w.className = ('overflow-hidden bg-' + thm + (bTy == "s" ? ' sFeature' : "") + ((isCa || isNav) ? (' st' + S + ' carousel carousel-fade') : ""));
+                    //console.log({tit,l,b,bP,bC});
+                    //console.log(fe.feed.entry);
 
-                    //== FEED LOOP FOR POSTS ==
-                    // This is the main loop that iterates over each post from the feed and builds the corresponding HTML.
-                    for (let p = 0; p < postCount; p++) {
-                        const item = fe.feed.entry[p],
-                            itemTitle = item.title.$t,
-                            itemContent = (hasSnippet || hasImage) && (("content" in item) ? item.content.$t : (("summary" in item) ? (item.summary.$t) : (("summary" in b_rc) ? (item.summary.$t) : "")));
-                        let authorName = item.author[0].name.$t, snippetHtml = tempSnippetText = "";
+                    //FEED LOOP FOR POSTS
+                    for (let p = 0; p < l; p++) {
+                        const it = fe.feed.entry[p],
+                            ti = it.title.$t,
+                            c = (isS || isI) && (("content" in it) ? it.content.$t : (("summary" in it) ? (it.summary.$t) : (("summary" in b_rc) ? (it.summary.$t) : "")));
+                        let au = it.author[0].name.$t, sni = z = "";
+                        //console.log({tit,it,ti,au});
+                        //console.log({tit,p,fTy,bTy,fC,bC});
 
-                        // For the "List" block type, the first post is treated differently (as a Text type), and subsequent posts are Cards.
-                        (blockType == C.TYPE.LIST) && p > 0 && (hasHeader ? (finalItemType = C.TYPE.TEXT, columnCount--) : finalItemType = C.TYPE.CARD);
+                        //LIST
+                        (bTy == "l") && p > 0 && (isH ? (fTy = "t", bC--) : fTy = "c");
 
                         //<< POST COMPONENT LIBRARY >>
-                        // Each section below builds a piece of the final post HTML (Author, Date, Title, etc.)
-                        
-                        let authorHtml = '';
-                        if (hasAuthor) {
-                            contentType != C.CONTENT.COMMENTS && ((authorName == "Anonymous" || authorName == "Unknown") ? (auur = siteUrl) : (auur = item.author[0].uri.$t));
-                            switch (finalItemType) {
-                                case C.TYPE.QUOTE: authorHtml = `<figcaption class="small fw-lighter">- ${authorName}</figcaption>`; break;
-                                case C.TYPE.MINIMAL: authorHtml = `<span class="small text-${theme}" rel="author">${authorName}</span>`; break;
+                        //AUTHOR INFO
+                        let a = '';
+                        if (isA) {
+                            cTy != "comments" && ((au == "Anonymous" || au == "Unknown") ? (auur = si) : (auur = it.author[0].uri.$t));
+
+                            //COMMENT AUTHOR
+                            switch (fTy) {
+                                case "q": a += '<figcaption class="small fw-lighter">- ' + au + '</figcaption>'; break;
+                                case "m": a += '<span class="small text-'+thm+'" rel="author">' + au + '</span>'; break;
                             }
                         }
                         
-                        let dateHtml = '';
-                        if (hasDate) {
-                            const o = item.published.$t,
-                                h = (item.published.$t, item.content.$t, item.published.$t);
+                        //DATE
+                        let d = '';
+                        if (isD) {
+                            const o = it.published.$t,
+                                //                      c=o.substring(0,4),
+                                //                    m=o.substring(5,7),
+                                //                  h=o.substring(8,10),
+                                //                u=month_format[parseInt(m,10)]+" "+h+", "+c,
+                        
+                                h = (it.published.$t, it.content.$t, it.published.$t);
+                          //  console.log(h);
                             let v = h.split("T");
-                            dateHtml = ` ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][(v = v[0].split("-"))[1] - 1]} ${v[2]}, ${v[0]}`;
-                            dateHtml = `<span class="small fw-lighter">${hasAuthor ? ' &#8226; ' : ''}${dateHtml}</span>`;
+                            d = " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][(v = v[0].split("-"))[1] - 1] + " " + v[2] + ", " + v[0];
+                            d = '<span class="small fw-lighter">'+(isA?' &#8226; ':'') + d + '</span>';
+                            // console.log(d);
                         }
 
-                        let headerDisplay = "", headerNormal = "", headerMinimal = "";
-                        if (finalItemType === C.TYPE.QUOTE) {
-                            headerNormal = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${itemTitle}</blockquote>`;
-                        } else if (hasHeader) {
-                            headerDisplay = `<h3 class="display-5 mx-lg-5 ${isLowContrast ? "opacity-50" : "opacity-75"}">${itemTitle}</h3>`;
-                            headerNormal = `<h5 class="card-title fw-normal">${itemTitle}</h5>`;
-                            headerMinimal = `<span class="d-block my-2">"${itemTitle}"</span>`;
+                        //TITLE - DISPLAY AND NORMAL
+                        let hD = hN = hM= "";
+                        (fTy == "q") ? (hN = '<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">' + ti + '</blockquote>') : (isH && (hD = '<h3 class="display-5 mx-lg-5 ' + (isL ? "opacity-50" : "opacity-75") + '">' + ti + '</h3>', hN = '<h5 class="card-title fw-normal">' + ti + '</h5>',hM='<span class="d-block my-2">"' + ti+'"</span>'));
+
+                        //SNIPPET
+                        if (isS) {
+                            (z = c.replace(/<\S[^>]*>/g, "")).length > 70 && (z = z.substring(0, snS) + "...");
+                            //console.log({ tit: T, it, c, z });
+                            sni = '<summary class="list-unstyled' +
+                                (thm == "light" ? ' text-muted' : ' opacity-75')+
+                                (fTy == "v" ? ' py-3 d-block mx-lg-5' : '') +
+                                (isL ? ' opacity-75' : '') +
+                                '">' + z + '</summary>';
                         }
 
-                        if (hasSnippet) {
-                            (tempSnippetText = itemContent.replace(/<\S[^>]*>/g, "")).length > 70 && (tempSnippetText = tempSnippetText.substring(0, snippetSize) + "...");
-                            snippetHtml = `<summary class="list-unstyled${theme == C.THEME.LIGHT ? ' text-muted' : ' opacity-75'}${finalItemType == C.TYPE.VERTICAL ? ' py-3 d-block mx-lg-5' : ''}${isLowContrast ? ' opacity-75' : ''}">${tempSnippetText}</summary>`;
-                        }
+                        //LINK
+                        let li = "";
+                        for (let z = 0; z < it.link.length; z++) if ("alternate" == it.link[z].rel) { li = it.link[z].href; break; }
+                        //                        console.log({tit},it.link[z].rel,it.link.length);
 
-                        let linkUrl = "";
-                        for (let z = 0; z < item.link.length; z++) if ("alternate" == item.link[z].rel) { linkUrl = item.link[z].href; break; }
-
-                        let imageHtml = "", imageUrl = "", imageHighResUrl = "", videoThumbUrl = "", imageShowcaseHtml = "";
-                        if (hasImage) {
-                            imageUrl = imageHighResUrl = noImg;
-                            let tempSnippetText = $("<div>").html(itemContent);
-                            if (contentType == C.CONTENT.COMMENTS) {
-                                imageUrl = item.author[0].gd$image.src;
-                                if (imageUrl.match("blogblog.com")) {
-                                    imageUrl = noImg;
-                                }
+                        //IMAGE SETTINGS
+                        let im = iU = iH = iV = imS = "";
+                        if (isI) {
+                            let iU = iH = noImg;
+                            let z = $("<div>").html(c);
+                            //console.log({iU,iH,c});
+                            if (cTy == 'comments') {
+                                iU = it.author[0].gd$image.src;
+                                iU.match("blogblog.com") && (iU = noImg);
                             }
                             else {
-                                if (itemContent.indexOf("//www.youtube.com/embed/") > -1) {
-                                    videoThumbUrl = item.media$thumbnail.url;
-                                    if (videoThumbUrl.includes("img.youtube.com")) {
-                                        videoThumbUrl = videoThumbUrl.replace("/default.jpg", "/maxresdefault.jpg");
-                                    }
+                                //console.log({tit,c},c.indexOf("//www.youtube.com/embed/"));
+                                if (c.indexOf("//www.youtube.com/embed/") > -1) {
+                                    iV = it.media$thumbnail.url;//v-mThumb	
+                                    //console.log({tit,iV});
+                                    (-1 !== iV.indexOf("img.youtube.com")) && (iV = iV.replace("/default.jpg", "/maxresdefault.jpg"));
                                 }
-                                if (itemContent.indexOf("<img") > -1) {
-                                    imageUrl = tempSnippetText.find("img:first").attr("src");
-                                    if (imageUrl.includes("/s72-c")) {
-                                        imageHighResUrl = imageUrl.replace("/s72-c", "/s1600");
-                                    } else if (imageUrl.includes("/w640-h424")) {
-                                        imageHighResUrl = imageUrl.replace("/w640-h424", "/s1600");
-                                    } else {
-                                        imageHighResUrl = imageUrl;
-                                    }
-                                    if (imageHighResUrl.includes("/s1600")) {
-                                        imageUrl = imageHighResUrl.replace("/s1600", `/s${imageSize}`);
-                                    }
+                                if (c.indexOf("<img") > -1) {
+                                    iU = z.find("img:first").attr("src");
+                                    (-1 !== iU.indexOf("/s72-c")) ? (iH = iU.replace("/s72-c", "/s1600")) : ((-1 !== iU.indexOf("/w640-h424")) ? iH = iU.replace("/w640-h424", "/s1600") : (iH = iU));
+                                    (-1 !== iH.indexOf("/s1600")) && (iU = iH.replace("/s1600", "/s" + s));
+                                    //console.log({s,iH,iU});
                                 }
                             }
-                            if (!videoThumbUrl) {
-                                videoThumbUrl = imageUrl;
-                            }
+                            (iV == "") && (iV = iU);
+                            //console.log({bTy,fTy,ty,p,iU,iH});
 
-                            let imageStyle = " object-fit:cover;height:100%!important;",
-                                imageClass = ' w-100 img-fluid',
-                                imageStyleFixed = ` background:url(${imageHighResUrl}) fixed center center;background-size:cover;`,
+                            let iS = " object-fit:cover;height:100%!important;",
+                                iC = ' w-100 img-fluid',
+                                iSF = ' background:url(' + iH + ') fixed center center;background-size:cover;',
                                 t = "";
-                            switch (finalItemType) {
-                                case C.TYPE.PHOTO: imageClass = aspectRatio; break;
-                                case C.TYPE.MINIMAL:
-                                    imageStyle += ' height:3rem!important;width:3rem;';
-                                    imageStyleFixed += ' height:3rem!important;width:3rem;';
-                                    imageClass = ' rounded-circle m-2';
+                            switch (fTy) {
+                                case "p": iC = ar; break;
+                                case "m":iS += ' height:3rem!important;width:3rem;';
+                                iSF += ' height:3rem!important;width:3rem;';
+                                iC = ' rounded-circle m-2'; break;
+                                case "q":
+                                    iS += ' height:6rem!important;width:6rem;';
+                                    iSF += ' height:6rem!important;width:6rem;';
+                                    iC = ' rounded-circle mx-auto mt-3'; break;
+                                case "t": iC = " col-4 h-100"; break;
+                                case "s":
+                                    var vY = (-1 !== iV.indexOf("img.youtube.com")) ? (iV.substr(iV.indexOf("/vi/") + 4, 11)) : "regular";
+                                    p == 0 && (t = '" data-toggle="tooltip" data-vidid="' + vY + '"', imS = '<figure class="m-0' + iC +(cor == " rounded" ? ' rounded-5 rounded-bottom' : cor) + '" style="' + iSF + bH + '" role="img" loading="lazy" title="' + ti + '" aria-label="' + ti + ' image"' + t + '></figure>');
+                                    iC += ar+' shadow-sm';
                                     break;
-                                case C.TYPE.QUOTE:
-                                    imageStyle += ' height:6rem!important;width:6rem;';
-                                    imageStyleFixed += ' height:6rem!important;width:6rem;';
-                                    imageClass = ' rounded-circle mx-auto mt-3';
-                                    break;
-                                case C.TYPE.TEXT: imageClass = " col-4 h-100"; break;
-                                case C.TYPE.SHOWCASE:
-                                    const videoIdYoutube = videoThumbUrl.includes("img.youtube.com") ? videoThumbUrl.substr(videoThumbUrl.indexOf("/vi/") + 4, 11) : "regular";
-                                    if (p === 0) {
-                                        t = ` data-toggle="tooltip" data-vidid="${videoIdYoutube}"`;
-                                        imageShowcaseHtml = `<figure class="m-0 ${imageClass}${cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle}" style="${imageStyleFixed}${blockHeightStyle}" role="img" loading="lazy" title="${itemTitle}" aria-label="${itemTitle} image"${t}></figure>`;
-                                    }
-                                    imageClass += `${aspectRatio} shadow-sm`;
-                                    break;
-                                case C.TYPE.VERTICAL: imageStyleFixed += blockHeightStyle; break;
+                                case "v": iSF += bH; break;
                             }
-                            if (isBlurred && contentType !== C.CONTENT.COMMENTS) {
-                                imageClass += ' blur-5';
-                            }
+                            isB && !(cTy == "comments") && (iC += ' blur-5');
 
-                            imageHtml = isImageFixed
-                                ? `<figure class="m-0 ${imageClass}" style="${imageStyleFixed}" role="img" loading="lazy" aria-label="${itemTitle} image"${t}></figure>`
-                                : `<img class="${imageClass}" style="${imageStyle}" src="${imageUrl}" alt="${itemTitle} image" loading="lazy" title="${itemTitle}"${t}/>`;
-                        }
+                            im = isF ? ('<figure class="m-0' + iC + '" style="' + iSF + '" role="img" loading="lazy" aria-label="' + ti + ' image"' + t + '></figure>') : ('<img class="' + iC + '" style="' + iS + '" src="' + iU + '" alt="' + ti + ' image" loading="lazy" title="' + ti + '" ' + t + '/>');
+                            //console.log({imS});
+                        }//IMAGE SETTINGS
 
-                        let buttonHtml = "";
-                        if (ctaText) {
-                            switch (finalItemType) {
-                                case C.TYPE.GALLERY: break;
-                                case C.TYPE.MINIMAL:
-                                    buttonHtml = `<span class="link-${theme} small">${ctaText}</span>`;
-                                    break;
+                        //CTA BUTTON (purely visual therefore button instead of a)
+                        let B = "";
+                        if (cta != "") {
+                            switch (fTy) {
+                                case "g": break;
+                                case "m": B = '<span class="link-'+thm+' small">'+cta+'</span>' ; break;
                                 default:
-                                    let buttonClasses = "btn";
-                                    if (cornerStyle !== " rounded" || finalItemType === C.TYPE.PHOTO || finalItemType === C.TYPE.QUOTE) {
-                                        buttonClasses += " rounded-0";
+                                    B = '<button class="btn ' +
+                                        ((cor != " rounded" || fTy == "p" || fTy == "q") ? 'rounded-0' : '') +
+                                        (isL ? " opacity-50" : " opacity-75");
+                                    switch (fTy) {
+                                        case "s": B += " p-3 px-lg-5 float-end"; break;
+                                        case "v": B += ' p-2 px-4  mx-lg-5 mt-4'; break;
+                                        case "p": case "q": B += ' py-2 px-3 w-100 text-end link-' + iThm; break;
+                                        case "t": B += ' mt-3'; break;
+                                        case "c": case "l": B += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
                                     }
-                                    if (isLowContrast) {
-                                        buttonClasses += " opacity-50";
-                                    } else {
-                                        buttonClasses += " opacity-75";
-                                    }
-
-                                    switch (finalItemType) {
-                                        case C.TYPE.SHOWCASE: buttonClasses += " p-3 px-lg-5 float-end"; break;
-                                        case C.TYPE.VERTICAL: buttonClasses += " p-2 px-4 mx-lg-5 mt-4"; break;
-                                        case C.TYPE.PHOTO:
-                                        case C.TYPE.QUOTE: 
-                                            buttonClasses += ` py-2 px-3 w-100 text-end link-${inverseTheme}`;
-                                            break;
-                                        case C.TYPE.TEXT: 
-                                            buttonClasses += " mt-3"; 
-                                            break;
-                                        case C.TYPE.CARD:
-                                        case C.TYPE.LIST: 
-                                            buttonClasses += " bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto"; 
-                                            break;
-                                    }
-
-                                    buttonClasses += ` border-0 btn-${theme}`;
-                                    buttonHtml = `<button class="${buttonClasses}" role="button" title="${itemTitle}">${ctaText}</button>`;
+                                    B += ' border-0 btn-' + thm + '" role="button" title="' + ti + '">' + cta + '</button>';
                             }
                         }
 
-                        if (isCarousel && p % (activeColumns * rowCount) === 0) {
-                            const slideIndex = p / (activeColumns * rowCount);
-                            const indicatorClasses = `bg-${inverseTheme}${p === 0 ? ' active' : ''}`;
-                            const ariaCurrent = p === 0 ? ' aria-current="true"' : '';
-                            const indicator = `<button type="button" data-bs-target="#m${blockId}" data-bs-slide-to="${slideIndex}" class="${indicatorClasses}"${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
-                            $(carouselIndicators).append(indicator);
-                        }
+                        //CAROUSEL INDICATORS
+                        isCa && (p % (aC * bR) == 0) && ($(cI).append('<button type="button" data-bs-target="#m' + mID + '" data-bs-slide-to="' + p / (aC * bR) + '" class="bg-' + iThm + (p == 0 ? (' active" aria-current="true"') : '"') + ' aria-label="Slide ' + (p / (aC * bR) + 1) + '"></button>'));
 
-                        if (finalItemType === C.TYPE.SHOWCASE && isFirstInstance && p === 0) {
-                            const featureImage = `
-                                <div class="feature-image card border-0 text-center bg-${theme} overflow-hidden rounded-0">
-                                    <div class="sIframe" style="display:none;"></div>
-                                    ${imageShowcaseHtml}
-                                    <a class="link-${inverseTheme}" href="${linkUrl}" title="${itemTitle}">
-                                        ${hasHeader ? `
-                                            <div class="sContent card-img-overlay rounded-0 ${cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${theme} mt-auto" style="height:fit-content;">
-                                                ${headerNormal}
-                                                ${snippetHtml}
-                                            </div>
-                                        ` : ""}
-                                        ${(hasImage || ctaText) ? buttonHtml : ""}
-                                    </a>
-                                </div>
-                            `;
-                            m.before(featureImage);
-                        }
+                        //SHOWCASE
+                        fTy == "s" && i1 && p == 0 && m.before('<div class="feature-image card border-0 text-center bg-' + thm + ' overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>' + imS + '<a class="link-' + iThm + '" href="' + li + '" title="' + ti + '">' + ((isH) ? ('<div class="sContent card-img-overlay rounded-0 ' + (cor == " rounded" && "rounded-top") + ' mx-md-5 p-3 px-lg-5 bg-' + thm + ' mt-auto" style="height:fit-content;">' + hN + ' ' + sni + '</div>') : "") + ((isI || cta != "") ? B : "") + '</a></div>');
 
-                        if (p === 0 || (isCarousel && p % (activeColumns * rowCount) === 0) || (blockType === C.TYPE.LIST && p === 1)) {
-                            let rowClasses = `row g-${gutter} mx-0`;
-                            if (isCarousel) {
-                                rowClasses += ' carousel-item';
-                                if (p === 0) {
-                                    rowClasses += ' active';
-                                }
+                        //WRAPPER - CAROUSEL & CONTENT
+                        if (p == 0 || (isCa && p % (aC * bR) == 0) || (bTy == "l" && p == 1)) {
+                            b += '<div class="row  g-' + bG + ' mx-0';
+                            isCa && ((b += ' carousel-item'), (p == 0) && (b += ' active'));
+                            //isCa && console.log({ tit, bTy, fTy, p, b });
+                            isC && (bTy == "l") && (b += ' col flex-grow-1');
+                            (fTy != "v") && (!(isC && (fTy == "t" || fTy == "c")) && (b += ' pb-' + bG), (isCa || isNav) && (b += ' px-2 px-sm-3 px-md-4 px-lg-5'));
+                            switch (bC) {
+                                case 1: b += ' row-cols-1">'; break;
+                                case 2: b += ' row-cols-1 row-cols-sm-1 row-cols-md-2">'; break;
+                                case 3: b += ' row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3">'; break;
+                                case 4: b += ' row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4">'; break;
+                                case 5: b += ' row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5">'; break;
+                                case 6: b += ' row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6">'; break;
                             }
-                            if (isCompound && blockType === C.TYPE.LIST) {
-                                rowClasses += ' col flex-grow-1';
-                            }
-                            if (finalItemType !== C.TYPE.VERTICAL) {
-                                if (!(isCompound && (finalItemType === C.TYPE.TEXT || finalItemType === C.TYPE.CARD))) {
-                                    rowClasses += ` pb-${gutter}`;
-                                }
-                                if (isCarousel || isNav) {
-                                    rowClasses += ' px-2 px-sm-3 px-md-4 px-lg-5';
-                                }
-                            }
-                            switch (columnCount) {
-                                case 1: rowClasses += ' row-cols-1'; break;
-                                case 2: rowClasses += ' row-cols-1 row-cols-sm-1 row-cols-md-2'; break;
-                                case 3: rowClasses += ' row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3'; break;
-                                case 4: rowClasses += ' row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4'; break;
-                                case 5: rowClasses += ' row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5'; break;
-                                case 6: rowClasses += ' row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6'; break;
-                            }
-                            blockBodyHtml += `<div class="${rowClasses}">`;
                         }
+                        //console.log({tit,p,b});
 
-                        let articleClasses = 'col d-inline-flex';
-                        let articleAttributes = '';
-                        if (finalItemType === C.TYPE.SHOWCASE) {
-                            const videoIdYoutube = videoThumbUrl.includes("img.youtube.com") ? videoThumbUrl.substr(videoThumbUrl.indexOf("/vi/") + 4, 11) : "regular";
-                            articleClasses += ' sPost';
-                            articleAttributes = ` data-title="${itemTitle}" data-link="${linkUrl}" data-summary="${tempSnippetText}" data-vidid="${videoIdYoutube}" data-img="${videoThumbUrl}" data-toggle="tooltip"`;
-                        } else if (finalItemType === C.TYPE.VERTICAL) {
-                            articleAttributes = ` style="${blockHeightStyle}"`;
-                        }
-                        blockBodyHtml += `<article class="${articleClasses}"${articleAttributes} role="article">`;
+                        //ARTICLE START
+                        b += '<article class="col d-inline-flex' + (fTy == "s" ? (' sPost" data-title="' + ti + '" data-link="' + li + '" data-summary="' + z + '" data-vidid="' + vY + '" data-img="' + iV + '" data-toggle="tooltip"') : (fTy == "v" ?'" style='+bH+'"':'"')) + ' role="article">';
 
-                        if (finalItemType !== C.TYPE.SHOWCASE) {
-                            let aClasses = 'overflow-hidden w-100 shadow-sm';
-                            aClasses += finalItemType !== C.TYPE.VERTICAL ? cornerStyle : ' rounded-0';
-                            aClasses += finalItemType !== C.TYPE.MINIMAL ? ' card' : ` text-bg-${inverseTheme}`;
-                            aClasses += isRounded ? ` border border-3 border-opacity-75 border-${theme}` : ' border-0';
+                        //LINK START
+                        fTy != "s" && (b += '<a class="overflow-hidden w-100 shadow-sm' +
+                        (fTy != "v" ? cor : ' rounded-0') +
+                        (fTy != "m" ? ' card' : ' text-bg-'+iThm) +
+                        (isR ? (' border border-3 border-opacity-75 border-' + thm) : ' border-0') +
+                            ((fTy == "q" || fTy == "v") ? ' text-center h-100' : ((fTy == "t"||fTy=="m") ? " row g-0" : ((fTy == "l" || fTy == "c" || fTy == "g") ? ar + (fTy == "l" ? ' mt-' + bG : '') : ""))) + '" href="' + li + '" title="' + ti + '">');
 
-                            if (finalItemType === C.TYPE.QUOTE || finalItemType === C.TYPE.VERTICAL) {
-                                aClasses += ' text-center h-100';
-                            } else if (finalItemType === C.TYPE.TEXT || finalItemType === C.TYPE.MINIMAL) {
-                                aClasses += ' row g-0';
-                            } else if (finalItemType === C.TYPE.LIST || finalItemType === C.TYPE.CARD || finalItemType === C.TYPE.GALLERY) {
-                                aClasses += aspectRatio;
-                                if (finalItemType === C.TYPE.LIST) {
-                                    aClasses += ` mt-${gutter}`;
-                                }
-                            }
-                            blockBodyHtml += `<a class="${aClasses}" href="${linkUrl}" title="${itemTitle}">`;
-                        }
+                        //IMAGE
+                        isI && (b += im);
 
-                        hasImage && (blockBodyHtml += imageHtml);
-
-                        if (hasHeader && finalItemType !== C.TYPE.SHOWCASE && finalItemType !== C.TYPE.GALLERY) {
-                            let contentClasses = '';
-                            switch (finalItemType) {
-                                case C.TYPE.MINIMAL:
-                                    blockBodyHtml += '<div class="col p-2 ps-0">';
-                                    break;
-                                case C.TYPE.TEXT:
-                                    if (hasImage) {
-                                        blockBodyHtml += '<div class="col-8 h-100">';
-                                    }
-                                case C.TYPE.PHOTO:
-                                case C.TYPE.QUOTE:
-                                    contentClasses = 'card-body';
-                                    if (theme !== C.THEME.LIGHT && (finalItemType === C.TYPE.PHOTO || (blockType === C.TYPE.LIST && finalItemType === C.TYPE.TEXT))) {
-                                        contentClasses += ` h-100 bg-opacity-75 text-bg-${theme}`;
-                                    } else {
-                                        contentClasses += ` text-${inverseTheme}`;
-                                    }
-                                    blockBodyHtml += `<div class="${contentClasses}">`;
-                                    break;
-                                case C.TYPE.LIST:
-                                    blockBodyHtml += `<div class="text-bg-${theme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
-                                case C.TYPE.CARD:
-                                    contentClasses = `text-bg-${theme} bg-opacity-75 rounded-0 p-5`;
-                                    switch (textAlignV) {
-                                        case C.V_ALIGN.TOP: contentClasses += ' h-auto'; break;
-                                        case C.V_ALIGN.MIDDLE: contentClasses += ' h-auto top-50 translate-middle-y'; break;
-                                        case C.V_ALIGN.BOTTOM: contentClasses += ' h-auto bottom-0" style="top:auto;'; break;
-                                        case C.V_ALIGN.OVERLAY: break;
-                                    }
-                                    blockBodyHtml += `<div class="${contentClasses}">`;
-                                    break;
-                                case C.TYPE.VERTICAL:
-                                    if (finalItemType === C.TYPE.VERTICAL) {
-                                        contentClasses = `text-bg-${theme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${cornerStyle === " rounded" && textAlignV !== C.V_ALIGN.OVERLAY ? ' rounded-5' : cornerStyle} start-50 translate-middle`;
-                                        switch (textAlignV) {
-                                            case C.V_ALIGN.TOP: contentClasses += '-x mt-5'; break;
-                                            case C.V_ALIGN.MIDDLE: contentClasses += ' top-50'; break;
-                                            case C.V_ALIGN.BOTTOM: contentClasses += '-x bottom-0 mb-5'; break;
-                                            case C.V_ALIGN.OVERLAY: contentClasses += ' top-50 h-100 w-100'; break;
+                        //TEXT
+                        if (isH && fTy != "s" && fTy != "g") {
+                            switch (fTy) {
+                                case "m": b+= '<div class="col p-2 ps-0">'; break;
+                                    case "t": isI && (b += '<div class="col-8 h-100">');
+                                    case "p": case "q": b += '<div class="card-body' + (thm != "light" && (fTy == "p" || (bTy == "l" && fTy == "t")) ? (' h-100 bg-opacity-75 text-bg-' + thm) : ' text-'+ iThm) + '">';
+                                        break;
+                                    case "l": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>';
+                                    case "c": b += '<div class="text-bg-' + thm + ' bg-opacity-75 rounded-0 p-5';
+                                        switch (tva) {
+                                            case "top": b += ' h-auto">'; break;
+                                            case "middle": b += ' h-auto top-50 translate-middle-y">'; break;
+                                            case "bottom": b += ' h-auto bottom-0" style="top:auto;">'; break;
+                                            case "overlay": b += '">'; break;
                                         }
-                                        blockBodyHtml += `<div class="${contentClasses}">`;
-                                    }
-                                    break;
-                            }
+                                        break;
+                                    case "v": fTy == "v" && (b += '<div class="text-bg-' + thm + ' bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ' + ((cor == " rounded" && tva != "overlay") ? ' rounded-5' : cor) + ' start-50 translate-middle');
+                                        switch (tva) {
+                                            case "top": b += '-x mt-5">'; break;
+                                            case "middle": b += ' top-50">'; break;
+                                            case "bottom": b += '-x  bottom-0 mb-5">'; break;
+                                            case "overlay": b += ' top-50 h-100 w-100">'; break;
+                                        }
+                                }
 
-                            blockBodyHtml += authorHtml + dateHtml;
-                            blockBodyHtml += finalItemType === C.TYPE.VERTICAL ? headerDisplay : (finalItemType === C.TYPE.MINIMAL ? headerMinimal : headerNormal);
-                            blockBodyHtml += snippetHtml;
-                            if (finalItemType !== C.TYPE.PHOTO && finalItemType !== C.TYPE.QUOTE) {
-                                blockBodyHtml += buttonHtml;
-                            }
+                                b += a+d;
+                                (fTy == "v") ? b += hD : (fTy=='m') ? b+=hM : b += hN;
+                                b += sni;
+                                !(fTy == "p" || fTy == "q") && (b += B);//CTA 
 
-                            blockBodyHtml += '</div>';
-                            if (finalItemType === C.TYPE.TEXT && hasImage) {
-                                blockBodyHtml += '</div>';
-                            }
-                            if (finalItemType === C.TYPE.PHOTO || finalItemType === C.TYPE.QUOTE) {
-                                blockBodyHtml += buttonHtml;
-                            }
-                        }
+                                b += '</div>';
+                                fTy == "t" && isI && (b += '</div>');
+                                (fTy == "p" || fTy == "q") && (b += B);//CTA - card footer type
+                            }//TEXT
+                        fTy != "s" && (b += '</a>');
+                        b += '</article>';
 
-                        finalItemType != C.TYPE.SHOWCASE && (blockBodyHtml += '</a>');
-                        blockBodyHtml += '</article>';
+                        (p == (l - 1) || (isCa && (p % (aC * bR) == (aC * bR - 1)))) && (b += '</div>');
+                        //isCa&&console.log({tit,p,b});
+                    }//feed
 
-                        (p == (postCount - 1) || (isCarousel && (p % (activeColumns * rowCount) == (activeColumns * rowCount - 1)))) && (blockBodyHtml += '</div>');
-                    }
+                    if (isCa || isNav) {
+                        b += '</div>';
 
-                    if (isCarousel || isNav) {
-                        blockBodyHtml += '</div>';
+                        //CAROUSEL NAVIGATION AND WRAPPER CLOSURE
+                        let L = R = "";
+                        L = '<button class="carousel-control-prev link-secondary' + (isNav ? " nav-prev" : " pb-5") + '" type="button" title="Click for Previous" data-bs-target="#m' + mID + '" data-bs-slide="prev" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg><span class="visually-hidden">Previous</span></button>', R = '<button class="carousel-control-next link-secondary' + (isNav ? " nav-next" : " pb-5") + '" title="Click for Next" type="button" data-bs-target="#m' + mID + '" data-bs-slide="next" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg><span class="visually-hidden">Next</span></button>';
+                        b += isCa ? (L + R) : "";
+                        m.append(b);
+                        m.append(cI);
+                        isNav && ((S > 1) && m.append(L), (S < tS) && m.append(R));
+                    } else { m.append(b); }
 
-                        const prevClasses = `carousel-control-prev link-secondary${isNav ? ' nav-prev' : ' pb-5'}`;
-                        const nextClasses = `carousel-control-next link-secondary${isNav ? ' nav-next' : ' pb-5'}`;
-                        const carouselLeft = `<button class="${prevClasses}" type="button" title="Click for Previous" data-bs-target="#m${blockId}" data-bs-slide="prev" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg><span class="visually-hidden">Previous</span></button>`;
-                        const carouselRight = `<button class="${nextClasses}" title="Click for Next" type="button" data-bs-target="#m${blockId}" data-bs-slide="next" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg><span class="visually-hidden">Next</span></button>`;
-                        blockBodyHtml += isCarousel ? (carouselLeft + carouselRight) : "";
-                        m.append(blockBodyHtml);
-                        m.append(carouselIndicators);
-                        isNav && ((stage > 1) && m.append(carouselLeft), (stage < totalStages) && m.append(carouselRight));
-                    } else { m.append(blockBodyHtml); }
-
-                    let navHtml = "";
-                    if (moreText || blockType !== C.TYPE.VERTICAL) {
-                        navHtml += `<nav aria-label="Page navigation" class="st${stage} w-100 pe-5 py-5 pagination justify-content-end bg-${theme}">`;
-                    }
-                    if (moreText != "") {
-                        for (let i = 0; i < fe.feed.link.length; i++) {
-                            const linkItem = fe.feed.link[i];
-                            if ("alternate" == linkItem.rel) {
-                                const moreLink = linkItem.href;
-                                const moreLinkClasses = `text-bg-${theme} border-0 ${isLowContrast ? 'opacity-50' : 'opacity-75'}`;
-                                navHtml += `<a class="${moreLinkClasses}" href="${moreLink}?&max-results=12" title="Click for More">${moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>`;
+                    //BLOCK FOOTER - JUMP-LINK
+                    //console.log((!(!isMo && bTy=='v')),ty);
+                    let n = "";
+                    (!(mo == "" && bTy == 'v')) && (n += '<nav aria-label="Page navigation" class="st' + S + ' w-100 pe-5 py-5 pagination justify-content-end bg-' + thm + '">');
+                    if (mo != "") {
+                        for (i = 0; i < fe.feed.link.length; i++) {
+                            var r = fe.feed.link[i];
+                            if ("alternate" == r.rel) {
+                                var moLi = r.href;
+                                //console.log(tit,r,r.href,r.rel);
+                                n += '<a class="text-bg-' + thm + ' border-0 ' + (isL ? "opacity-50" : "opacity-75") + '" href="' + moLi + '?&max-results=12" title="Click for More">' + mo + ' <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>';
                             }
                         }
                     }
-                    if (moreText || blockType !== C.TYPE.VERTICAL) {
-                        navHtml += '</nav>';
-                    }
-                    m.after(navHtml);
-                }
+                    (!(mo == "" && bTy == 'v')) && (n += '</nav>');
+                    m.after(n);
+                }//if
                 else {
-                    switch (contentType) {
-                        case C.CONTENT.RECENT: element.append(`<div class="text-center text-bg-${theme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
-                        case C.CONTENT.COMMENTS: element.append(`<div class="text-center text-bg-${theme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
-                        default: element.append(`<div class="text-center text-bg-${theme} display-6 p-4 w-100">Sorry! No content found for "${label}"!</div>`);
+                    switch (cTy) {
+                        case "recent": e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No recent updates.</div>'); break;
+                        case "comments": e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>'); break;
+                        default: e.append('<div class="text-center text-bg-'+thm+' display-6 p-4 w-100">Sorry! No content found for "' + la + '"!</div>');
                     }
-                }
-            },
+                } //console.log(b);
+            },//success
             complete: function () {
+                //NAV
                 if (isNav) {
-                    element.find(".nav-prev").unbind('click').click(function () {
-                        const sC = (element.attr("data-s"));
-                        element.attr("data-s", +sC - 1);
-                        element.find(".st" + sC).fadeOut(); element.find(".st" + (sC - 1)).fadeIn();
+                    e.find(".nav-prev").unbind('click').click(function () {
+                        const sC = (e.attr("data-s"));
+                        e.attr("data-s", +sC - 1);
+                        //console.log(s-2);
+                        //console.log(el);
+                        //console.log(el.attr("data-s"));
+                        e.find(".st" + sC).fadeOut(); e.find(".st" + (sC - 1)).fadeIn();
                     });
-                    element.find(".nav-next").unbind('click').click(function () {
-                        const sC = (element.attr("data-s"));
-                        element.find(".st" + sC).fadeOut();
-                        element.attr("data-s", +sC + 1);
-                        (element.find(".st" + (+sC + 1)).length == 0) ? mBlocks(element) : element.find(".st" + (+sC + 1)).fadeIn();
+                    e.find(".nav-next").unbind('click').click(function () {
+                        const sC = (e.attr("data-s"));
+                        e.find(".st" + sC).fadeOut();
+                        //console.log(e.find(".st" +s).length==0);
+                        e.attr("data-s", +sC + 1);
+                        //console.log({ m, s: sC, t }, t == 0);
+                        (e.find(".st" + (+sC + 1)).length == 0) ? mBlocks(e) : e.find(".st" + (+sC + 1)).fadeIn();
                     });
-                }
-                if (blockType == C.TYPE.SHOWCASE) {
-                    const featureContainer = element.find(".feature-image");
-                    const featureFigure = featureContainer.find("figure"), featureIframe = featureContainer.find(".sIframe"), featureContent = featureContainer.find(".sContent");
-                    featureFigure.click(function () {
+                }//if
+                //SHOWCASE
+                if (bTy == "s") {
+                    const F = e.find(".feature-image");
+                    const f = F.find("figure"), i = F.find(".sIframe"), c = F.find(".sContent");
+                    f.click(function () {
                         let e = $(this).attr("data-vidid");
                         if (e !== "regular") {
-                            featureIframe.html(`<iframe src="https://www.youtube.com/embed/${e}?autoplay=1" allowfullscreen="" style="${blockHeightStyle}width:100%;" frameborder="0"></iframe>`), featureIframe.fadeIn(0), featureFigure.fadeOut(0),featureContent.fadeOut(0);
+                            i.html('<iframe src="https://www.youtube.com/embed/' + e + '?autoplay=1" allowfullscreen="" style="' + bH + 'width:100%;" frameborder="0"></iframe>'), i.fadeIn(0), f.fadeOut(0),c.fadeOut(0);
                         }
                     }),
-                        element.find(".sPost").map(function () {
+                        e.find(".sPost").map(function () {
                             $(this).click(function () {
                                 const v = $(this).attr("data-vidid"),
                                     t = $(this).attr("data-title");
-                                let fi = featureFigure.find("svg")||false;
+                                let fi = f.find("svg")||false;
                                 if (v.toLowerCase() != "regular") {
-                                    itemTitle = "Click here to load the video!";
-                                    if (fi.length === 0) { featureFigure.append(`<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`); } else { fi.fadeIn(0); }
-                                } else { itemTitle = t; fi.fadeOut(0); }
-                                featureFigure.attr({ style: `background:url(${$(this).attr("data-img")}) center center;background-size:cover;${blockHeightStyle}`, "data-vidid": v, title: itemTitle, "aria-label": itemTitle });
-                                featureIframe.fadeOut(0), featureFigure.fadeIn(0),
-                                    featureContent.fadeIn(0), featureContent.find("h5").html(t), featureContent.find("summary").html($(this).attr("data-summary")),
-                                    featureContainer.find("a").attr({ href: $(this).attr("data-link"), title: t }), featureContainer.find("button").attr("title", t);
-                            })
+                                    ti = "Click here to load the video!";
+                                    (fi.length==0)?f.append('<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>'):fi.fadeIn(0);
+                                } else { ti = t; fi.fadeOut(0); }
+//                                console.log(fi);
+                                f.attr({ style: "background:url(" + $(this).attr("data-img") + ") center center;background-size:cover;" + bH, "data-vidid": v, title: ti, "aria-label": ti });
+                                i.fadeOut(0), f.fadeIn(0),
+                                    c.fadeIn(0), c.find("h5").html(t), c.find("summary").html($(this).attr("data-summary")),
+                                    F.find("a").attr({ href: $(this).attr("data-link"), title: t }), F.find("button").attr("title", t);
+                                })
                         })
                 }
-            }
-        })
-    });
+                //(isCa)&&console.log(b);
+                //console.log(b);
+            }//complete
+        })//ajax
+    });//map
 }
