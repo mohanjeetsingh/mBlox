@@ -6,8 +6,10 @@
  * Released under the MIT license
  */
 function mBlocks(m) {
-    $(m).map(function () {
-        /* SETTINGS PULLED FROM USER PLACEMENT + VALIDATION + DEFAULT SETTINGS APPLICATION */
+    // Stage 1 jQuery Removal: Use native JS for element selection and looping.
+    const elements = (typeof m === 'string') ? document.querySelectorAll(m) : [m];
+
+    elements.forEach(function (rawElement) {
         const // Constants for block types, improving readability over single-character strings.
             BLOCK_TYPE_COVER = 'v',
             BLOCK_TYPE_SHOWCASE = 's',
@@ -20,39 +22,38 @@ function mBlocks(m) {
             BLOCK_TYPE_COMMENT = 'm';
 
         const
-            element = $(this), // The current .mBlock element
-            dataLabel = element.attr("data-label") || "Label Name missing", // Blogger label to fetch posts from
-            contentType = (element.attr("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
-            siteURL = element.attr("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
-            dataTitle = element.attr("data-title") || "", // Optional title for the block
-            dataDescription = element.attr("data-description") || "", // Optional description for the block
-            dataType = (element.attr("data-type") || "v-ih").toLowerCase(), // Combined type and component string (e.g., "s-ihs")
+            element = $(rawElement), // jQuery-wrapped element for remaining legacy code.
+            dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
+            contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
+            siteURL = rawElement.getAttribute("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
+            dataTitle = rawElement.getAttribute("data-title") || "", // Optional title for the block
+            dataDescription = rawElement.getAttribute("data-description") || "", // Optional description for the block
+            dataType = (rawElement.getAttribute("data-type") || "v-ih").toLowerCase(), // Combined type and component string (e.g., "s-ihs")
             blockType = dataType.substring(0, 1),// The base layout type (v, s, l, c, etc.)
             componentList = dataType.substring(1), // The components to display (i, h, s, a, d) 
-            dataTheme = (element.attr("data-theme") || "light").toLowerCase(),// Color theme [light, dark, primary, secondary]
+            dataTheme = (rawElement.getAttribute("data-theme") || "light").toLowerCase(),// Color theme [light, dark, primary, secondary]
             containsHeader = componentList.includes("h"), // 'h' for heading/title
             containsImage = componentList.includes("i"), // 'i' for image
             containsSnippet = componentList.includes("s"), // 's' for snippet
             containsAuthor = componentList.includes("a"), // 'a' for author
             containsDate = componentList.includes("d"); // 'd' for date
         
-        let sectionHeight = element.attr("data-iHeight");
+        let sectionHeight = rawElement.getAttribute("data-iHeight");
         if (!sectionHeight) {
             if (blockType === BLOCK_TYPE_COVER) sectionHeight = "100vh";
             else if (blockType === BLOCK_TYPE_SHOWCASE) sectionHeight = "70vh";
             else sectionHeight = "m";
         }
 
-        const
-            stageID = element.attr("data-s") || 1,// For paginated navigation, tracks the current page/stage
-            firstInstance = (element.attr("data-s") === undefined),// Is this the first time the block is being loaded?
-            postsPerBlock = parseInt(element.attr("data-posts") || 3); // Number of posts to fetch
+        const stageID = rawElement.getAttribute("data-s") || 1; // For paginated navigation, tracks the current page/stage
+        const firstInstance = !rawElement.hasAttribute("data-s"); // Is this the first time the block is being loaded?
+        const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
         
         const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
         const mBlockID = element.closest(".widget-content").parent(".widget").attr("ID") || (dataTitle + dataType + dataLabel); // Unique ID for the block
         
         let blurImage;
-        const dataBlur = (element.attr("data-iBlur") || "").toLowerCase();
+        const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
         if (dataBlur === "true") {
             blurImage = true;
         } else if (dataBlur === "false") {
@@ -63,9 +64,9 @@ function mBlocks(m) {
             blurImage = containsHeader && !excludedBlurTypes.includes(blockType);
         }
         let
-            columnCount = element.attr("data-cols"),// Number of columns for the grid
-            blockRows = parseInt(element.attr("data-rows") || 1),// Number of rows per carousel slide
-            isCarousel = (element.attr("data-isCarousel") || "").toLowerCase() == "true", // Check if the block should be a carousel
+            columnCount = rawElement.getAttribute("data-cols"), // Number of columns for the grid
+            blockRows = parseInt(rawElement.getAttribute("data-rows") || "1", 10), // Number of rows per carousel slide
+            isCarousel = (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true", // Check if the block should be a carousel
             containsNavigation = false,
             contentWrapper = "",
             feedURL = siteURL + "feeds/",
@@ -98,27 +99,27 @@ function mBlocks(m) {
                 if (response.feed.entry) {
                     const postsInFeed = response.feed.entry.length,//Total number of actual posts in feed
                         totalPostsAvailable = response.feed.openSearch$totalResults.$t, // Total posts available on the blog for this query
-                        snippetSize = element.attr("data-snippetSize") || 150, // Max characters for snippets
-                        cornerStyle = ((element.attr("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded", // 'sharp' or 'rounded' corners
+                        snippetSize = rawElement.getAttribute("data-snippetSize") || 150, // Max characters for snippets
+                        cornerStyle = ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded", // 'sharp' or 'rounded' corners
                         inverseTheme = (dataTheme == "light" ? "primary" : "light");// Inverse theme for contrast
                     
-                    let textVerticalAlign = (element.attr("data-textVAlign") || "").toLowerCase();
+                    let textVerticalAlign = (rawElement.getAttribute("data-textVAlign") || "").toLowerCase();
                     if (!textVerticalAlign) {
                         if (blockType === 'v') textVerticalAlign = "middle";
                         else if (blockType === 'l') textVerticalAlign = "bottom";
                         else textVerticalAlign = 'overlay';
                     }
                     const
-                        aspectRatio = ` ratio ratio-${(element.attr("data-ar") || "1x1").toLowerCase()}`,// Aspect ratio for media [1x1, 4x3, 16x9, etc.]
-                        bsGutter = element.attr("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
-                        isImageFixed = (element.attr("data-iFix") || "").toLowerCase() == "true", // Use fixed background images
-                        lowContrast = (element.attr("data-lowContrast") || "").toLowerCase() == "true", // Lower contrast for text/elements
-                        hasRoundedBorder = (element.attr("data-iBorder") || "").toLowerCase() == "true", // Add a border around items
-                        callToAction = element.attr("data-CTAText") || "", // Call-to-action button text
+                        aspectRatio = ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,// Aspect ratio for media [1x1, 4x3, 16x9, etc.]
+                        bsGutter = rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
+                        isImageFixed = (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true", // Use fixed background images
+                        lowContrast = (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true", // Lower contrast for text/elements
+                        hasRoundedBorder = (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true", // Add a border around items
+                        callToAction = rawElement.getAttribute("data-CTAText") || "", // Call-to-action button text
                         isComplexLayout = (blockType == BLOCK_TYPE_LIST || blockType == BLOCK_TYPE_SHOWCASE), // Flag for layouts with special structures
                         totalStages = Math.ceil(totalPostsAvailable / postsPerBlock);// Total pages/stages available for navigation
                     let blockBody = '',//block body
-                    moreText = element.attr("data-moreText") || "",
+                    moreText = rawElement.getAttribute("data-moreText") || "",
                     finalType = blockType;
 
                     // Disable carousel for single-post blocks or list-style blocks
@@ -128,32 +129,15 @@ function mBlocks(m) {
                     let windowInnerWidth = 0;
                     if (isCarousel || containsImage) { windowInnerWidth = window.innerWidth; }
 
-                    // --- Image Resolution Calculation ---
-                    // Determines the optimal image resolution to request based on column count and window size to save bandwidth.
-                    let imageResolution = 100;
-                    if (containsImage && !blurImage) {
-                        if (isImageFixed) { imageResolution = windowInnerWidth; } else {
-                            switch (columnCount) {
-                                case 1: imageResolution = windowInnerWidth;
-                                case 2: windowInnerWidth < 768 ? imageResolution = windowInnerWidth : imageResolution = windowInnerWidth / 2;
-                                case 3: windowInnerWidth < 768 ? imageResolution = windowInnerWidth : (windowInnerWidth < 992 ? imageResolution = windowInnerWidth / 2 : imageResolution = windowInnerWidth / 3);
-                                case 4: windowInnerWidth < 576 ? imageResolution = windowInnerWidth : (windowInnerWidth < 768 ? imageResolution = windowInnerWidth / 2 : (windowInnerWidth < 992 ? imageResolution = windowInnerWidth / 3 : imageResolution = windowInnerWidth / 4));
-                                case 5: windowInnerWidth < 576 ? imageResolution = windowInnerWidth / 2 : (windowInnerWidth < 768 ? imageResolution = windowInnerWidth / 3 : (windowInnerWidth < 1200 ? imageResolution = windowInnerWidth / 4 : imageResolution = windowInnerWidth / 5));
-                                case 6: windowInnerWidth < 576 ? imageResolution = windowInnerWidth / 3 : (windowInnerWidth < 992 ? imageResolution = windowInnerWidth / 4 : (windowInnerWidth < 1200 ? imageResolution = windowInnerWidth / 5 : imageResolution = windowInnerWidth / 6));
-                            }
-                        }
-                        imageResolution = Math.ceil(imageResolution / 100) * 100;
-                    }
-
                     if (firstInstance) {
-                        element.attr("data-s", stageID);
+                        rawElement.setAttribute("data-s", stageID);
 
                         //BLOCK HEADER - TITLE & DESCRIPTION
                         // Appends the main title and description for the entire block if provided.
                         if (dataTitle) element.append(`<div class="text-center m-0 bg-${dataTheme} py-5"><h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${lowContrast ? "opacity-50" : ""}">${dataTitle}</h4>${(dataDescription != "") ? `<span class="pb-3 text-black-50">${dataDescription}</span>` : ''}</div>`);
                     }
 
-                    if (typeof (columnCount) === "undefined") {
+                    if (columnCount === null) { // Only set default if data-cols is not present at all
                         switch (blockType) {
                             case BLOCK_TYPE_COVER: case BLOCK_TYPE_COMMENT: case BLOCK_TYPE_STACK: columnCount = 1; break;
                             case BLOCK_TYPE_PANCAKE: columnCount = 3; break;
@@ -163,10 +147,30 @@ function mBlocks(m) {
                             case BLOCK_TYPE_SHOWCASE: columnCount = 6; break;
                         }
                     } else { 
-                        columnCount = parseInt(columnCount); 
+                        columnCount = parseInt(columnCount, 10); 
                         if (columnCount < 1) columnCount = 1;
                         if (columnCount > 6) columnCount = 6;
                     }
+
+                    // --- Image Resolution Calculation ---
+                    // Determines the optimal image resolution to request based on column count and window size to save bandwidth.
+                    let imageResolution = 100;
+                    if (containsImage && !blurImage) {
+                        if (isImageFixed) {
+                            imageResolution = windowInnerWidth;
+                        } else {
+                            if (columnCount === 1) { imageResolution = windowInnerWidth; }
+                            else if (columnCount === 2) { imageResolution = windowInnerWidth < 768 ? windowInnerWidth : windowInnerWidth / 2; }
+                            else if (columnCount === 3) { imageResolution = windowInnerWidth < 768 ? windowInnerWidth : (windowInnerWidth < 992 ? windowInnerWidth / 2 : windowInnerWidth / 3); }
+                            else if (columnCount === 4) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth : (windowInnerWidth < 768 ? windowInnerWidth / 2 : (windowInnerWidth < 992 ? windowInnerWidth / 3 : windowInnerWidth / 4)); }
+                            else if (columnCount === 5) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth / 2 : (windowInnerWidth < 768 ? windowInnerWidth / 3 : (windowInnerWidth < 1200 ? windowInnerWidth / 4 : windowInnerWidth / 5)); }
+                            else if (columnCount >= 6) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth / 3 : (windowInnerWidth < 992 ? windowInnerWidth / 4 : (windowInnerWidth < 1200 ? windowInnerWidth / 5 : windowInnerWidth / 6)); }
+                        }
+                        imageResolution = Math.ceil(imageResolution / 100) * 100;
+                        if (imageResolution < 100) imageResolution = 100;
+                        if (imageResolution > 1600) imageResolution = 1600;
+                    }
+
 
                     // --- Carousel Column Calculation ---
                     // Adjusts the number of visible columns in a carousel based on the screen width for responsiveness.
@@ -193,7 +197,7 @@ function mBlocks(m) {
                     contentWrapper = document.createElement('div');
                     contentWrapper.id = 'm' + mBlockID;
                     const mBlockCode = $(contentWrapper);
-                    mBlockCode.appendTo(element).attr({ "data-bs-ride": "carousel" });
+                    mBlockCode.appendTo(rawElement).attr({ "data-bs-ride": "carousel" });
                     contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_TYPE_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
 
                     // === POST PROCESSING LOOP ===
@@ -291,8 +295,11 @@ function mBlocks(m) {
                                 tooltipAttributes = ``;
                             switch (finalType) {
                                 case BLOCK_TYPE_SHOWCASE:
-                                    let videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
-                                    if (postID === 0) { tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`; showcaseImageCode = `<figure class="m-0${imageBSClass}${cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle}" style="${fixedImageStyle}${articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`; }
+                                    const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
+                                    tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
+                                    if (postID === 0) { 
+                                        showcaseImageCode = `<figure class="m-0${imageBSClass}${cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle}" style="${fixedImageStyle}${articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`; 
+                                    }
                                     imageBSClass += aspectRatio+' shadow-sm';
                                     break;
                                 case BLOCK_TYPE_PANCAKE: imageBSClass = aspectRatio; break;
@@ -354,9 +361,10 @@ function mBlocks(m) {
                             }
                         }
 
-                        let videoID = "regular"; // Declare videoID in a higher scope
+                        let videoID = "regular"; // Default videoID
+                        if (finalType == BLOCK_TYPE_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                         // --- Article HTML Construction ---
-                        blockBody += `<article class="col d-inline-flex${(finalType == BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == BLOCK_TYPE_COVER ? `" style=${articleHeight}"`:'"'))} role="article">`;
+                        blockBody += `<article class="col d-inline-flex${(finalType == BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == BLOCK_TYPE_COVER ? `" style="${articleHeight}"` : '"'))} role="article">`;
 
                         // Link wrapper for the entire article (except for showcase items)
                         if (finalType !== BLOCK_TYPE_SHOWCASE) blockBody += `<a class="overflow-hidden w-100 shadow-sm${(finalType != BLOCK_TYPE_COVER ? cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${inverseTheme}`)}${(hasRoundedBorder ? ` border border-3 border-opacity-75 border-${dataTheme}` : ' border-0')}${((finalType == BLOCK_TYPE_QUOTE || finalType == BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == BLOCK_TYPE_STACK||finalType==BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == BLOCK_TYPE_LIST || finalType == BLOCK_TYPE_CARD || finalType == BLOCK_TYPE_GALLERY) ? `${aspectRatio}${(finalType == BLOCK_TYPE_LIST ? ` mt-${bsGutter}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
@@ -445,14 +453,14 @@ function mBlocks(m) {
                 // --- Navigation Event Handlers ---
                 if (containsNavigation) {
                     element.find(".nav-prev").unbind('click').click(function () {
-                        const currentStage = (element.attr("data-s"));
-                        element.attr("data-s", +currentStage - 1);
+                        const currentStage = (rawElement.getAttribute("data-s"));
+                        rawElement.setAttribute("data-s", +currentStage - 1);
                         element.find(".st" + currentStage).fadeOut(); element.find(".st" + (currentStage - 1)).fadeIn();
                     });
                     element.find(".nav-next").unbind('click').click(function () {
-                        const currentStage = (element.attr("data-s"));
+                        const currentStage = (rawElement.getAttribute("data-s"));
                         element.find(".st" + currentStage).fadeOut();
-                        element.attr("data-s", +currentStage + 1);
+                        rawElement.setAttribute("data-s", +currentStage + 1);
                         (element.find(".st" + (+currentStage + 1)).length == 0) ? mBlocks(element) : element.find(".st" + (+currentStage + 1)).fadeIn();
                     });
                 }//if
@@ -484,5 +492,5 @@ function mBlocks(m) {
                 }
             }//complete
         })//ajax
-    });//map
+    });//forEach
 }
