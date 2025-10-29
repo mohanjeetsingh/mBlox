@@ -20,16 +20,16 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
     > **Checkpoint:** After this stage, the script should still function correctly. You've only changed how the initial elements are looped over and how their `data-*` attributes are read.
 
     ### Stage 2: Replace AJAX with a JSONP Fetch Helper
-    This is a critical step. We'll replace `$.ajax` with a native solution for fetching JSONP data.
-    - [ ] **Create a `fetchJSONP` helper function:** This function will take a URL and a callback function as arguments. Inside, it will:
+    **[COMPLETED]** This is a critical step. We'll replace `$.ajax` with a native solution for fetching JSONP data.
+    - [x] **Create a `fetchJSONP` helper function:** This function will take a URL and a callback function as arguments. Inside, it will:
         1.  Create a unique callback function name (e.g., `jsonp_callback_12345`).
         2.  Attach this callback to the global `window` object.
         3.  Create a new `<script>` element.
         4.  Set its `src` to the feed URL, appending `&callback=window.jsonp_callback_12345`.
         5.  Append the script to the document head to trigger the request.
         6.  The global callback function will execute the original `success` logic, and then clean up by removing the script tag and the global callback function itself.
-    - [ ] **Replace `$.ajax()` call:** Use the new `fetchJSONP` helper to fetch the Blogger feed. The logic inside the `success` function will remain the same for now.
-    - [ ] **Move `complete` logic:** The logic from the `$.ajax` `complete` block should be moved to the end of the `fetchJSONP`'s callback, after the `success` logic has run.
+    - [x] **Replace `$.ajax()` call:** Use the new `fetchJSONP` helper to fetch the Blogger feed. The logic inside the `success` function will remain the same for now.
+    - [x] **Move `complete` logic:** The logic from the `$.ajax` `complete` block should be moved to the end of the `fetchJSONP`'s callback, after the `success` logic has run.
 
     > **Checkpoint:** The blocks should still load content correctly. The only change is the data fetching mechanism.
 

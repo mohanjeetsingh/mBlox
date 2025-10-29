@@ -5,6 +5,39 @@
  * Copyright (c) 2022-2024, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
+
+// Stage 2 jQuery Removal: Native JSONP helper to replace $.ajax for JSONP calls.
+function fetchJSONP(url, options) {
+    const callbackName = `jsonp_callback_${Math.round(100000 * Math.random())}`;
+    const script = document.createElement('script');
+
+    // The URL already has query params, so we append the callback.
+    script.src = `${url}&callback=${callbackName}`;
+
+    window[callbackName] = function(data) {
+        // Cleanup the script and global callback function
+        delete window[callbackName];
+        document.head.removeChild(script);
+
+        // Execute the success and complete callbacks
+        if (options.success) {
+            options.success(data);
+        }
+        if (options.complete) {
+            options.complete();
+        }
+    };
+
+    // Basic error handling
+    script.onerror = function() {
+        delete window[callbackName];
+        document.head.removeChild(script);
+        console.error(`JSONP request to ${url} failed.`);
+        if (options.complete) options.complete();
+    };
+
+    document.head.appendChild(script);
+}
 function mBlocks(m) {
     // Stage 1 jQuery Removal: Use native JS for element selection and looping.
     const elements = (typeof m === 'string') ? document.querySelectorAll(m) : [m];
@@ -91,10 +124,7 @@ function mBlocks(m) {
         feedURL += `?alt=json-in-script&start-index=${(stageID - 1) * postsPerBlock + 1}&max-results=${postsPerBlock}`;
 
         //JSON PULL
-        $.ajax({
-            url: feedURL,
-            type: "get",
-            dataType: "jsonp",
+        fetchJSONP(feedURL, {
             success: function (response) {
                 if (response.feed.entry) {
                     const postsInFeed = response.feed.entry.length,//Total number of actual posts in feed
