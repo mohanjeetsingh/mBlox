@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-let s = !0;
+let isFirstScriptLoad = !0;
 
 function loadScripts(m, s) {
     if (s) {
@@ -20,7 +20,7 @@ function loadScripts(m, s) {
 
 //Intersection Observer for Lazy Loading
 window.addEventListener("load", (event) => {
-    document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock',s));
+    document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock',isFirstScriptLoad));
 
     const options = { rootMargin: '500px', threshold: 0.0 },
         T = document.getElementsByClassName("mBlockL");
@@ -28,10 +28,10 @@ window.addEventListener("load", (event) => {
     Array.prototype.forEach.call(T, function (m) { observer.observe(m) });
 }, false);
 
-function cFn(entries, observer) {
+const cFn = (entries, observer) => {
     entries.forEach((entry) => {
         if (entry.isIntersecting) {
-            (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target,s));
+            (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target,isFirstScriptLoad));
             observer.unobserve(entry.target);
         }
     });
