@@ -237,27 +237,28 @@ function _createPostHtml(post, postID, config) {
                 ctaButtonCode = `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
                 break;
             default:
-                ctaButtonCode = `<button class="btn ${((config.cornerStyle != " rounded" || finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')}${(config.lowContrast ? " opacity-50" : " opacity-75")}`;
+                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
                 switch (finalType) {
                     case config.BLOCK_TYPE_SHOWCASE:
-                        ctaButtonCode += " p-3 px-lg-5 float-end";
+                        ctaClasses += " p-3 px-lg-5 float-end";
                         break;
                     case config.BLOCK_TYPE_COVER:
-                        ctaButtonCode += ' p-2 px-4  mx-lg-5 mt-4';
+                        ctaClasses += ' p-2 px-4 mx-lg-5 mt-4';
                         break;
                     case config.BLOCK_TYPE_PANCAKE:
                     case config.BLOCK_TYPE_QUOTE:
-                        ctaButtonCode += ' py-2 px-3 w-100 text-end link-' + config.inverseTheme;
+                        ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`;
                         break;
                     case config.BLOCK_TYPE_STACK:
-                        ctaButtonCode += ' mt-3';
+                        ctaClasses += ' mt-3';
                         break;
                     case config.BLOCK_TYPE_CARD:
                     case config.BLOCK_TYPE_LIST:
-                        ctaButtonCode += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto';
+                        ctaClasses += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto';
                         break;
                 }
-                ctaButtonCode += ` border-0 btn-${config.dataTheme}" role="button" title="${postTitle}">${config.callToAction}</button>`;
+                ctaClasses += ` border-0 btn-${config.dataTheme}`;
+                ctaButtonCode = `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
         }
     }
 
