@@ -335,6 +335,25 @@ function _createPostHtml(post, postID, config) {
 }
 
 /**
+ * Creates the HTML for the main block header (title and description).
+ * @param {object} config The configuration object for the block.
+ * @returns {string} The HTML string for the block header, or an empty string if no title is provided.
+ */
+function _createBlockHeader(config) {
+    if (!config.dataTitle) {
+        return '';
+    }
+
+    const descriptionHTML = config.dataDescription ? `<span class="pb-3 text-black-50">${config.dataDescription}</span>` : '';
+    const titleClasses = `display-5 fw-bold text-${config.inverseTheme} py-3 m-0 ${config.lowContrast ? "opacity-50" : ""}`;
+
+    return `<div class="text-center m-0 bg-${config.dataTheme} py-5">
+                <h4 class="${titleClasses}">${config.dataTitle}</h4>
+                ${descriptionHTML}
+            </div>`;
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -481,7 +500,7 @@ function mBlocks(blockItem) {
                     // Consolidate all configuration variables into a single blockConfig object.
                     // This simplifies passing data to helper functions.
                     const blockConfig = {
-                        siteURL, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction,
+                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction,
                         // Pass block-type constants
                         BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
@@ -493,7 +512,7 @@ function mBlocks(blockItem) {
 
                         // --- Block Header (Title & Description) ---
                         // Appends the main title and description for the entire block if provided.
-                        if (dataTitle) rawElement.insertAdjacentHTML('beforeend', `<div class="text-center m-0 bg-${dataTheme} py-5"><h4 class="display-5 fw-bold text-${inverseTheme} py-3 m-0 ${lowContrast ? "opacity-50" : ""}">${dataTitle}</h4>${(dataDescription != "") ? `<span class="pb-3 text-black-50">${dataDescription}</span>` : ''}</div>`);
+                        rawElement.insertAdjacentHTML('beforeend', _createBlockHeader(blockConfig));
                     }
 
                     if (columnCount === null) { // Only set default if data-cols is not present at all

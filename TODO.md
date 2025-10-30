@@ -24,7 +24,7 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
 
     ### **Stage 3: Extract Structural and Event Logic**
     *Goal: Clean up the main `mBlocks` function by extracting the remaining pieces of logic.*
-    - [ ] **Step 3.1: Extract Block Header.** Create a `_createBlockHeader(config)` function. Move the block title and description HTML generation from `mBlocks` into this new function and convert it to a template literal.
+    - [x] **Step 3.1: Extract Block Header.** Create a `_createBlockHeader(config)` function. Move the block title and description HTML generation from `mBlocks` into this new function and convert it to a template literal.
     - [ ] **Step 3.2: Extract Block Footer.** Create a `_createBlockFooter(config, response)` function. Move the "View All" footer/navigation logic from `mBlocks` into this new function and convert it to a template literal.
     - [ ] **Step 3.3: Extract Carousel Controls.** Create a `_createCarouselControls(config)` function. Move the `previousButtonCode` and `nextButtonCode` generation from `mBlocks` into this function and convert it to a template literal.
     - [ ] **Step 3.4: Extract Showcase Event Binding.** Create a `_bindShowcaseEvents(rawElement, config)` function. Move the event binding logic specific to the Showcase layout from the `complete` callback into this new function.
