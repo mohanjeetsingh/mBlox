@@ -47,6 +47,283 @@ function fetchJSONP(url, options) {
 }
 
 /**
+ * Calculates the optimal image resolution based on layout and screen size.
+ * This helps in requesting appropriately sized images from Blogger's servers to save bandwidth.
+ * @param {boolean} isImageFixed - Whether the image is a fixed background.
+ * @param {number} columnCount - The number of columns in the layout.
+ * @param {number} windowInnerWidth - The width of the browser window.
+ * @returns {number} The calculated image resolution, rounded up to the nearest 100.
+ */
+function calculateImageResolution(isImageFixed, columnCount, windowInnerWidth) {
+    let resolution = 100;
+    if (isImageFixed) {
+        resolution = windowInnerWidth;
+    } else {
+        if (columnCount === 1) { resolution = windowInnerWidth; }
+        else if (columnCount === 2) { resolution = windowInnerWidth < 768 ? windowInnerWidth : windowInnerWidth / 2; }
+        else if (columnCount === 3) { resolution = windowInnerWidth < 768 ? windowInnerWidth : (windowInnerWidth < 992 ? windowInnerWidth / 2 : windowInnerWidth / 3); }
+        else if (columnCount === 4) { resolution = windowInnerWidth < 576 ? windowInnerWidth : (windowInnerWidth < 768 ? windowInnerWidth / 2 : (windowInnerWidth < 992 ? windowInnerWidth / 3 : windowInnerWidth / 4)); }
+        else if (columnCount === 5) { resolution = windowInnerWidth < 576 ? windowInnerWidth / 2 : (windowInnerWidth < 768 ? windowInnerWidth / 3 : (windowInnerWidth < 1200 ? windowInnerWidth / 4 : windowInnerWidth / 5)); }
+        else if (columnCount >= 6) { resolution = windowInnerWidth < 576 ? windowInnerWidth / 3 : (windowInnerWidth < 992 ? windowInnerWidth / 4 : (windowInnerWidth < 1200 ? windowInnerWidth / 5 : windowInnerWidth / 6)); }
+    }
+    resolution = Math.ceil(resolution / 100) * 100;
+    if (resolution < 100) resolution = 100;
+    if (resolution > 1600) resolution = 1600;
+
+    return resolution;
+}
+
+/**
+ * Creates the HTML for a single post item.
+ * This is a helper function for mBlocks.
+ * @param {object} post The post data object from the Blogger feed.
+ * @param {number} postID The index of the post in the current feed batch.
+ * @param {object} config The configuration object for the block.
+ * @returns {{postHTML: string, showcaseHTML: string, carouselIndicator: string}} An object containing the HTML for the post and other related components.
+ */
+function _createPostHtml(post, postID, config) {
+    let postHTML = '';
+    let showcaseHTML = '';
+    let carouselIndicator = '';
+
+    const postTitle = post.title.$t,
+        postSnippet = (config.showSnippet || config.showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""));
+    let postAuthor = post.author[0].name.$t,
+        snippetText = "",
+        snippetCode = "";
+
+    // --- List Block Type Transformation ---
+    // For a 'list' block, the first post (postID 0) uses the 'l' style. 
+    // Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style for a more complex layout.
+    let finalType = config.blockType;
+    if (config.blockType === config.BLOCK_TYPE_LIST && postID > 0) {
+        if (config.showHeader) {
+            finalType = config.BLOCK_TYPE_STACK;
+            config.columnCount--;
+        } else {
+            finalType = config.BLOCK_TYPE_CARD;
+        }
+    }
+
+    // --- Author Info ---
+    let authorCode = '',
+        authorURL = "";
+    if (config.showAuthor) {
+        if (config.contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? config.siteURL : post.author[0].uri.$t;
+
+        // Author display varies by block type.
+        switch (finalType) {
+            case config.BLOCK_TYPE_QUOTE:
+                authorCode += `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
+                break;
+            case config.BLOCK_TYPE_COMMENT:
+                authorCode += `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
+                break;
+        }
+    }
+
+    // --- Date Formatting ---
+    let dateCode = ''; // Formats the publication date.
+    if (config.showDate) {
+        const formattedDate = config.dateFormatter.format(new Date(post.published.$t));
+        dateCode = `<span class="small fw-lighter">${(config.showAuthor ? ' &#8226; ' : '')} ${formattedDate}</span>`;
+    }
+
+    // --- Title / Header ---
+    let displayHeaderCode = "",
+        normalHeaderCode = "",
+        commentHeaderCode = "";
+    if (finalType === config.BLOCK_TYPE_QUOTE) {
+        normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
+    } else if (config.showHeader) {
+        displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
+        normalHeaderCode = `<h5 class="card-title fw-normal">${postTitle}</h5>`;
+        commentHeaderCode = `<span class="d-block my-2">"${postTitle}"</span>`;
+    }
+
+    // --- Snippet ---
+    if (config.showSnippet) {
+        (snippetText = postSnippet.replace(/<\S[^>]*>/g, "")).length > 70 && (snippetText = snippetText.substring(0, config.snippetSize) + "...");
+        snippetCode = `<summary class="list-unstyled${config.dataTheme == "light" ? ' text-muted' : ' opacity-75'}${finalType == config.BLOCK_TYPE_COVER ? ' py-3 d-block mx-lg-5' : ''}${config.lowContrast ? ' opacity-75' : ''}">${snippetText}</summary>`;
+    }
+
+    // --- Post Link ---
+    let postURL = "";
+    for (let linkIndex = 0; linkIndex < post.link.length; linkIndex++)
+        if ("alternate" == post.link[linkIndex].rel) {
+            postURL = post.link[linkIndex].href;
+            break;
+        }
+
+    // --- Image & Video Processing ---
+    // Extracts image or video thumbnail from the post content.
+    let imageCode = "",
+        videoThumbnailURL = "",
+        showcaseImageCode = ''; // This was missing
+    let highResImageURL = noImg; // Declare here to ensure it's in scope
+    if (config.showImage) {
+        let imageURL = noImg;
+        // Use DOMParser for robust HTML string parsing to find images/videos.
+        const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
+        if (config.contentType == 'comments') {
+            imageURL = post.author[0].gd$image.src;
+            if (imageURL.match("blogblog.com")) imageURL = noImg;
+        } else {
+            // Check for YouTube embeds to get a high-quality thumbnail.
+            if (postSnippet.indexOf("//www.youtube.com/embed/") > -1) {
+                videoThumbnailURL = post.media$thumbnail.url;
+                (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) && (videoThumbnailURL = videoThumbnailURL.replace("/default.jpg", "/maxresdefault.jpg"));
+            }
+            if (postSnippet.indexOf("<img") > -1) {
+                const firstImage = contentParser.querySelector("img");
+                // Extract image URL and attempt to get a higher resolution version from Blogger's image server.
+                imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
+                if (-1 !== imageURL.indexOf("/s72-c")) highResImageURL = imageURL.replace("/s72-c", "/s1600");
+                else if (-1 !== imageURL.indexOf("/w640-h424")) highResImageURL = imageURL.replace("/w640-h424", "/s1600");
+                else highResImageURL = imageURL;
+                if (-1 !== highResImageURL.indexOf("/s1600")) imageURL = highResImageURL.replace("/s1600", "/s" + config.imageResolution);
+            }
+        }
+        (videoThumbnailURL == "") && (videoThumbnailURL = imageURL);
+
+        // Prepare image classes and styles based on block type and settings.
+        let imageCoverStyle = " object-fit:cover;height:100%!important;",
+            imageBSClass = ' w-100 img-fluid',
+            fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
+            tooltipAttributes = ``;
+        switch (finalType) {
+            case config.BLOCK_TYPE_SHOWCASE:
+                const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
+                tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
+                if (postID === 0) {
+                    showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle}" style="${fixedImageStyle}${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
+                }
+                imageBSClass += config.aspectRatio + ' shadow-sm';
+                break;
+            case config.BLOCK_TYPE_PANCAKE:
+                imageBSClass = config.aspectRatio;
+                break;
+            case config.BLOCK_TYPE_COMMENT:
+                imageCoverStyle += ' height:3rem!important;width:3rem;';
+                fixedImageStyle += ' height:3rem!important;width:3rem;';
+                imageBSClass = ' rounded-circle m-2';
+                break;
+            case config.BLOCK_TYPE_QUOTE:
+                imageCoverStyle += ' height:6rem!important;width:6rem;';
+                fixedImageStyle += ' height:6rem!important;width:6rem;';
+                imageBSClass = ' rounded-circle mx-auto mt-3';
+                break;
+            case config.BLOCK_TYPE_STACK:
+                imageBSClass = " col-4 h-100";
+                break;
+            case config.BLOCK_TYPE_COVER:
+                fixedImageStyle += config.articleHeight;
+                break;
+        }
+        if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
+
+        imageCode = config.isImageFixed ? (`<figure class="m-0${imageBSClass}" style="${fixedImageStyle}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`) : (`<img class="${imageBSClass}" style="${imageCoverStyle}" src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`);
+    } //IMAGE SETTINGS
+
+    // --- CTA Button ---
+    let ctaButtonCode = "";
+    if (config.callToAction != "") {
+        switch (finalType) {
+            case config.BLOCK_TYPE_GALLERY:
+                break;
+            case config.BLOCK_TYPE_COMMENT:
+                ctaButtonCode = `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
+                break;
+            default:
+                ctaButtonCode = `<button class="btn ${((config.cornerStyle != " rounded" || finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')}${(config.lowContrast ? " opacity-50" : " opacity-75")}`;
+                switch (finalType) {
+                    case config.BLOCK_TYPE_SHOWCASE:
+                        ctaButtonCode += " p-3 px-lg-5 float-end";
+                        break;
+                    case config.BLOCK_TYPE_COVER:
+                        ctaButtonCode += ' p-2 px-4  mx-lg-5 mt-4';
+                        break;
+                    case config.BLOCK_TYPE_PANCAKE:
+                    case config.BLOCK_TYPE_QUOTE:
+                        ctaButtonCode += ' py-2 px-3 w-100 text-end link-' + config.inverseTheme;
+                        break;
+                    case config.BLOCK_TYPE_STACK:
+                        ctaButtonCode += ' mt-3';
+                        break;
+                    case config.BLOCK_TYPE_CARD:
+                    case config.BLOCK_TYPE_LIST:
+                        ctaButtonCode += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto';
+                        break;
+                }
+                ctaButtonCode += ` border-0 btn-${config.dataTheme}" role="button" title="${postTitle}">${config.callToAction}</button>`;
+        }
+    }
+
+    // --- Carousel Indicators ---
+    if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
+        carouselIndicator = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${postID / (config.actualColumnCount * config.blockRows)}" class="bg-${config.inverseTheme}${postID == 0 ? ' active' : ''}" ${postID == 0 ? 'aria-current="true"' : ''} aria-label="Slide ${postID / (config.actualColumnCount * config.blockRows) + 1}"></button>`;
+    }
+
+    // --- Showcase Block Specific ---
+    // The first post of a showcase block is handled separately to create the large featured image area.
+    if (finalType === config.BLOCK_TYPE_SHOWCASE && config.firstInstance && postID === 0) {
+        showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${(config.showHeader ? `<div class="sContent card-img-overlay rounded-0 ${(config.cornerStyle == " rounded" ? "rounded-top" : "")} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>` : "")}${(config.showImage || config.callToAction != "") ? ctaButtonCode : ""}</a></div>`;
+    }
+
+    // --- Article HTML Construction ---
+    let videoID = "regular"; // Default videoID
+    if (finalType == config.BLOCK_TYPE_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
+
+    postHTML += `<article class="col d-inline-flex${(finalType == config.BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == config.BLOCK_TYPE_COVER ? `" style="${config.articleHeight}"` : '"'))}" role="article">`;
+
+    // Link wrapper for the entire article (except for showcase items)
+    if (finalType !== config.BLOCK_TYPE_SHOWCASE) postHTML += `<a class="overflow-hidden w-100 shadow-sm${(finalType != config.BLOCK_TYPE_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != config.BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((finalType == config.BLOCK_TYPE_QUOTE || finalType == config.BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == config.BLOCK_TYPE_STACK||finalType==config.BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == config.BLOCK_TYPE_LIST || finalType == config.BLOCK_TYPE_CARD || finalType == config.BLOCK_TYPE_GALLERY) ? `${config.aspectRatio}${(finalType == config.BLOCK_TYPE_LIST ? ` mt-${config.gutterSize}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
+
+    //IMAGE
+    if (config.showImage) postHTML += imageCode; // Add image HTML if it exists
+
+    // --- Text Content ---
+    if (config.showHeader && finalType != config.BLOCK_TYPE_SHOWCASE && finalType != config.BLOCK_TYPE_GALLERY) {
+        switch (finalType) {
+            case config.BLOCK_TYPE_COMMENT: postHTML += `<div class="col p-2 ps-0">`; break;
+                case config.BLOCK_TYPE_STACK: config.showImage && (postHTML += '<div class="col-8 h-100">');
+                case config.BLOCK_TYPE_PANCAKE: case config.BLOCK_TYPE_QUOTE: postHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == config.BLOCK_TYPE_PANCAKE || (config.blockType == config.BLOCK_TYPE_LIST && finalType == config.BLOCK_TYPE_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
+                    break;
+                case config.BLOCK_TYPE_LIST: postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
+                case config.BLOCK_TYPE_CARD: postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
+                    switch (config.textVerticalAlign) {
+                        case "top": postHTML += ' h-auto">'; break;
+                        case "middle": postHTML += ' h-auto top-50 translate-middle-y">'; break;
+                        case "bottom": postHTML += ' h-auto bottom-0" style="top:auto;">'; break;
+                        case "overlay": postHTML += '">'; break;
+                    }
+                    break;
+                case config.BLOCK_TYPE_COVER: finalType == config.BLOCK_TYPE_COVER && (postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
+                    switch (config.textVerticalAlign) {
+                        case "top": postHTML += '-x mt-5">'; break;
+                        case "middle": postHTML += ' top-50">'; break;
+                        case "bottom": postHTML += '-x  bottom-0 mb-5">'; break;
+                        case "overlay": postHTML += ' top-50 h-100 w-100">'; break;
+                    }
+            }
+
+            postHTML += `${authorCode}${dateCode}`;
+            if (finalType === config.BLOCK_TYPE_COVER) postHTML += displayHeaderCode; else if (finalType === config.BLOCK_TYPE_COMMENT) postHTML += commentHeaderCode; else postHTML += normalHeaderCode;
+            postHTML += snippetCode;
+            !(finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) && (postHTML += ctaButtonCode);//CTA 
+
+            postHTML += `</div>`;
+            if (finalType === config.BLOCK_TYPE_STACK && config.showImage) postHTML += `</div>`;
+            if (finalType === config.BLOCK_TYPE_PANCAKE || finalType === config.BLOCK_TYPE_QUOTE) postHTML += ctaButtonCode;// CTA for card-footer style
+        }//TEXT
+    if (finalType !== config.BLOCK_TYPE_SHOWCASE) postHTML += `</a>`;
+
+    postHTML += `</article>`;
+
+    return { postHTML, showcaseHTML, carouselIndicator };
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -172,9 +449,6 @@ function mBlocks(blockItem) {
                     // Disable carousel for single-post blocks or list-style blocks
                     (postsPerBlock <= 1 || blockType == BLOCK_TYPE_LIST) && (isCarousel = false);
                     (contentType == "comments") && (moreText="");
-                    
-                    let windowInnerWidth = 0;
-                    if (isCarousel || showImage) { windowInnerWidth = window.innerWidth; }
 
                     // Create the date formatter once, outside the loop, for efficiency.
                     const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', {
@@ -182,6 +456,26 @@ function mBlocks(blockItem) {
                         month: 'short', // Use 'short' to match original format (e.g., "Oct")
                         day: 'numeric'
                     }) : null;
+                    
+                    let windowInnerWidth = 0;
+                    if (isCarousel || showImage) { windowInnerWidth = window.innerWidth; }
+
+                    // --- Image Resolution Calculation ---
+                    // Determines the optimal image resolution to request from Blogger's servers based on column count and window size to save bandwidth.
+                    let imageResolution = 100;
+                    if (showImage && !blurImage) {
+                        imageResolution = calculateImageResolution(isImageFixed, columnCount, windowInnerWidth);
+                    }
+
+                    // Consolidate all configuration variables into a single blockConfig object.
+                    // This simplifies passing data to helper functions.
+                    const blockConfig = {
+                        siteURL, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction,
+                        // Pass block-type constants
+                        BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
+                        // Pass other dynamic variables needed inside the helper
+                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize
+                    };
 
                     if (firstInstance) {
                         rawElement.setAttribute("data-s", stageID);
@@ -206,39 +500,22 @@ function mBlocks(blockItem) {
                         if (columnCount > 6) columnCount = 6;
                     }
 
-                    // --- Image Resolution Calculation ---
-                    // Determines the optimal image resolution to request from Blogger's servers based on column count and window size to save bandwidth.
-                    let imageResolution = 100;
-                    if (showImage && !blurImage) {
-                        if (isImageFixed) {
-                            imageResolution = windowInnerWidth;
-                        } else {
-                            if (columnCount === 1) { imageResolution = windowInnerWidth; }
-                            else if (columnCount === 2) { imageResolution = windowInnerWidth < 768 ? windowInnerWidth : windowInnerWidth / 2; }
-                            else if (columnCount === 3) { imageResolution = windowInnerWidth < 768 ? windowInnerWidth : (windowInnerWidth < 992 ? windowInnerWidth / 2 : windowInnerWidth / 3); }
-                            else if (columnCount === 4) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth : (windowInnerWidth < 768 ? windowInnerWidth / 2 : (windowInnerWidth < 992 ? windowInnerWidth / 3 : windowInnerWidth / 4)); }
-                            else if (columnCount === 5) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth / 2 : (windowInnerWidth < 768 ? windowInnerWidth / 3 : (windowInnerWidth < 1200 ? windowInnerWidth / 4 : windowInnerWidth / 5)); }
-                            else if (columnCount >= 6) { imageResolution = windowInnerWidth < 576 ? windowInnerWidth / 3 : (windowInnerWidth < 992 ? windowInnerWidth / 4 : (windowInnerWidth < 1200 ? windowInnerWidth / 5 : windowInnerWidth / 6)); }
-                        }
-                        imageResolution = Math.ceil(imageResolution / 100) * 100;
-                        if (imageResolution < 100) imageResolution = 100;
-                        if (imageResolution > 1600) imageResolution = 1600;
-                    }
-
-
                     // --- Carousel Column Calculation ---
                     // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
                     if (isCarousel) {
-                        if (windowInnerWidth < 576) { columnCount < 5 ? actualColumnCount = 1 : (columnCount == 5 ? actualColumnCount = 2 : actualColumnCount = 3); }
-                        else if (windowInnerWidth < 768) { columnCount < 4 ? actualColumnCount = 1 : (columnCount == 4 ? actualColumnCount = 2 : (columnCount == 5 ? actualColumnCount = 3 : actualColumnCount = 4)); }
-                        else if (windowInnerWidth < 992) { columnCount == 3 ? actualColumnCount = 2 : (columnCount == 4 ? actualColumnCount = 3 : actualColumnCount = 4); }
-                        else if (windowInnerWidth < 1200) { (columnCount > 4) && (columnCount == 5 ? actualColumnCount = 4 : actualColumnCount = 5); }
+                        if (windowInnerWidth < 576) { actualColumnCount = columnCount < 5 ? 1 : (columnCount === 5 ? 2 : 3); }
+                        else if (windowInnerWidth < 768) { actualColumnCount = columnCount < 4 ? 1 : (columnCount === 4 ? 2 : (columnCount === 5 ? 3 : 4)); }
+                        else if (windowInnerWidth < 992) { actualColumnCount = columnCount === 3 ? 2 : (columnCount === 4 ? 3 : 4); }
+                        else if (windowInnerWidth < 1200) { actualColumnCount = columnCount > 4 ? (columnCount === 5 ? 4 : 5) : columnCount; }
                         else { actualColumnCount = columnCount; }
+                        
+                        blockConfig.actualColumnCount = actualColumnCount; // Update config with the calculated value
 
                         // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
-                        if (blockRows > Math.ceil(postsInFeed / columnCount)) blockRows = Math.ceil(postsInFeed / columnCount);
+                        if (blockRows > Math.ceil(postsInFeed / actualColumnCount)) blockRows = Math.ceil(postsInFeed / actualColumnCount);
                         if (postsInFeed <= (actualColumnCount * blockRows)) { isCarousel = false; containsNavigation = true; }
                     }
+
                     // --- Carousel Initialization ---
                     if (isCarousel) {
                         carouselIndicators = document.createElement("div");
@@ -257,149 +534,21 @@ function mBlocks(blockItem) {
                     // =========================== POST PROCESSING LOOP ===========================
                     // Iterates through each post from the feed to build its HTML.
                     for (let postID = 0; postID < postsInFeed; postID++) {
-                        const post = response.feed.entry[postID],
-                            postTitle = post.title.$t,
-                            postSnippet = (showSnippet || showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""));
-                        let postAuthor = post.author[0].name.$t, snippetText="", snippetCode = "";
-
-                        // --- List Block Type Transformation ---
-                        // For a 'list' block, the first post (postID 0) uses the 'l' style. 
-                        // Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style for a more complex layout.
-                        if (blockType === BLOCK_TYPE_LIST && postID > 0) { 
-                            if (showHeader) { finalType = BLOCK_TYPE_STACK; columnCount--; } 
-                            else { finalType = BLOCK_TYPE_CARD; }
-                        }
-
-                        // --- Author Info ---
-                        let authorCode = '',authorURL="";
-                        if (showAuthor) {
-                            if (contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? siteURL : post.author[0].uri.$t;
-
-                            // Author display varies by block type.
-                            switch (finalType) {
-                                case BLOCK_TYPE_QUOTE: authorCode += `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`; break;
-                                case BLOCK_TYPE_COMMENT: authorCode += `<span class="small text-${dataTheme}" rel="author">${postAuthor}</span>`; break;
-                            }
-                        }
+                        const post = response.feed.entry[postID];
+                        const { postHTML, showcaseHTML, carouselIndicator } = _createPostHtml(post, postID, blockConfig);
                         
-                        // --- Date Formatting ---
-                        let dateCode = ''; // Formats the publication date.
-                        if (showDate) {
-                            const formattedDate = dateFormatter.format(new Date(post.published.$t));
-                            dateCode = `<span class="small fw-lighter">${(showAuthor ? ' &#8226; ' : '')} ${formattedDate}</span>`;
+                        if (carouselIndicator) {
+                            if (isCarousel) carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
                         }
-
-                        // --- Title / Header ---
-                        let displayHeaderCode = "", normalHeaderCode = "", commentHeaderCode = "";
-                        if (finalType === BLOCK_TYPE_QUOTE) {
-                            normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
-                        } else if (showHeader) {
-                            displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
-                            normalHeaderCode = `<h5 class="card-title fw-normal">${postTitle}</h5>`;
-                            commentHeaderCode = `<span class="d-block my-2">"${postTitle}"</span>`;
+                        if (showcaseHTML && firstInstance && postID === 0) {
+                             contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
                         }
-
-                        // --- Snippet ---
-                        if (showSnippet) {
-                            (snippetText = postSnippet.replace(/<\S[^>]*>/g, "")).length > 70 && (snippetText = snippetText.substring(0, snippetSize) + "...");
-                            snippetCode = `<summary class="list-unstyled${dataTheme == "light" ? ' text-muted' : ' opacity-75'}${finalType == BLOCK_TYPE_COVER ? ' py-3 d-block mx-lg-5' : ''}${lowContrast ? ' opacity-75' : ''}">${snippetText}</summary>`;
-                        }
-
-                        // --- Post Link ---
-                        let postURL = "";
-                        for (let linkIndex = 0; linkIndex < post.link.length; linkIndex++) if ("alternate" == post.link[linkIndex].rel) { postURL = post.link[linkIndex].href; break; }
-
-                        // --- Image & Video Processing ---
-                        // Extracts image or video thumbnail from the post content.
-                        let imageCode = "", videoThumbnailURL = "", showcaseImageCode = "";
-                        let highResImageURL = noImg; // Declare here to ensure it's in scope
-                        if (showImage) {
-                            let imageURL = noImg;                            
-                            // Use DOMParser for robust HTML string parsing to find images/videos.
-                            const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
-                            if (contentType == 'comments') {
-                                imageURL = post.author[0].gd$image.src;
-                                if (imageURL.match("blogblog.com")) imageURL = noImg;
-                            }
-                            else {
-                                // Check for YouTube embeds to get a high-quality thumbnail.
-                                if (postSnippet.indexOf("//www.youtube.com/embed/") > -1) {
-                                    videoThumbnailURL = post.media$thumbnail.url;
-                                    (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) && (videoThumbnailURL = videoThumbnailURL.replace("/default.jpg", "/maxresdefault.jpg"));
-                                }
-                                if (postSnippet.indexOf("<img") > -1) {
-                                    const firstImage = contentParser.querySelector("img");
-                                    // Extract image URL and attempt to get a higher resolution version from Blogger's image server.
-                                    imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
-                                    if (-1 !== imageURL.indexOf("/s72-c")) highResImageURL = imageURL.replace("/s72-c", "/s1600");
-                                    else if (-1 !== imageURL.indexOf("/w640-h424")) highResImageURL = imageURL.replace("/w640-h424", "/s1600");
-                                    else highResImageURL = imageURL;
-                                    if (-1 !== highResImageURL.indexOf("/s1600")) imageURL = highResImageURL.replace("/s1600", "/s" + imageResolution);
-                                }
-                            }
-                            (videoThumbnailURL == "") && (videoThumbnailURL = imageURL);
-
-                            // Prepare image classes and styles based on block type and settings.
-                            let imageCoverStyle = " object-fit:cover;height:100%!important;",
-                                imageBSClass = ' w-100 img-fluid',
-                                fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
-                                tooltipAttributes = ``;
-                            switch (finalType) {
-                                case BLOCK_TYPE_SHOWCASE:
-                                    const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
-                                    tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
-                                    if (postID === 0) { 
-                                        showcaseImageCode = `<figure class="m-0${imageBSClass}${cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : cornerStyle}" style="${fixedImageStyle}${articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`; 
-                                    }
-                                    imageBSClass += aspectRatio+' shadow-sm';
-                                    break;
-                                case BLOCK_TYPE_PANCAKE: imageBSClass = aspectRatio; break;
-                                case BLOCK_TYPE_COMMENT:imageCoverStyle += ' height:3rem!important;width:3rem;';
-                                fixedImageStyle += ' height:3rem!important;width:3rem;';
-                                imageBSClass = ' rounded-circle m-2'; break;
-                                case BLOCK_TYPE_QUOTE:
-                                    imageCoverStyle += ' height:6rem!important;width:6rem;';
-                                    fixedImageStyle += ' height:6rem!important;width:6rem;';
-                                    imageBSClass = ' rounded-circle mx-auto mt-3'; break;
-                                case BLOCK_TYPE_STACK: imageBSClass = " col-4 h-100"; break;
-                                case BLOCK_TYPE_COVER: fixedImageStyle += articleHeight; break;
-                            }
-                            if (blurImage && contentType !== "comments") imageBSClass += ' blur-5';
-
-                            imageCode = isImageFixed ? (`<figure class="m-0${imageBSClass}" style="${fixedImageStyle}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`) : (`<img class="${imageBSClass}" style="${imageCoverStyle}" src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`);
-                        }//IMAGE SETTINGS
-
-                        // --- CTA Button ---
-                        let ctaButtonCode = "";
-                        if (callToAction != "") {
-                            switch (finalType) {
-                                case BLOCK_TYPE_GALLERY: break;
-                                case BLOCK_TYPE_COMMENT: ctaButtonCode = `<span class="link-${dataTheme} small">${callToAction}</span>`; break;
-                                default:
-                                    ctaButtonCode = `<button class="btn ${((cornerStyle != " rounded" || finalType == BLOCK_TYPE_PANCAKE || finalType == BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')}${(lowContrast ? " opacity-50" : " opacity-75")}`;
-                                    switch (finalType) {
-                                        case BLOCK_TYPE_SHOWCASE: ctaButtonCode += " p-3 px-lg-5 float-end"; break;
-                                        case BLOCK_TYPE_COVER: ctaButtonCode += ' p-2 px-4  mx-lg-5 mt-4'; break;
-                                        case BLOCK_TYPE_PANCAKE: case BLOCK_TYPE_QUOTE: ctaButtonCode += ' py-2 px-3 w-100 text-end link-' + inverseTheme; break;
-                                        case BLOCK_TYPE_STACK: ctaButtonCode += ' mt-3'; break;
-                                        case BLOCK_TYPE_CARD: case BLOCK_TYPE_LIST: ctaButtonCode += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
-                                    }
-                                    ctaButtonCode += ` border-0 btn-${dataTheme}" role="button" title="${postTitle}">${callToAction}</button>`;
-                            }
-                        }
-
-                        // --- Carousel Indicators ---
-                        if (isCarousel && (postID % (actualColumnCount * blockRows) == 0)) carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#m${mBlockID}" data-bs-slide-to="${postID / (actualColumnCount * blockRows)}" class="bg-${inverseTheme}${postID == 0 ? ' active" aria-current="true"' : '"'} aria-label="Slide ${postID / (actualColumnCount * blockRows) + 1}"></button>`);
-
-                        // --- Showcase Block Specific ---
-                        // The first post of a showcase block is handled separately to create the large featured image area.
-                        if (finalType === BLOCK_TYPE_SHOWCASE && firstInstance && postID === 0) contentWrapper.insertAdjacentHTML('beforebegin', `<div class="feature-image card border-0 text-center bg-${dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${inverseTheme}" href="${postURL}" title="${postTitle}">${((showHeader) ? `<div class="sContent card-img-overlay rounded-0 ${(cornerStyle == " rounded" ? "rounded-top" : "")} mx-md-5 p-3 px-lg-5 bg-${dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>` : "")}${((showImage || callToAction != "") ? ctaButtonCode : "")}</a></div>`);
 
                         // --- Item Wrapper ---
                         // Creates a new row/carousel-item wrapper when needed.
                         if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_TYPE_LIST && postID == 1)) {
                             blockBody += `<div class="row  g-${gutterSize} mx-0`;
-                            if (isCarousel) { blockBody += ' carousel-item'; if (postID === 0) blockBody += ' active'; }
+                            if (isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); } // Add active class to first item
                             isComplexLayout && (blockType == BLOCK_TYPE_LIST) && (blockBody += ' col flex-grow-1');
                             (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             switch (columnCount) {
@@ -412,68 +561,22 @@ function mBlocks(blockItem) {
                             }
                         }
 
-                        let videoID = "regular"; // Default videoID
-                        if (finalType == BLOCK_TYPE_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                         // --- Article HTML Construction ---
-                        blockBody += `<article class="col d-inline-flex${(finalType == BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == BLOCK_TYPE_COVER ? `" style="${articleHeight}"` : '"'))} role="article">`;
-
-                        // Link wrapper for the entire article (except for showcase items)
-                        if (finalType !== BLOCK_TYPE_SHOWCASE) blockBody += `<a class="overflow-hidden w-100 shadow-sm${(finalType != BLOCK_TYPE_COVER ? cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${inverseTheme}`)}${(hasRoundedBorder ? ` border border-3 border-opacity-75 border-${dataTheme}` : ' border-0')}${((finalType == BLOCK_TYPE_QUOTE || finalType == BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == BLOCK_TYPE_STACK||finalType==BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == BLOCK_TYPE_LIST || finalType == BLOCK_TYPE_CARD || finalType == BLOCK_TYPE_GALLERY) ? `${aspectRatio}${(finalType == BLOCK_TYPE_LIST ? ` mt-${gutterSize}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
-
-                        //IMAGE
-                        if (showImage) blockBody += imageCode; // Add image HTML if it exists
-
-                        // --- Text Content ---
-                        if (showHeader && finalType != BLOCK_TYPE_SHOWCASE && finalType != BLOCK_TYPE_GALLERY) {
-                            switch (finalType) {
-                                case BLOCK_TYPE_COMMENT: blockBody += `<div class="col p-2 ps-0">`; break;
-                                    case BLOCK_TYPE_STACK: showImage && (blockBody += '<div class="col-8 h-100">');
-                                    case BLOCK_TYPE_PANCAKE: case BLOCK_TYPE_QUOTE: blockBody += `<div class="card-body${(dataTheme != "light" && (finalType == BLOCK_TYPE_PANCAKE || (blockType == BLOCK_TYPE_LIST && finalType == BLOCK_TYPE_STACK)) ? ` h-100 bg-opacity-75 text-bg-${dataTheme}` : ` text-${inverseTheme}`)}">`;
-                                        break;
-                                    case BLOCK_TYPE_LIST: blockBody += `<div class="text-bg-${dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
-                                    case BLOCK_TYPE_CARD: blockBody += `<div class="text-bg-${dataTheme} bg-opacity-75 rounded-0 p-5`;
-                                        switch (textVerticalAlign) {
-                                            case "top": blockBody += ' h-auto">'; break;
-                                            case "middle": blockBody += ' h-auto top-50 translate-middle-y">'; break;
-                                            case "bottom": blockBody += ' h-auto bottom-0" style="top:auto;">'; break;
-                                            case "overlay": blockBody += '">'; break;
-                                        }
-                                        break;
-                                    case BLOCK_TYPE_COVER: finalType == BLOCK_TYPE_COVER && (blockBody += `<div class="text-bg-${dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((cornerStyle == " rounded" && textVerticalAlign != "overlay") ? ' rounded-5' : cornerStyle)} start-50 translate-middle`);
-                                        switch (textVerticalAlign) {
-                                            case "top": blockBody += '-x mt-5">'; break;
-                                            case "middle": blockBody += ' top-50">'; break;
-                                            case "bottom": blockBody += '-x  bottom-0 mb-5">'; break;
-                                            case "overlay": blockBody += ' top-50 h-100 w-100">'; break;
-                                        }
-                                }
-
-                                blockBody += `${authorCode}${dateCode}`;
-                                if (finalType === BLOCK_TYPE_COVER) blockBody += displayHeaderCode; else if (finalType === BLOCK_TYPE_COMMENT) blockBody += commentHeaderCode; else blockBody += normalHeaderCode;
-                                blockBody += snippetCode;
-                                !(finalType == BLOCK_TYPE_PANCAKE || finalType == BLOCK_TYPE_QUOTE) && (blockBody += ctaButtonCode);//CTA 
-
-                                blockBody += `</div>`;
-                                if (finalType === BLOCK_TYPE_STACK && showImage) blockBody += `</div>`;
-                                if (finalType === BLOCK_TYPE_PANCAKE || finalType === BLOCK_TYPE_QUOTE) blockBody += ctaButtonCode;// CTA for card-footer style
-                            }//TEXT
-                        if (finalType !== BLOCK_TYPE_SHOWCASE) blockBody += `</a>`;
-                        blockBody += `</article>`;
+                        blockBody += postHTML;
 
                         // Close the row/carousel-item div at the end of a slide or at the last post.
-                        if (postID === (postsInFeed - 1) || (isCarousel && (postID % (actualColumnCount * blockRows) === (actualColumnCount * blockRows - 1)))) blockBody += `</div>`;
+                        if (postID === (postsInFeed - 1) || (isCarousel && (postID % (actualColumnCount * blockRows) === (actualColumnCount * blockRows - 1)))) blockBody += `</div>`; // close .row
                     }// End of post processing loop
 
                     if (isCarousel || containsNavigation) {
-                        blockBody += `</div>`; // Close carousel-inner
+                        contentWrapper.insertAdjacentHTML('beforeend', blockBody + '</div>'); // Append and close carousel-inner
+                        if (isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                         // --- Carousel/Pagination Navigation ---
                         let previousButtonCode ="", nextButtonCode = "";
                         previousButtonCode = `<button class="carousel-control-prev link-secondary${(containsNavigation ? " nav-prev" : " pb-5")}" type="button" title="Click for Previous" data-bs-target="#m${mBlockID}" data-bs-slide="prev" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg><span class="visually-hidden">Previous</span></button>`, nextButtonCode = `<button class="carousel-control-next link-secondary${(containsNavigation ? " nav-next" : " pb-5")}" title="Click for Next" type="button" data-bs-target="#m${mBlockID}" data-bs-slide="next" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg><span class="visually-hidden">Next</span></button>`;
-                        blockBody += isCarousel ? (previousButtonCode + nextButtonCode) : "";
-                        // Append all generated HTML to the main container.
-                        contentWrapper.insertAdjacentHTML('beforeend', blockBody);
-                        if (isCarousel) contentWrapper.appendChild(carouselIndicators);
+                        if (isCarousel) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode + nextButtonCode);
+
                         if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButtonCode); }
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
@@ -546,10 +649,10 @@ function mBlocks(blockItem) {
                     if (figureNode) figureNode.addEventListener('click', function() {
                         let clickedVideoID = this.getAttribute("data-vidid");
                         if (clickedVideoID !== "regular") {
-                            iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${articleHeight}width:100%;" frameborder="0"></iframe>`;
+                            if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${articleHeight}width:100%;" frameborder="0"></iframe>`;
                             fadeIn(iFrameNode);
                             fadeOut(figureNode);
-                            if(contentNode) fadeOut(contentNode);
+                            if (contentNode) fadeOut(contentNode);
                         }
                     });
 
@@ -566,7 +669,7 @@ function mBlocks(blockItem) {
                                 if (videoID.toLowerCase() != "regular") {
                                     videoTitle = "Click here to load the video!";
                                     if (!playIcon) {
-                                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
+                                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
                                     } else {
                                         fadeIn(playIcon);
                                     }
