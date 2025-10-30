@@ -264,13 +264,21 @@ function _createPostHtml(post, postID, config) {
 
     // --- Carousel Indicators ---
     if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
-        carouselIndicator = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${postID / (config.actualColumnCount * config.blockRows)}" class="bg-${config.inverseTheme}${postID == 0 ? ' active' : ''}" ${postID == 0 ? 'aria-current="true"' : ''} aria-label="Slide ${postID / (config.actualColumnCount * config.blockRows) + 1}"></button>`;
+        const slideIndex = postID / (config.actualColumnCount * config.blockRows);
+        const activeClass = postID === 0 ? ' active' : '';
+        const ariaCurrent = postID === 0 ? 'aria-current="true"' : '';
+        carouselIndicator = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${activeClass}" ${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
     }
 
     // --- Showcase Block Specific ---
     // The first post of a showcase block is handled separately to create the large featured image area.
     if (finalType === config.BLOCK_TYPE_SHOWCASE && config.firstInstance && postID === 0) {
-        showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${(config.showHeader ? `<div class="sContent card-img-overlay rounded-0 ${(config.cornerStyle == " rounded" ? "rounded-top" : "")} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>` : "")}${(config.showImage || config.callToAction != "") ? ctaButtonCode : ""}</a></div>`;
+        const showcaseContent = config.showHeader
+            ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
+            : '';
+        const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
+
+        showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
     }
 
     // --- Article HTML Construction ---
