@@ -222,7 +222,9 @@ function _createPostHtml(post, postID, config) {
         }
         if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
 
-        imageCode = config.isImageFixed ? (`<figure class="m-0${imageBSClass}" style="${fixedImageStyle}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`) : (`<img class="${imageBSClass}" style="${imageCoverStyle}" src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`);
+        imageCode = config.isImageFixed
+            ? `<figure class="m-0${imageBSClass}" style="${fixedImageStyle}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
+            : `<img class="${imageBSClass}" style="${imageCoverStyle}" src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
     } //IMAGE SETTINGS
 
     // --- CTA Button ---

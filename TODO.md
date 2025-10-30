@@ -16,7 +16,7 @@ This file tracks planned improvements and refactoring tasks for the mBlox projec
     
     ### **Stage 2: Convert to Template Literals**
     *Goal: Modernize the HTML generation now that it's safely isolated in a helper function.*
-    - [ ] **Step 2.1: Convert simple HTML strings.** In `_createPostHtml`, convert the generation of `authorCode`, `dateCode`, `snippetCode`, and the header codes (`displayHeaderCode`, `normalHeaderCode`, `commentHeaderCode`) to use template literals.
+    - [x] **Step 2.1: Convert simple HTML strings.** In `_createPostHtml`, convert the generation of `authorCode`, `dateCode`, `snippetCode`, and the header codes (`displayHeaderCode`, `normalHeaderCode`, `commentHeaderCode`) to use template literals.
     - [ ] **Step 2.2: Convert `imageCode` generation.** In `_createPostHtml`, refactor the `imageCode` generation to use template literals, including the complex `switch` statement for different block types.
     - [ ] **Step 2.3: Convert `ctaButtonCode` generation.** In `_createPostHtml`, refactor the `ctaButtonCode` generation to use template literals, including its `switch` statement.
     - [ ] **Step 2.4: Convert `carouselIndicator` and `showcaseHTML`.** Refactor these two remaining pieces in `_createPostHtml` to use template literals.
