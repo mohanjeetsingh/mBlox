@@ -354,6 +354,37 @@ function _createBlockHeader(config) {
 }
 
 /**
+ * Creates the HTML for the block footer, which typically contains a "View All" link.
+ * @param {object} config The configuration object for the block.
+ * @param {object} response The JSON response object from the Blogger feed.
+ * @returns {string} The HTML string for the block footer.
+ */
+function _createBlockFooter(config, response) {
+    if (config.moreText === "" && config.blockType === config.BLOCK_TYPE_COVER) {
+        return '';
+    }
+
+    let moreLinkHTML = '';
+    if (config.moreText !== "") {
+        for (let i = 0; i < response.feed.link.length; i++) {
+            const feedURL = response.feed.link[i];
+            if (feedURL.rel === "alternate") {
+                const moreLinkURL = feedURL.href;
+                const linkClasses = `text-bg-${config.dataTheme} border-0 ${config.lowContrast ? "opacity-50" : "opacity-75"}`;
+                moreLinkHTML = `<a class="${linkClasses}" href="${moreLinkURL}?&max-results=12" title="Click for More">
+                                  ${config.moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
+                                </a>`;
+                break;
+            }
+        }
+    }
+
+    return `<nav aria-label="Page navigation" class="st${config.stageID} w-100 pe-5 py-5 pagination justify-content-end bg-${config.dataTheme}">
+                ${moreLinkHTML}
+            </nav>`;
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -500,11 +531,11 @@ function mBlocks(blockItem) {
                     // Consolidate all configuration variables into a single blockConfig object.
                     // This simplifies passing data to helper functions.
                     const blockConfig = {
-                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction,
+                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
                         // Pass block-type constants
                         BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
-                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize
+                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize,
                     };
 
                     if (firstInstance) {
@@ -611,19 +642,7 @@ function mBlocks(blockItem) {
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
                     // --- Block Footer (More Link) ---
-                    let footerNavCode = ``;
-                    if (!(moreText === "" && blockType === BLOCK_TYPE_COVER)) footerNavCode += `<nav aria-label="Page navigation" class="st${stageID} w-100 pe-5 py-5 pagination justify-content-end bg-${dataTheme}">`;
-                    if (moreText != "") {
-                        for (let linkIndex = 0; linkIndex < response.feed.link.length; linkIndex++) {
-                            let feedURL = response.feed.link[linkIndex];
-                            if ("alternate" == feedURL.rel) {
-                                let moreLinkURL = feedURL.href;
-                                footerNavCode += `<a class="text-bg-${dataTheme} border-0 ${lowContrast ? "opacity-50" : "opacity-75"}" href="${moreLinkURL}?&max-results=12" title="Click for More">${moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>`;
-                            }
-                        }
-                    }
-                    if (!(moreText === "" && blockType === BLOCK_TYPE_COVER)) footerNavCode += `</nav>`;
-                    contentWrapper.insertAdjacentHTML('afterend', footerNavCode);
+                    contentWrapper.insertAdjacentHTML('afterend', _createBlockFooter(blockConfig, response));
                 }//if
                 else { // If response.feed.entry is empty or doesn't exist
                     switch (contentType) { // Handle cases where the feed is empty
