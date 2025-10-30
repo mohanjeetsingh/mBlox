@@ -513,6 +513,42 @@ function _bindShowcaseEvents(rawElement, config) {
 }
 
 /**
+ * Binds click events for simple pagination (non-carousel next/previous).
+ * @param {HTMLElement} rawElement The main block element.
+ */
+function _bindPaginationEvents(rawElement) {
+    const prevButton = rawElement.querySelector(".nav-prev");
+    if (prevButton) {
+        const prevNav = function() {
+            const currentStage = rawElement.getAttribute("data-s");
+            rawElement.setAttribute("data-s", +currentStage - 1);
+            fadeOut(rawElement.querySelector(".st" + currentStage));
+            fadeIn(rawElement.querySelector(".st" + (+currentStage - 1)));
+            prevButton.removeEventListener('click', prevNav); // Unbind to prevent multiple clicks
+        };
+        prevButton.addEventListener('click', prevNav);
+    }
+
+    const nextButton = rawElement.querySelector(".nav-next");
+    if (nextButton) {
+        const nextNav = function() {
+            const currentStage = rawElement.getAttribute("data-s");
+            rawElement.setAttribute("data-s", +currentStage + 1);
+            fadeOut(rawElement.querySelector(".st" + currentStage));
+            const nextStageEl = rawElement.querySelector(".st" + (+currentStage + 1));
+            if (nextStageEl) {
+                fadeIn(nextStageEl);
+            } else {
+                // If the next stage doesn't exist in the DOM, fetch it.
+                mBlocks(rawElement);
+            }
+            nextButton.removeEventListener('click', nextNav); // Unbind
+        };
+        nextButton.addEventListener('click', nextNav);
+    }
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -783,34 +819,7 @@ function mBlocks(blockItem) {
                 } 
             },//success
             complete: function () {
-                // --- Navigation Event Handlers ---
-                if (containsNavigation) {
-                    const prevButton = rawElement.querySelector(".nav-prev"); // Previous button for simple navigation
-                    const prevNav = function() {
-                        const currentStage = (rawElement.getAttribute("data-s"));
-                        rawElement.setAttribute("data-s", +currentStage - 1);
-                        fadeOut(rawElement.querySelector(".st" + currentStage));
-                        fadeIn(rawElement.querySelector(".st" + (currentStage - 1)));
-                        prevButton.removeEventListener('click', prevNav); // Unbind
-                    };
-                    if (prevButton) prevButton.addEventListener('click', prevNav);
-
-                    const nextButton = rawElement.querySelector(".nav-next"); // Next button for simple navigation
-                    const nextNav = function() {
-                        const currentStage = (rawElement.getAttribute("data-s"));
-                        rawElement.setAttribute("data-s", +currentStage + 1);
-                        fadeOut(rawElement.querySelector(".st" + currentStage));
-                        const nextStageEl = rawElement.querySelector(".st" + (+currentStage + 1));
-                        if (nextStageEl) {
-                            fadeIn(nextStageEl);
-                        } else {
-                            // If the next stage doesn't exist in the DOM, fetch it.
-                            mBlocks(rawElement);
-                        }
-                        nextButton.removeEventListener('click', nextNav); // Unbind
-                    };
-                    if (nextButton) nextButton.addEventListener('click', nextNav);
-                }//if
+                if (containsNavigation) _bindPaginationEvents(rawElement);
                 // --- Showcase Block Interactivity ---
                 // The showcase event binding logic is very complex.
                 // It will be moved into the _bindShowcaseEvents function in a future step.
