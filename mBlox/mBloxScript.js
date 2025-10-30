@@ -385,6 +385,27 @@ function _createBlockFooter(config, response) {
 }
 
 /**
+ * Creates the HTML for carousel control buttons (previous/next).
+ * @param {object} config The configuration object for the block.
+ * @returns {{prev: string, next: string}} An object containing the HTML for the previous and next buttons.
+ */
+function _createCarouselControls(config) {
+    const prevClass = `carousel-control-prev link-secondary${config.containsNavigation ? " nav-prev" : " pb-5"}`;
+    const nextClass = `carousel-control-next link-secondary${config.containsNavigation ? " nav-next" : " pb-5"}`;
+    const target = `#m${config.mBlockID}`;
+
+    const prev = `<button class="${prevClass}" type="button" title="Click for Previous" data-bs-target="${target}" data-bs-slide="prev" style="width:5%;">
+                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg>
+                    <span class="visually-hidden">Previous</span>
+                  </button>`;
+    const next = `<button class="${nextClass}" title="Click for Next" type="button" data-bs-target="${target}" data-bs-slide="next" style="width:5%;">
+                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
+                    <span class="visually-hidden">Next</span>
+                  </button>`;
+    return { prev, next };
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -535,7 +556,7 @@ function mBlocks(blockItem) {
                         // Pass block-type constants
                         BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
-                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize,
+                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false
                     };
 
                     if (firstInstance) {
@@ -575,6 +596,9 @@ function mBlocks(blockItem) {
                         // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
                         if (blockRows > Math.ceil(postsInFeed / actualColumnCount)) blockRows = Math.ceil(postsInFeed / actualColumnCount);
                         if (postsInFeed <= (actualColumnCount * blockRows)) { isCarousel = false; containsNavigation = true; }
+
+                        blockConfig.isCarousel = isCarousel; // Update config with potentially modified value
+                        blockConfig.containsNavigation = containsNavigation; // Update config
                     }
 
                     // --- Carousel Initialization ---
@@ -634,11 +658,10 @@ function mBlocks(blockItem) {
                         if (isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                         // --- Carousel/Pagination Navigation ---
-                        let previousButtonCode ="", nextButtonCode = "";
-                        previousButtonCode = `<button class="carousel-control-prev link-secondary${(containsNavigation ? " nav-prev" : " pb-5")}" type="button" title="Click for Previous" data-bs-target="#m${mBlockID}" data-bs-slide="prev" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg><span class="visually-hidden">Previous</span></button>`, nextButtonCode = `<button class="carousel-control-next link-secondary${(containsNavigation ? " nav-next" : " pb-5")}" title="Click for Next" type="button" data-bs-target="#m${mBlockID}" data-bs-slide="next" style="width:5%;"><svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg><span class="visually-hidden">Next</span></button>`;
-                        if (isCarousel) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode + nextButtonCode);
+                        const { prev: prevButton, next: nextButton } = _createCarouselControls(blockConfig);
+                        if (isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
 
-                        if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', previousButtonCode); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButtonCode); }
+                        if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
                     // --- Block Footer (More Link) ---
