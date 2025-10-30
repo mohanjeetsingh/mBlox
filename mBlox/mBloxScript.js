@@ -114,10 +114,10 @@ function _createPostHtml(post, postID, config) {
         // Author display varies by block type.
         switch (finalType) {
             case config.BLOCK_TYPE_QUOTE:
-                authorCode += `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
+                authorCode = `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
                 break;
             case config.BLOCK_TYPE_COMMENT:
-                authorCode += `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
+                authorCode = `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
                 break;
         }
     }
@@ -126,7 +126,7 @@ function _createPostHtml(post, postID, config) {
     let dateCode = ''; // Formats the publication date.
     if (config.showDate) {
         const formattedDate = config.dateFormatter.format(new Date(post.published.$t));
-        dateCode = `<span class="small fw-lighter">${(config.showAuthor ? ' &#8226; ' : '')} ${formattedDate}</span>`;
+        dateCode = `<span class="small fw-lighter">${config.showAuthor ? ' &#8226; ' : ''} ${formattedDate}</span>`;
     }
 
     // --- Title / Header ---
@@ -144,7 +144,7 @@ function _createPostHtml(post, postID, config) {
     // --- Snippet ---
     if (config.showSnippet) {
         (snippetText = postSnippet.replace(/<\S[^>]*>/g, "")).length > 70 && (snippetText = snippetText.substring(0, config.snippetSize) + "...");
-        snippetCode = `<summary class="list-unstyled${config.dataTheme == "light" ? ' text-muted' : ' opacity-75'}${finalType == config.BLOCK_TYPE_COVER ? ' py-3 d-block mx-lg-5' : ''}${config.lowContrast ? ' opacity-75' : ''}">${snippetText}</summary>`;
+        snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == config.BLOCK_TYPE_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
     }
 
     // --- Post Link ---
