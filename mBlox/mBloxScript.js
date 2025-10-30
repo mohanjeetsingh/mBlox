@@ -406,6 +406,113 @@ function _createCarouselControls(config) {
 }
 
 /**
+ * Fades in an element.
+ * @param {HTMLElement} el The element to fade in.
+ */
+function fadeIn(el) {
+    if (!el) return;
+    el.style.opacity = 0;
+    el.style.display = 'block';
+    (function fade() {
+        let val = parseFloat(el.style.opacity);
+        if (!((val += .1) > 1)) {
+            el.style.opacity = val;
+            requestAnimationFrame(fade);
+        }
+    })();
+}
+
+/**
+ * Fades out an element.
+ * @param {HTMLElement} el The element to fade out.
+ */
+function fadeOut(el) {
+    if (!el) return;
+    el.style.opacity = 1;
+    (function fade() {
+        if ((el.style.opacity -= .1) < 0) {
+            el.style.display = "none";
+        } else {
+            requestAnimationFrame(fade);
+        }
+    })();
+}
+
+/**
+ * Binds click events for the showcase block type.
+ * @param {HTMLElement} rawElement The main block element.
+ * @param {object} config The configuration object for the block.
+ */
+function _bindShowcaseEvents(rawElement, config) {
+    const featuredImageNode = rawElement.querySelector(".feature-image");
+    if (!featuredImageNode) return;
+
+    const figureNode = featuredImageNode.querySelector("figure");
+    const iFrameNode = featuredImageNode.querySelector(".sIframe");
+    const contentNode = featuredImageNode.querySelector(".sContent");
+
+    if (figureNode) {
+        figureNode.addEventListener('click', function() {
+            let clickedVideoID = this.getAttribute("data-vidid");
+            if (clickedVideoID !== "regular") {
+                if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
+                fadeIn(iFrameNode);
+                fadeOut(figureNode);
+                if (contentNode) fadeOut(contentNode);
+            }
+        });
+    }
+
+    rawElement.querySelectorAll(".sPost").forEach(showcasePost => {
+        showcasePost.addEventListener('click', function() {
+            const videoID = this.getAttribute("data-vidid");
+            const postTitle = this.getAttribute("data-title")
+            let playIcon = figureNode ? figureNode.querySelector("svg") : null;
+
+            if (figureNode) {
+                // Update the main figure with the new post's data (image, title, video ID).
+                let videoTitle = postTitle;
+                if (videoID.toLowerCase() != "regular") {
+                    videoTitle = "Click here to load the video!";
+                    if (!playIcon) {
+                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
+                    } else {
+                        fadeIn(playIcon);
+                    }
+                } else {
+                    if (playIcon) fadeOut(playIcon);
+                }
+                figureNode.setAttribute("title", videoTitle);
+                figureNode.setAttribute("aria-label", videoTitle);
+                figureNode.style.background = `url(${this.getAttribute("data-img-high")}) center center`;
+                figureNode.style.backgroundSize = 'cover';
+                figureNode.setAttribute("data-vidid", videoID);
+            }
+
+            fadeOut(iFrameNode);
+            fadeIn(figureNode);
+            if (contentNode) {
+                // Update the content overlay with the new post's title and snippet.
+                fadeIn(contentNode);
+                const h5 = contentNode.querySelector("h5");
+                if (h5) h5.innerHTML = postTitle;
+                const summary = contentNode.querySelector("summary");
+                if (summary) summary.innerHTML = this.getAttribute("data-summary");
+            }
+
+            // Update the link and button titles.
+            const link = featuredImageNode.querySelector("a");
+            if (link) {
+                link.setAttribute("href", this.getAttribute("data-link"));
+                link.setAttribute("title", postTitle);
+            }
+            const button = featuredImageNode.querySelector("button");
+            if (button) button.setAttribute("title", postTitle);
+        });
+    });
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -556,7 +663,7 @@ function mBlocks(blockItem) {
                         // Pass block-type constants
                         BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
-                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false
+                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false, articleHeight
                     };
 
                     if (firstInstance) {
@@ -676,10 +783,6 @@ function mBlocks(blockItem) {
                 } 
             },//success
             complete: function () {
-                // Helper functions for fade animations
-                const fadeIn = (el) => { if (!el) return; el.style.opacity = 0; el.style.display = 'block'; (function fade() { let val = parseFloat(el.style.opacity); if (!((val += .1) > 1)) { el.style.opacity = val; requestAnimationFrame(fade); } })(); };
-                const fadeOut = (el) => { if (!el) return; el.style.opacity = 1; (function fade() { if ((el.style.opacity -= .1) < 0) { el.style.display = "none"; } else { requestAnimationFrame(fade); } })(); };
-
                 // --- Navigation Event Handlers ---
                 if (containsNavigation) {
                     const prevButton = rawElement.querySelector(".nav-prev"); // Previous button for simple navigation
@@ -709,74 +812,15 @@ function mBlocks(blockItem) {
                     if (nextButton) nextButton.addEventListener('click', nextNav);
                 }//if
                 // --- Showcase Block Interactivity ---
-                if (blockType == BLOCK_TYPE_SHOWCASE) {
-                    const featuredImageNode = rawElement.querySelector(".feature-image");
-                    if (!featuredImageNode) return;
-
-                    const figureNode = featuredImageNode.querySelector("figure");
-                    const iFrameNode = featuredImageNode.querySelector(".sIframe");
-                    const contentNode = featuredImageNode.querySelector(".sContent");
-
-                    // Handle clicks on the main featured image, especially for playing videos.
-                    if (figureNode) figureNode.addEventListener('click', function() {
-                        let clickedVideoID = this.getAttribute("data-vidid");
-                        if (clickedVideoID !== "regular") {
-                            if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${articleHeight}width:100%;" frameborder="0"></iframe>`;
-                            fadeIn(iFrameNode);
-                            fadeOut(figureNode);
-                            if (contentNode) fadeOut(contentNode);
-                        }
-                    });
-
-                    // Handle clicks on the smaller thumbnail posts to update the main featured area.
-                    rawElement.querySelectorAll(".sPost").forEach(showcasePost => {
-                        showcasePost.addEventListener('click', function() {
-                            const videoID = this.getAttribute("data-vidid");
-                            const postTitle = this.getAttribute("data-title");
-                            let playIcon = figureNode ? figureNode.querySelector("svg") : null;
-
-                            if (figureNode) {
-                                // Update the main figure with the new post's data (image, title, video ID).
-                                let videoTitle = postTitle;
-                                if (videoID.toLowerCase() != "regular") {
-                                    videoTitle = "Click here to load the video!";
-                                    if (!playIcon) {
-                                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
-                                    } else {
-                                        fadeIn(playIcon);
-                                    }
-                                } else { 
-                                    if (playIcon) fadeOut(playIcon); 
-                                }
-                                figureNode.setAttribute("title", videoTitle);
-                                figureNode.setAttribute("aria-label", videoTitle);
-                                figureNode.style.background = `url(${this.getAttribute("data-img-high")}) center center`;
-                                figureNode.style.backgroundSize = 'cover';
-                                figureNode.setAttribute("data-vidid", videoID);
-                            }
-
-                            fadeOut(iFrameNode);
-                            fadeIn(figureNode);
-                            if(contentNode) {
-                                // Update the content overlay with the new post's title and snippet.
-                                fadeIn(contentNode);
-                                const h5 = contentNode.querySelector("h5");
-                                if (h5) h5.innerHTML = postTitle;
-                                const summary = contentNode.querySelector("summary");
-                                if (summary) summary.innerHTML = this.getAttribute("data-summary");
-                            }
-
-                            // Update the link and button titles.
-                            const link = featuredImageNode.querySelector("a");
-                            if (link) {
-                                link.setAttribute("href", this.getAttribute("data-link"));
-                                link.setAttribute("title", postTitle);
-                            }
-                            const button = featuredImageNode.querySelector("button");
-                            if (button) button.setAttribute("title", postTitle);
-                        });
-                    });
-                }
+                // The showcase event binding logic is very complex.
+                // It will be moved into the _bindShowcaseEvents function in a future step.
+                // For now, we just call the function if the block type is showcase.
+                // Note: We need to re-fetch the blockConfig here as it's not in scope.
+                // This is temporary until the complete() callback is refactored.
+                const tempConfig = {
+                    articleHeight: (rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`)
+                };
+                if (blockType === BLOCK_TYPE_SHOWCASE) _bindShowcaseEvents(rawElement, tempConfig);
             }//complete
         })//ajax
     });//forEach
