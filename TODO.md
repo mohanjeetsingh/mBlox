@@ -18,9 +18,9 @@ This file tracks the next set of refactoring and feature implementation tasks fo
     - [x] **Correct Grid/Carousel Structure:** Refactored `_buildBlockBody` to ensure the smaller showcase items (`sPost`) are correctly wrapped in Bootstrap `row` and `carousel-item` divs, fixing layout bugs.
     - [x] **Isolate Feature Item Logic:** The main showcase feature item is now generated outside the main loop in `_buildBlockBody`, clarifying the logic and preventing rendering conflicts.
 
-- [ ] **Step 10.3: Optimize Event Handling & Data Access**
-    - [ ] **Improve `_bindShowcaseEvents`:** Refactor the function to read all necessary `data-*` attributes from the `.sPost` elements into a JavaScript array on initialization. The click handler should then read from this array instead of querying the DOM on every click, improving performance.
-    - [ ] **Unify `videoID` Calculation:** Consolidate the `videoID` calculation to a single, reliable point at the top of `_createPostHtml` to prevent `ReferenceError` bugs and redundant processing.
+- [x] **Step 10.3: Optimize Event Handling & Data Access**
+    - [x] **Improve `_bindShowcaseEvents`:** Refactored the function to read all necessary `data-*` attributes from the `.sPost` elements into a JavaScript array on initialization. The click handler now reads from this array instead of querying the DOM on every click, improving performance.
+    - [x] **Unify `videoID` Calculation:** The `videoID` calculation is already consolidated at the top of `_createPostHtml`, preventing redundant processing.
 
 - [ ] **Step 10.4: Improve Code Encapsulation**
     - [ ] **Wrap Script in an IIFE:** Encapsulate the entire `mBloxScript.js` in an Immediately Invoked Function Expression (IIFE) to move all helper functions out of the global `window` scope. Expose only the main `mBlocks` function to the outside world.
