@@ -18,8 +18,10 @@ const // Constants for block types, improving readability over single-character 
     BLOCK_GALLERY = 'g',
     BLOCK_PANCAKE = 'p',
     BLOCK_STACK = 't',
-    BLOCK_TYPE_QUOTE = 'q',
-    BLOCK_TYPE_COMMENT = 'm';
+    
+    // Constants for block content types, improving readability over single-character strings
+    CONTENT_QUOTE = 'q',
+    CONTENT_COMMENT = 'm';
 
 
 
@@ -68,11 +70,11 @@ window.fetchJSONP = function(url) {
 
 const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_COVER]: 1,
-    [BLOCK_TYPE_COMMENT]: 1,
+    [CONTENT_COMMENT]: 1,
     [BLOCK_STACK]: 1,
     [BLOCK_PANCAKE]: 3,
     [BLOCK_CARD]: 4,
-    [BLOCK_TYPE_QUOTE]: 4,
+    [CONTENT_QUOTE]: 4,
     [BLOCK_GALLERY]: 5,
     [BLOCK_LIST]: 2,
     [BLOCK_SHOWCASE]: 6
@@ -86,6 +88,132 @@ const RESPONSIVE_GRID_CLASSES = {
     5: 'row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5',
     6: 'row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6'
 };
+
+/**
+ * Maps the raw response from the WordPress REST API to a standardized internal format.
+ * @param {Array<object>} wpResponse The raw JSON array from the WordPress API.
+ * @param {object} headers The response headers from the fetch call.
+ * @returns {{posts: Array<object>, totalResults: number}} A standardized data object.
+ */
+window._mapWordPressResponseToStandardFormat = function(wpResponse, headers) {
+    if (!Array.isArray(wpResponse)) {
+        return { posts: [], totalResults: 0 };
+    }
+
+    const standardPosts = wpResponse.map(post => ({
+        title: post.title.rendered,
+        content: post.content.rendered,
+        authorName: post._embedded?.author[0]?.name || 'Unknown',
+        authorUri: post._embedded?.author[0]?.link || '',
+        authorImage: post._embedded?.author[0]?.avatar_urls?.['96'] || '',
+        publishedDate: post.date_gmt,
+        url: post.link,
+        // Find the best available featured image, defaulting to an empty string.
+        thumbnailUrl: post._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url 
+                   || post._embedded?.['wp:featuredmedia']?.[0]?.source_url 
+                   || ''
+    }));
+
+    return { posts: standardPosts, totalResults: parseInt(headers.get('X-WP-Total') || '0', 10) };
+}
+
+/**
+ * Maps a parsed RSS/XML feed to a standardized internal format.
+ * @param {XMLDocument} xmlDoc The parsed XML document.
+ * @returns {{posts: Array<object>, totalResults: number, feedUrl: string}} A standardized data object.
+ */
+window._mapRssResponseToStandardFormat = function(xmlDoc) {
+    // Find all items, supporting both <item> (RSS) and <entry> (Atom) tags.
+    const items = xmlDoc.querySelectorAll('item, entry');
+    if (!items.length) {
+        return { posts: [], totalResults: 0, feedUrl: '' };
+    }
+
+    // Check if this is a YouTube feed by looking for a specific tag.
+    const isYouTube = xmlDoc.querySelector('yt\\:channelId') !== null;
+
+    const standardPosts = Array.from(items).map(item => {
+        const getTagContent = (tagName) => {
+            const el = item.querySelector(tagName);
+            return el ? el.textContent : '';
+        };
+
+        let post;
+
+        if (isYouTube) {
+            const videoId = getTagContent('yt\\:videoId');
+            // YouTube nests the thumbnail in a media:group. We need to query inside it.
+            const mediaGroup = item.querySelector('media\\:group');
+            const thumbnailUrl = mediaGroup ? (mediaGroup.querySelector('media\\:thumbnail[url]')?.getAttribute('url') || '') : '';
+            post = {
+                title: getTagContent('title'),
+                content: getTagContent('media\\:description') || '',
+                authorName: getTagContent('author > name'),
+                publishedDate: getTagContent('published'),
+                url: item.querySelector('link[rel="alternate"]')?.getAttribute('href') || '',
+                thumbnailUrl: thumbnailUrl,
+                videoId: videoId, // Add videoId to the standard format
+                authorUri: getTagContent('author > uri') || '',
+                authorImage: ''
+            };
+        } else {
+            // Generic RSS feed parsing logic
+            let thumbnailUrl = item.querySelector('media\\:thumbnail[url], thumbnail[url]')?.getAttribute('url') || '';
+            if (!thumbnailUrl) {
+                const content = getTagContent('description') || getTagContent('content');
+                const match = content.match(/<img[^>]+src="([^">]+)"/);
+                if (match) thumbnailUrl = match[1];
+            }
+            post = {
+                title: getTagContent('title'),
+                content: getTagContent('description') || getTagContent('content'),
+                authorName: getTagContent('dc\\:creator, author > name') || 'Unknown',
+                publishedDate: getTagContent('pubDate, published'),
+                url: getTagContent('link') || item.querySelector('link[href]')?.getAttribute('href') || '',
+                thumbnailUrl: thumbnailUrl,
+                authorUri: getTagContent('author > uri') || '',
+                authorImage: ''
+            };
+        }
+        return post;
+    });
+
+    const feedUrl = xmlDoc.querySelector('channel > link, feed > link[rel="alternate"]')?.getAttribute('href') 
+                  || xmlDoc.querySelector('channel > link, feed > link[rel="alternate"]')?.textContent 
+                  || '';
+    return { posts: standardPosts, totalResults: items.length, feedUrl };
+}
+
+/**
+ * Maps the raw response from the Blogger JSON feed to a standardized internal format.
+ * This abstraction allows the rendering functions to be data-source agnostic.
+ * @param {object} bloggerResponse The raw JSON object from the Blogger API.
+ * @returns {{posts: Array<object>, totalResults: number, feedUrl: string}} A standardized data object.
+ */
+window._mapBloggerResponseToStandardFormat = function(bloggerResponse) {
+    if (!bloggerResponse.feed || !bloggerResponse.feed.entry) {
+        return { posts: [], totalResults: 0, feedUrl: '' };
+    }
+
+    const standardPosts = bloggerResponse.feed.entry.map(post => ({
+        title: post.title.$t,
+        content: ("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""),
+        authorName: post.author[0].name.$t,
+        authorUri: (post.author[0].name.$t === "Anonymous" || post.author[0].name.$t === "Unknown") ? '' : post.author[0].uri.$t,
+        authorImage: post.author[0].gd$image ? post.author[0].gd$image.src : '',
+        publishedDate: post.published.$t,
+        url: (post.link.find(l => l.rel === 'alternate') || {}).href || '',
+        thumbnailUrl: post.media$thumbnail ? post.media$thumbnail.url : ''
+    }));
+
+    const alternateLink = (bloggerResponse.feed.link.find(l => l.rel === 'alternate') || {}).href || '';
+
+    return {
+        posts: standardPosts,
+        totalResults: bloggerResponse.feed.openSearch$totalResults.$t,
+        feedUrl: alternateLink
+    };
+}
 
 
 /**
@@ -101,10 +229,13 @@ window._createPostHtml = function(post, postID, config) {
     let showcaseHTML = '';
     let carouselIndicator = '';
     let highResImageURL = ''; // Declare here to ensure it's in scope for all block types.
+    
+    // Determine the videoID early and consistently.
+    const videoID = post.videoId || (post.thumbnailUrl.includes("img.youtube.com") ? post.thumbnailUrl.substr(post.thumbnailUrl.indexOf("/vi/") + 4, 11) : "regular");
 
-    const postTitle = post.title.$t,
-        postSnippet = (config.showSnippet || config.showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""));
-    let postAuthor = post.author[0].name.$t,
+    const postTitle = post.title,
+        postSnippet = (config.showSnippet || config.showImage) && post.content;
+    let postAuthor = post.authorName,
         snippetText = "",
         snippetCode = "";
 
@@ -125,14 +256,14 @@ window._createPostHtml = function(post, postID, config) {
     let authorCode = '',
         authorURL = "";
     if (config.showAuthor) {
-        if (config.contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? config.siteURL : post.author[0].uri.$t;
+        if (config.contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? config.siteURL : post.authorUri;
 
         // Author display varies by block type.
         switch (finalType) {
-            case BLOCK_TYPE_QUOTE:
+            case CONTENT_QUOTE:
                 authorCode = `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
                 break;
-            case BLOCK_TYPE_COMMENT:
+            case CONTENT_COMMENT:
                 authorCode = `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
                 break;
         }
@@ -141,7 +272,7 @@ window._createPostHtml = function(post, postID, config) {
     // --- Date Formatting ---
     let dateCode = ''; // Formats the publication date.
     if (config.showDate) {
-        const formattedDate = config.dateFormatter.format(new Date(post.published.$t));
+        const formattedDate = config.dateFormatter.format(new Date(post.publishedDate));
         dateCode = `<span class="small fw-lighter">${config.showAuthor ? ' &#8226; ' : ''} ${formattedDate}</span>`;
     }
 
@@ -149,7 +280,7 @@ window._createPostHtml = function(post, postID, config) {
     let displayHeaderCode = "",
         normalHeaderCode = "",
         commentHeaderCode = "";
-    if (finalType === BLOCK_TYPE_QUOTE) {
+    if (finalType === CONTENT_QUOTE) {
         normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
     } else if (config.showHeader) {
         displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
@@ -165,39 +296,32 @@ window._createPostHtml = function(post, postID, config) {
 
     // --- Post Link ---
     let postURL = "";
-    for (let linkIndex = 0; linkIndex < post.link.length; linkIndex++)
-        if ("alternate" == post.link[linkIndex].rel) {
-            postURL = post.link[linkIndex].href;
-            break;
-        }
-
+    postURL = post.url;
     // --- Image & Video Processing ---
     // Extracts image or video thumbnail from the post content.
     let imageCode = "",
-        videoThumbnailURL = "",
         showcaseImageCode = ''; // This was missing
+    // Prioritize the direct thumbnail URL from the standardized post object.
+    let videoThumbnailURL = post.thumbnailUrl || ""; 
+
     if (config.showImage) {
-        let imageURL = noImg;
-        // Use DOMParser for robust HTML string parsing to find images/videos.
-        const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
-        if (config.contentType == 'comments') {
-            imageURL = post.author[0].gd$image.src;
-            if (imageURL.match("blogblog.com")) imageURL = noImg;
-        } else {
-            // Check for YouTube embeds to get a high-quality thumbnail.
-            if (postSnippet.indexOf("//www.youtube.com/embed/") > -1) {
-                videoThumbnailURL = post.media$thumbnail.url;
-                (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) && (videoThumbnailURL = videoThumbnailURL.replace("/default.jpg", "/maxresdefault.jpg"));
-            }
-            if (postSnippet.indexOf("<img") > -1) {
+        let imageURL = videoThumbnailURL; // Start with the provided thumbnail.
+
+        // If no thumbnail is provided by the provider, fall back to parsing the content.
+        if (!imageURL) {
+            const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
+            if (config.contentType == 'comments') {
+                imageURL = post.authorImage;
+            } else {
                 const firstImage = contentParser.querySelector("img");
-                // Extract image URL and attempt to get a higher resolution version from Blogger's image server.
                 imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
             }
         }
-        (videoThumbnailURL == "") && (videoThumbnailURL = imageURL);
+        
+        // Ensure videoThumbnailURL is set for showcase logic.
+        if (!videoThumbnailURL) videoThumbnailURL = imageURL;
 
-        // Get the base s1600 (or original) URL for optimal loading.
+        // Get the base s1600 (or original) URL for optimal loading for Blogger images.
         highResImageURL = imageURL.includes('/s72-c') ? imageURL.replace('/s72-c', '/s1600') : imageURL;
         highResImageURL = highResImageURL.includes('/w640-h424') ? highResImageURL.replace('/w640-h424', '/s1600') : highResImageURL;
 
@@ -208,7 +332,6 @@ window._createPostHtml = function(post, postID, config) {
             tooltipAttributes = ``;
         switch (finalType) {
             case BLOCK_SHOWCASE:
-                const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                 tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
                 if (postID === 0) {
                     showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
@@ -218,12 +341,12 @@ window._createPostHtml = function(post, postID, config) {
             case BLOCK_PANCAKE:
                 imageBSClass = config.aspectRatio;
                 break;
-            case BLOCK_TYPE_COMMENT:
+            case CONTENT_COMMENT:
                 imageCoverStyle += ' height:3rem!important;width:3rem;';
                 fixedImageStyle += ' height:3rem!important;width:3rem;';
                 imageBSClass = ' rounded-circle m-2';
                 break;
-            case BLOCK_TYPE_QUOTE:
+            case CONTENT_QUOTE:
                 imageCoverStyle += ' height:6rem!important;width:6rem;';
                 fixedImageStyle += ' height:6rem!important;width:6rem;';
                 imageBSClass = ' rounded-circle mx-auto mt-3';
@@ -249,11 +372,11 @@ window._createPostHtml = function(post, postID, config) {
         switch (finalType) {
             case BLOCK_GALLERY:
                 break;
-            case BLOCK_TYPE_COMMENT:
+            case CONTENT_COMMENT:
                 ctaButtonCode = `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
                 break;
             default:
-                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
+                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == CONTENT_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
                 switch (finalType) {
                     case BLOCK_SHOWCASE:
                         ctaClasses += " p-3 px-lg-5 float-end";
@@ -262,7 +385,7 @@ window._createPostHtml = function(post, postID, config) {
                         ctaClasses += ' p-2 px-4 mx-lg-5 mt-4';
                         break;
                     case BLOCK_PANCAKE:
-                    case BLOCK_TYPE_QUOTE:
+                    case CONTENT_QUOTE:
                         ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`;
                         break;
                     case BLOCK_STACK:
@@ -297,10 +420,6 @@ window._createPostHtml = function(post, postID, config) {
         showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
     }
 
-    // --- Article HTML Construction ---
-    let videoID = "regular"; // Default videoID
-    if (finalType == BLOCK_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
-
     let textContentHTML = '';
     let linkWrapperStart = '';
     let linkWrapperEnd = '';
@@ -308,9 +427,9 @@ window._createPostHtml = function(post, postID, config) {
     // --- Text Content ---
     if (config.showHeader && finalType != BLOCK_SHOWCASE && finalType != BLOCK_GALLERY) {
         switch (finalType) {
-            case BLOCK_TYPE_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
+            case CONTENT_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
                 case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
-                case BLOCK_PANCAKE: case BLOCK_TYPE_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
+                case BLOCK_PANCAKE: case CONTENT_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
                     break;
                 case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
                 case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
@@ -331,20 +450,20 @@ window._createPostHtml = function(post, postID, config) {
             }
 
             textContentHTML += `${authorCode}${dateCode}`;
-            if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === BLOCK_TYPE_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
+            if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === CONTENT_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
             textContentHTML += snippetCode;
-            !(finalType == BLOCK_PANCAKE || finalType == BLOCK_TYPE_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
+            !(finalType == BLOCK_PANCAKE || finalType == CONTENT_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
 
             textContentHTML += `</div>`;
             if (finalType === BLOCK_STACK && config.showImage) textContentHTML += `</div>`;
-            if (finalType === BLOCK_PANCAKE || finalType === BLOCK_TYPE_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
+            if (finalType === BLOCK_PANCAKE || finalType === CONTENT_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
         }//TEXT
     
     // Link wrapper for the entire article (except for showcase items)
     if (finalType !== BLOCK_SHOWCASE) {
-        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != BLOCK_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
-            if (f === BLOCK_TYPE_QUOTE || f === BLOCK_COVER) return ' text-center h-100';
-            if (f === BLOCK_STACK || f === BLOCK_TYPE_COMMENT) return ' row g-0';
+        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != BLOCK_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != CONTENT_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
+            if (f === CONTENT_QUOTE || f === BLOCK_COVER) return ' text-center h-100';
+            if (f === BLOCK_STACK || f === CONTENT_COMMENT) return ' row g-0';
             if (f === BLOCK_LIST || f === BLOCK_CARD || f === BLOCK_GALLERY) return `${config.aspectRatio}${(f === BLOCK_LIST ? ` mt-${config.gutterSize}` : '')}`;
             return '';
         })(finalType)}`;
@@ -396,16 +515,11 @@ window._createBlockFooter = function(config, response) {
 
     let moreLinkHTML = '';
     if (config.moreText !== "") {
-        for (let i = 0; i < response.feed.link.length; i++) {
-            const feedURL = response.feed.link[i];
-            if (feedURL.rel === "alternate") {
-                const moreLinkURL = feedURL.href;
-                const linkClasses = `text-bg-${config.dataTheme} border-0 ${config.lowContrast ? "opacity-50" : "opacity-75"}`;
-                moreLinkHTML = `<a class="${linkClasses}" href="${moreLinkURL}?&max-results=12" title="Click for More">
+        if (response.feedUrl) {
+            const linkClasses = `text-bg-${config.dataTheme} border-0 ${config.lowContrast ? "opacity-50" : "opacity-75"}`;
+            moreLinkHTML = `<a class="${linkClasses}" href="${response.feedUrl}?&max-results=12" title="Click for More">
                                   ${config.moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
                                 </a>`;
-                break;
-            }
         }
     }
 
@@ -684,7 +798,7 @@ window._parseBlockConfig = function(rawElement) {
         blurImage = false;
     } else {
         // Default behavior: Blur image if header is present, except for specific block types
-        const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_TYPE_QUOTE];
+        const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, CONTENT_QUOTE];
         blurImage = showHeader && !excludedBlurTypes.includes(blockType);
     }
 
@@ -789,9 +903,9 @@ window._buildBlockBody = function(response, config) {
     let blockBody = '';
     let showcaseHTML = '';
     let carouselIndicators = null;
-    const postsInFeed = response.feed.entry.length;
+    const postsInFeed = response.posts.length;
     const isComplexLayout = (config.blockType === BLOCK_LIST || config.blockType === BLOCK_SHOWCASE);
-
+    
     if (config.isCarousel) {
         carouselIndicators = document.createElement("div");
         carouselIndicators.classList.add('carousel-indicators');
@@ -799,7 +913,7 @@ window._buildBlockBody = function(response, config) {
     }
 
     for (let postID = 0; postID < postsInFeed; postID++) {
-        const post = response.feed.entry[postID];
+        const post = response.posts[postID];
         let currentColumnCount = config.columnCount;
 
         // Side effect removal: Handle column count change for 'list' type here.
@@ -839,6 +953,169 @@ window._buildBlockBody = function(response, config) {
 }
 
 /**
+ * Data provider for WordPress REST API feeds.
+ */
+class WordPressProvider {
+    constructor(config) {
+        this.config = config;
+    }
+
+    /**
+     * Builds the appropriate WordPress REST API URL.
+     * @returns {string} The final API URL.
+     */
+    _buildFeedUrl() {
+        // The base URL for the WordPress API endpoint.
+        let baseUrl = this.config.siteURL;
+
+        // Ensure the base URL has a trailing slash.
+        baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+        
+        // If the user provides the full path to /posts, don't append it again.
+        if (!baseUrl.endsWith('/posts/')) {
+            baseUrl += 'wp/v2/posts/';
+        }
+        let apiUrl = `${baseUrl}?_embed&per_page=${this.config.postsPerBlock}&page=${this.config.stageID}`;
+
+        // In WordPress, 'label' is equivalent to 'category'.
+        // This requires an extra fetch to get the category ID from the slug (label name).
+        // For simplicity in this implementation, we'll assume the user provides a category ID in data-label.
+        if (this.config.contentType === 'label' && !isNaN(parseInt(this.config.dataLabel, 10))) {
+            apiUrl += `&categories=${this.config.dataLabel}`;
+        }
+        
+        // Note: WordPress 'comments' are a separate endpoint (`/wp/v2/comments`) and would require
+        // different mapping. For now, we only support posts.
+
+        // Prepend a different CORS proxy to the API URL. Some servers block specific proxies,
+        // so switching can resolve DNS or 403 Forbidden errors.
+        return `https://api.codetabs.com/v1/proxy?quest=${apiUrl}`;
+    }
+
+    /**
+     * Fetches and transforms data from the WordPress REST API.
+     * @returns {Promise<object>} A promise that resolves with the standardized data object.
+     */
+    async fetch() {
+        const url = this._buildFeedUrl();
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`WordPress API request failed: ${response.statusText}`);
+        }
+        const rawData = await response.json();
+        return window._mapWordPressResponseToStandardFormat(rawData, response.headers);
+    }
+}
+
+/**
+ * Data provider for generic RSS/XML feeds.
+ */
+class RssProvider {
+    constructor(config) {
+        this.config = config;
+    }
+
+    /**
+     * Builds the feed URL, wrapping it in a CORS proxy.
+     * @returns {string} The final proxied feed URL.
+     */
+    _buildFeedUrl() {
+        // For RSS, the siteURL is the direct feed URL.
+        const feedUrl = this.config.siteURL;
+        // Wrap in a CORS proxy.
+        return `https://api.codetabs.com/v1/proxy?quest=${feedUrl}`;
+    }
+
+    /**
+     * Fetches and transforms data from an RSS feed.
+     * @returns {Promise<object>} A promise that resolves with the standardized data object.
+     */
+    async fetch() {
+        const url = this._buildFeedUrl();
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`RSS feed request failed: ${response.statusText}`);
+        }
+
+        const xmlString = await response.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+        // Check for parsing errors
+        if (xmlDoc.getElementsByTagName("parsererror").length) {
+            throw new Error("Failed to parse RSS feed.");
+        }
+        return window._mapRssResponseToStandardFormat(xmlDoc);
+    }
+}
+
+/**
+ * Data provider for Blogger feeds.
+ */
+class BloggerProvider {
+    constructor(config) {
+        this.config = config;
+    }
+
+    /**
+     * Builds the appropriate Blogger feed URL based on the block configuration.
+     * @returns {string} The final feed URL.
+     */
+    _buildFeedUrl() {
+        let feedURL = this.config.siteURL + "feeds/";
+        switch (this.config.contentType) {
+            case "recent":
+                feedURL += "posts";
+                feedURL += this.config.showImage ? "/default" : "/summary";
+                break;
+            case "comments":
+                feedURL += "comments";
+                feedURL += this.config.showImage ? "/default" : "/summary";
+                break;
+            default: // Assumes 'label'
+                feedURL += "posts";
+                feedURL += this.config.showImage ? "/default" : "/summary";
+                feedURL += "/-/" + this.config.dataLabel;
+        }
+        feedURL += `?alt=json-in-script&start-index=${(this.config.stageID - 1) * this.config.postsPerBlock + 1}&max-results=${this.config.postsPerBlock}`;
+        return feedURL;
+    }
+
+    /**
+     * Fetches and transforms data from the Blogger API.
+     * @returns {Promise<object>} A promise that resolves with the standardized data object.
+     */
+    async fetch() {
+        const url = this._buildFeedUrl();
+        const rawData = await window.fetchJSONP(url);
+        return window._mapBloggerResponseToStandardFormat(rawData);
+    }
+}
+
+/**
+ * Detects the appropriate data provider based on the feed URL.
+ * @param {object} config The block's configuration object.
+ * @returns {BloggerProvider} An instance of the correct provider.
+ */
+window._getProvider = function(config) {
+    const url = config.siteURL.toLowerCase();
+
+    // Check for WordPress REST API endpoint.
+    if (url.includes('/wp-json')) {
+        return new WordPressProvider(config);
+    }
+    // Check for common RSS feed patterns.
+    if (url.endsWith('.xml') || url.includes('/feed')) {
+        // The RssProvider now internally handles YouTube and other RSS variations.
+        return new RssProvider(config);
+    }
+    // Default to Blogger if no other provider matches.
+    return new BloggerProvider(config);
+}
+
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -848,95 +1125,80 @@ window.mBlocks = async function(blockItem) {
 
     for (const rawElement of elements) {
         let blockConfig = window._parseBlockConfig(rawElement);
-
-        // --- Feed URL Construction ---
-        let feedURL = blockConfig.siteURL + "feeds/";
-        switch (blockConfig.contentType) { // Construct the feed URL based on content type
-            case "recent":
-                feedURL += "posts";
-                feedURL += blockConfig.showImage ? "/default" : "/summary";
-                break;
-            case "comments":
-                feedURL += "comments";
-                feedURL += blockConfig.showImage ? "/default" : "/summary";
-                break;
-            default:
-                feedURL += "posts";
-                feedURL += blockConfig.showImage ? "/default" : "/summary";
-                feedURL += "/-/" + blockConfig.dataLabel;
-        }
-        feedURL += `?alt=json-in-script&start-index=${(blockConfig.stageID - 1) * blockConfig.postsPerBlock + 1}&max-results=${blockConfig.postsPerBlock}`;
-
         try {
-            const response = await window.fetchJSONP(feedURL);
-            // --- Data Processing ---
-                if (response.feed.entry) {
+            const provider = window._getProvider(blockConfig);
+            const response = await provider.fetch();
 
-                    const postsInFeed = response.feed.entry.length,//Total number of actual posts in feed
-                        totalPostsAvailable = response.feed.openSearch$totalResults.$t; // Total posts available on the blog for this query
-                    const totalStages = Math.ceil(totalPostsAvailable / blockConfig.postsPerBlock);// Total pages/stages available for navigation
+            if (response.posts && response.posts.length > 0) {
+                const postsInFeed = response.posts.length;
+                const totalPostsAvailable = response.totalResults;
+                const totalStages = Math.ceil(totalPostsAvailable / blockConfig.postsPerBlock); // Total pages/stages available for navigation
 
-                    if (blockConfig.contentType === "comments") {
-                        blockConfig.moreText = "";
-                    }
+                if (blockConfig.contentType === "comments") {
+                    blockConfig.moreText = "";
+                }
 
-                    if (blockConfig.firstInstance) {
-                        rawElement.setAttribute("data-s", blockConfig.stageID);
+                if (blockConfig.firstInstance) {
+                    rawElement.setAttribute("data-s", blockConfig.stageID);
 
-                        // --- Block Header (Title & Description) ---
-                        // Appends the main title and description for the entire block if provided.
-                        rawElement.insertAdjacentHTML('beforeend', window._createBlockHeader(blockConfig));
-                    }
+                    // --- Block Header (Title & Description) ---
+                    rawElement.insertAdjacentHTML('beforeend', window._createBlockHeader(blockConfig));
+                }
 
-                    blockConfig = window._calculateLayout(blockConfig, postsInFeed);
+                blockConfig = window._calculateLayout(blockConfig, postsInFeed);
 
-                    // --- Main Content Wrapper ---
-                    // Creates the main container for the block content.
-                    const contentWrapper = document.createElement('div');
-                    contentWrapper.id = 'm' + blockConfig.mBlockID;
-                    rawElement.appendChild(contentWrapper);
-                    contentWrapper.className = `overflow-hidden bg-${blockConfig.dataTheme}${blockConfig.blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((blockConfig.isCarousel || blockConfig.containsNavigation) ? ` st${blockConfig.stageID} carousel carousel-fade` : "")}`;
-                    contentWrapper.setAttribute("data-bs-ride", "carousel");
+                // --- Main Content Wrapper ---
+                const contentWrapper = document.createElement('div');
+                contentWrapper.id = 'm' + blockConfig.mBlockID;
+                rawElement.appendChild(contentWrapper);
+                contentWrapper.className = `overflow-hidden bg-${blockConfig.dataTheme}${blockConfig.blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((blockConfig.isCarousel || blockConfig.containsNavigation) ? ` st${blockConfig.stageID} carousel carousel-fade` : "")}`;
+                contentWrapper.setAttribute("data-bs-ride", "carousel");
 
-                    const { blockBody, carouselIndicators, showcaseHTML } = window._buildBlockBody(response, blockConfig);
+                const { blockBody, carouselIndicators, showcaseHTML } = window._buildBlockBody(response, blockConfig);
 
-                    if (showcaseHTML) {
-                        contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
-                    }
+                if (showcaseHTML) {
+                    contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
+                }
 
-                    if (blockConfig.isCarousel || blockConfig.containsNavigation) {
-                        let bodyWrapper = `<div class="carousel-inner">${blockBody}</div>`;
-                        contentWrapper.insertAdjacentHTML('beforeend', blockBody + '</div>'); // Append and close carousel-inner
-                        if (blockConfig.isCarousel) contentWrapper.appendChild(carouselIndicators);
+                if (blockConfig.isCarousel || blockConfig.containsNavigation) {
+                    let bodyWrapper = `<div class="carousel-inner">${blockBody}</div>`;
+                    contentWrapper.insertAdjacentHTML('beforeend', blockBody + '</div>'); // Append and close carousel-inner
+                    if (blockConfig.isCarousel) contentWrapper.appendChild(carouselIndicators);
 
-                        // --- Carousel/Pagination Navigation ---
-                        const { prev: prevButton, next: nextButton } = window._createCarouselControls(blockConfig);
-                        if (blockConfig.isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
+                    // --- Carousel/Pagination Navigation ---
+                    const { prev: prevButton, next: nextButton } = window._createCarouselControls(blockConfig);
+                    if (blockConfig.isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
 
-                        if (blockConfig.containsNavigation) { if (blockConfig.stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (blockConfig.stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
-                    } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
+                    if (blockConfig.containsNavigation) { if (blockConfig.stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (blockConfig.stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
+                } else {
+                    contentWrapper.insertAdjacentHTML('beforeend', blockBody);
+                }
 
-                    // --- Block Footer (More Link) ---
-                    contentWrapper.insertAdjacentHTML('afterend', window._createBlockFooter(blockConfig, response));
-                }//if
-                else { // If response.feed.entry is empty or doesn't exist
-                    switch (blockConfig.contentType) { // Handle cases where the feed is empty
-                        case "recent": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
-                        case "comments": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
-                        default: rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found for "${blockConfig.dataLabel}"!</div>`);
-                    }
-                } 
+                // --- Block Footer (More Link) ---
+                contentWrapper.insertAdjacentHTML('afterend', window._createBlockFooter(blockConfig, response));
+            } //if
+            else { // If response.posts is empty or doesn't exist
+                switch (blockConfig.contentType) {
+                    case "recent":
+                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`);
+                        break;
+                    case "comments":
+                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`);
+                        break;
+                    default:
+                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found for "${blockConfig.dataLabel}"!</div>`);
+                }
+            }
         } catch (error) {
             console.error(`mBlocks failed to initialize for element:`, rawElement, error);
             rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-danger p-4 w-100">Sorry! An error occurred while loading content.</div>`);
         } finally {
             // --- Finalization ---
-            // This code runs whether the fetch succeeded or failed.
             window._loadOptimalImages(rawElement);
             if (rawElement.querySelector('.nav-prev, .nav-next')) {
                 window._bindPaginationEvents(rawElement);
             }
-            
+
             const finalBlockType = (rawElement.getAttribute("data-type") || "v").substring(0, 1);
             if (finalBlockType === BLOCK_SHOWCASE) {
                 const articleHeight = rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`;

@@ -21,11 +21,11 @@ All initial refactoring tasks are complete. The codebase is now more modular, ma
     - [x] **Step 6.2: Promisify `fetchJSONP`.** Refactor `fetchJSONP` to return a `Promise`. This will allow the main `mBlocks` function to be converted to an `async` function, replacing the `success`/`complete` callbacks with `await` and enabling the use of a `try...catch` block for robust error handling.
     - [x] **Step 6.3: Eliminate Side Effects in `_createPostHtml`.** Move the logic that modifies `config.columnCount` for the 'list' block type out of `_createPostHtml` and into the main `mBlocks` loop to make the helper function pure.
 
-- [ ] **Stage 7: Multi-Platform Support**
+- [x] **Stage 7: Multi-Platform Support**
     *Goal: Refactor the data fetching and processing logic to support different feed sources like WordPress or YouTube in addition to Blogger.*
-    - [ ] **Step 7.1: Create Data Provider Interface.** Design a provider pattern. Create a `BloggerProvider` that encapsulates the current `fetchJSONP` and Blogger-specific URL/data mapping logic. This provider should expose a simple `fetch()` method that returns data in a standardized internal format.
-    - [ ] **Step 7.2: Refactor `mBlocks` to Use Providers.** Create a `detectProvider(url)` function that uses regular expressions to check the `data-feed` URL and returns the appropriate provider instance (e.g., `new BloggerProvider()`, `new WordPressProvider()`).
-    - [ ] **Step 7.3: Implement a `WordPressProvider`.** As the first new implementation, create a `WordPressProvider` that uses the standard `fetch` API. It will be responsible for building the correct WordPress REST API URL and mapping the WP JSON response to the same standardized internal format that the rendering functions expect.
+    - [x] **Step 7.1: Create Data Provider Interface.** Designed a provider pattern. Created a `BloggerProvider` that encapsulates the `fetchJSONP` and Blogger-specific URL/data mapping logic. It exposes a `fetch()` method that returns data in a standardized internal format.
+    - [x] **Step 7.2: Refactor `mBlocks` to Use Providers.** Created a `_getProvider(config)` function that returns the appropriate provider instance. The main `mBlocks` function now uses this provider to fetch data.
+    - [x] **Step 7.3: Implement a `WordPressProvider`.** Created the `WordPressProvider` class. It uses the standard `fetch` API to get posts from the WP REST API and maps the response to the standard internal format. The `_getProvider` function now detects `/wp-json/` in the feed URL to use this provider, with Blogger as the default.
 
 - [x] **Stage 8: Implement "Measure, then Fetch" for Images**
     *Goal: Replace the predictive image size calculation with a more accurate and robust method that measures the container after rendering and then fetches the optimally sized image.*
