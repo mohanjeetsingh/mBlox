@@ -10,47 +10,6 @@
 if (typeof window.mBloxInitialized === 'undefined') {
     window.mBloxInitialized = true;
 
-
-/**
- * Fetches data from a URL using the JSONP technique.
- * This is a lightweight, native replacement for jQuery's $.ajax with dataType: 'jsonp'.
- * @param {string} url The URL to request, which should support a JSONP callback.
- * @param {object} options Configuration for the request.
- * @param {function(object)} options.success Callback function to execute on successful data retrieval.
- * @param {function} options.complete Callback function to execute when the request finishes (either success or error).
- */
-function fetchJSONP(url, options) {
-    const callbackName = `jsonp_callback_${Math.round(100000 * Math.random())}`;
-    const script = document.createElement('script');
-
-    // The URL already has query params, so we append the callback.
-    script.src = `${url}&callback=${callbackName}`;
-
-    window[callbackName] = function(data) {
-        // Cleanup the script and global callback function
-        delete window[callbackName];
-        document.head.removeChild(script);
-
-        // Execute the success and complete callbacks
-        if (options.success) {
-            options.success(data);
-        }
-        if (options.complete) {
-            options.complete();
-        }
-    };
-
-    // Basic error handling
-    script.onerror = function() {
-        delete window[callbackName];
-        document.head.removeChild(script);
-        console.error(`JSONP request to ${url} failed.`);
-        if (options.complete) options.complete();
-    };
-
-    document.head.appendChild(script);
-}
-
 const // Constants for block types, improving readability over single-character strings.
     BLOCK_COVER = 'v',
     BLOCK_SHOWCASE = 's',
@@ -61,6 +20,51 @@ const // Constants for block types, improving readability over single-character 
     BLOCK_STACK = 't',
     BLOCK_TYPE_QUOTE = 'q',
     BLOCK_TYPE_COMMENT = 'm';
+
+
+
+
+
+/**
+ * Fetches data from a URL using the JSONP technique.
+ * This is a lightweight, native replacement for jQuery's $.ajax with dataType: 'jsonp'.
+ * @param {string} url The URL to request, which should support a JSONP callback.
+ * @param {object} options Configuration for the request.
+ * @returns {Promise<object>} A promise that resolves with the JSON data or rejects on error.
+ */
+window.fetchJSONP = function(url) {
+    return new Promise((resolve, reject) => {
+        const callbackName = `jsonp_callback_${Math.round(100000 * Math.random())}`;
+        const script = document.createElement('script');
+
+        // The URL already has query params, so we append the callback.
+        script.src = `${url}&callback=${callbackName}`;
+
+        window[callbackName] = function(data) {
+            // Cleanup the script and global callback function
+            delete window[callbackName];
+            document.head.removeChild(script);
+
+            // Resolve the promise with the data
+            resolve(data);
+        };
+
+        // Basic error handling
+        script.onerror = function() {
+            delete window[callbackName];
+            document.head.removeChild(script);
+            
+            // Reject the promise on error
+            const errorMsg = `JSONP request to ${url} failed.`;
+            console.error(errorMsg);
+            reject(new Error(errorMsg));
+        };
+
+        document.head.appendChild(script);
+    });
+}
+
+
 
 const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_COVER]: 1,
@@ -92,7 +96,7 @@ const RESPONSIVE_GRID_CLASSES = {
  * @param {object} config The configuration object for the block.
  * @returns {{postHTML: string, showcaseHTML: string, carouselIndicator: string}} An object containing the HTML for the post and other related components.
  */
-function _createPostHtml(post, postID, config) {
+window._createPostHtml = function(post, postID, config) {
     let postHTML = '';
     let showcaseHTML = '';
     let carouselIndicator = '';
@@ -107,13 +111,13 @@ function _createPostHtml(post, postID, config) {
     // --- List Block Type Transformation ---
     // For a 'list' block, the first post (postID 0) uses the 'l' style. 
     // Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style for a more complex layout.
-    let finalType = config.blockType;
-    if (config.blockType === config.BLOCK_TYPE_LIST && postID > 0) {
+    let finalType = config.blockType; // Use a local variable for the type to avoid modifying the config object.
+    if (config.blockType === BLOCK_LIST && postID > 0) {
         if (config.showHeader) {
-            finalType = config.BLOCK_TYPE_STACK;
-            config.columnCount--;
+            finalType = BLOCK_STACK;
+            // config.columnCount--; // Side effect removed. This is now handled in the main mBlocks loop.
         } else {
-            finalType = config.BLOCK_TYPE_CARD;
+            finalType = BLOCK_CARD;
         }
     }
 
@@ -125,10 +129,10 @@ function _createPostHtml(post, postID, config) {
 
         // Author display varies by block type.
         switch (finalType) {
-            case config.BLOCK_TYPE_QUOTE:
+            case BLOCK_TYPE_QUOTE:
                 authorCode = `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
                 break;
-            case config.BLOCK_TYPE_COMMENT:
+            case BLOCK_TYPE_COMMENT:
                 authorCode = `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
                 break;
         }
@@ -145,7 +149,7 @@ function _createPostHtml(post, postID, config) {
     let displayHeaderCode = "",
         normalHeaderCode = "",
         commentHeaderCode = "";
-    if (finalType === config.BLOCK_TYPE_QUOTE) {
+    if (finalType === BLOCK_TYPE_QUOTE) {
         normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
     } else if (config.showHeader) {
         displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
@@ -156,7 +160,7 @@ function _createPostHtml(post, postID, config) {
     // --- Snippet ---
     if (config.showSnippet) {
         (snippetText = postSnippet.replace(/<\S[^>]*>/g, "")).length > 70 && (snippetText = snippetText.substring(0, config.snippetSize) + "...");
-        snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == config.BLOCK_TYPE_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
+        snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == BLOCK_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
     }
 
     // --- Post Link ---
@@ -203,7 +207,7 @@ function _createPostHtml(post, postID, config) {
             fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
             tooltipAttributes = ``;
         switch (finalType) {
-            case config.BLOCK_TYPE_SHOWCASE:
+            case BLOCK_SHOWCASE:
                 const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                 tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
                 if (postID === 0) {
@@ -211,23 +215,23 @@ function _createPostHtml(post, postID, config) {
                 }
                 imageBSClass += `${config.aspectRatio} shadow-sm`;
                 break;
-            case config.BLOCK_TYPE_PANCAKE:
+            case BLOCK_PANCAKE:
                 imageBSClass = config.aspectRatio;
                 break;
-            case config.BLOCK_TYPE_COMMENT:
+            case BLOCK_TYPE_COMMENT:
                 imageCoverStyle += ' height:3rem!important;width:3rem;';
                 fixedImageStyle += ' height:3rem!important;width:3rem;';
                 imageBSClass = ' rounded-circle m-2';
                 break;
-            case config.BLOCK_TYPE_QUOTE:
+            case BLOCK_TYPE_QUOTE:
                 imageCoverStyle += ' height:6rem!important;width:6rem;';
                 fixedImageStyle += ' height:6rem!important;width:6rem;';
                 imageBSClass = ' rounded-circle mx-auto mt-3';
                 break;
-            case config.BLOCK_TYPE_STACK:
+            case BLOCK_STACK:
                 imageBSClass = " col-4 h-100";
                 break;
-            case config.BLOCK_TYPE_COVER:
+            case BLOCK_COVER:
                 fixedImageStyle += config.articleHeight;
                 break;
         }
@@ -243,29 +247,29 @@ function _createPostHtml(post, postID, config) {
     let ctaButtonCode = "";
     if (config.callToAction != "") {
         switch (finalType) {
-            case config.BLOCK_TYPE_GALLERY:
+            case BLOCK_GALLERY:
                 break;
-            case config.BLOCK_TYPE_COMMENT:
+            case BLOCK_TYPE_COMMENT:
                 ctaButtonCode = `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
                 break;
             default:
-                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
+                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_TYPE_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
                 switch (finalType) {
-                    case config.BLOCK_TYPE_SHOWCASE:
+                    case BLOCK_SHOWCASE:
                         ctaClasses += " p-3 px-lg-5 float-end";
                         break;
-                    case config.BLOCK_TYPE_COVER:
+                    case BLOCK_COVER:
                         ctaClasses += ' p-2 px-4 mx-lg-5 mt-4';
                         break;
-                    case config.BLOCK_TYPE_PANCAKE:
-                    case config.BLOCK_TYPE_QUOTE:
+                    case BLOCK_PANCAKE:
+                    case BLOCK_TYPE_QUOTE:
                         ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`;
                         break;
-                    case config.BLOCK_TYPE_STACK:
+                    case BLOCK_STACK:
                         ctaClasses += ' mt-3';
                         break;
-                    case config.BLOCK_TYPE_CARD:
-                    case config.BLOCK_TYPE_LIST:
+                    case BLOCK_CARD:
+                    case BLOCK_LIST:
                         ctaClasses += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto';
                         break;
                 }
@@ -284,7 +288,7 @@ function _createPostHtml(post, postID, config) {
 
     // --- Showcase Block Specific ---
     // The first post of a showcase block is handled separately to create the large featured image area.
-    if (finalType === config.BLOCK_TYPE_SHOWCASE && config.firstInstance && postID === 0) {
+    if (finalType === BLOCK_SHOWCASE && config.firstInstance && postID === 0) {
         const showcaseContent = config.showHeader
             ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
             : '';
@@ -295,21 +299,21 @@ function _createPostHtml(post, postID, config) {
 
     // --- Article HTML Construction ---
     let videoID = "regular"; // Default videoID
-    if (finalType == config.BLOCK_TYPE_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
+    if (finalType == BLOCK_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
 
     let textContentHTML = '';
     let linkWrapperStart = '';
     let linkWrapperEnd = '';
 
     // --- Text Content ---
-    if (config.showHeader && finalType != config.BLOCK_TYPE_SHOWCASE && finalType != config.BLOCK_TYPE_GALLERY) {
+    if (config.showHeader && finalType != BLOCK_SHOWCASE && finalType != BLOCK_GALLERY) {
         switch (finalType) {
-            case config.BLOCK_TYPE_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
-                case config.BLOCK_TYPE_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
-                case config.BLOCK_TYPE_PANCAKE: case config.BLOCK_TYPE_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == config.BLOCK_TYPE_PANCAKE || (config.blockType == config.BLOCK_TYPE_LIST && finalType == config.BLOCK_TYPE_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
+            case BLOCK_TYPE_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
+                case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
+                case BLOCK_PANCAKE: case BLOCK_TYPE_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
                     break;
-                case config.BLOCK_TYPE_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
-                case config.BLOCK_TYPE_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
+                case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
+                case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
                     switch (config.textVerticalAlign) {
                         case "top": textContentHTML += ' h-auto">'; break;
                         case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
@@ -317,7 +321,7 @@ function _createPostHtml(post, postID, config) {
                         case "overlay": textContentHTML += '">'; break;
                     }
                     break;
-                case config.BLOCK_TYPE_COVER: finalType == config.BLOCK_TYPE_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
+                case BLOCK_COVER: finalType == BLOCK_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
                     switch (config.textVerticalAlign) {
                         case "top": textContentHTML += '-x mt-5">'; break;
                         case "middle": textContentHTML += ' top-50">'; break;
@@ -327,29 +331,29 @@ function _createPostHtml(post, postID, config) {
             }
 
             textContentHTML += `${authorCode}${dateCode}`;
-            if (finalType === config.BLOCK_TYPE_COVER) textContentHTML += displayHeaderCode; else if (finalType === config.BLOCK_TYPE_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
+            if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === BLOCK_TYPE_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
             textContentHTML += snippetCode;
-            !(finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
+            !(finalType == BLOCK_PANCAKE || finalType == BLOCK_TYPE_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
 
             textContentHTML += `</div>`;
-            if (finalType === config.BLOCK_TYPE_STACK && config.showImage) textContentHTML += `</div>`;
-            if (finalType === config.BLOCK_TYPE_PANCAKE || finalType === config.BLOCK_TYPE_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
+            if (finalType === BLOCK_STACK && config.showImage) textContentHTML += `</div>`;
+            if (finalType === BLOCK_PANCAKE || finalType === BLOCK_TYPE_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
         }//TEXT
     
     // Link wrapper for the entire article (except for showcase items)
-    if (finalType !== config.BLOCK_TYPE_SHOWCASE) {
-        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != config.BLOCK_TYPE_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != config.BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
-            if (f === config.BLOCK_TYPE_QUOTE || f === config.BLOCK_TYPE_COVER) return ' text-center h-100';
-            if (f === config.BLOCK_TYPE_STACK || f === config.BLOCK_TYPE_COMMENT) return ' row g-0';
-            if (f === config.BLOCK_TYPE_LIST || f === config.BLOCK_TYPE_CARD || f === config.BLOCK_TYPE_GALLERY) return `${config.aspectRatio}${(f === config.BLOCK_TYPE_LIST ? ` mt-${config.gutterSize}` : '')}`;
+    if (finalType !== BLOCK_SHOWCASE) {
+        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != BLOCK_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
+            if (f === BLOCK_TYPE_QUOTE || f === BLOCK_COVER) return ' text-center h-100';
+            if (f === BLOCK_STACK || f === BLOCK_TYPE_COMMENT) return ' row g-0';
+            if (f === BLOCK_LIST || f === BLOCK_CARD || f === BLOCK_GALLERY) return `${config.aspectRatio}${(f === BLOCK_LIST ? ` mt-${config.gutterSize}` : '')}`;
             return '';
         })(finalType)}`;
         linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
         linkWrapperEnd = `</a>`;
     }
 
-    const articleClasses = `col${finalType === config.BLOCK_TYPE_SHOWCASE ? ' d-inline-flex sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-img-high="' + highResImageURL + '" data-toggle="tooltip"' : ' d-inline-flex'}`;
-    const articleStyle = finalType === config.BLOCK_TYPE_COVER ? ` style="${config.articleHeight}"` : '';
+    const articleClasses = `col${finalType === BLOCK_SHOWCASE ? ' d-inline-flex sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-img-high="' + highResImageURL + '" data-toggle="tooltip"' : ' d-inline-flex'}`;
+    const articleStyle = finalType === BLOCK_COVER ? ` style="${config.articleHeight}"` : '';
 
     postHTML = `<article class="${articleClasses}"${articleStyle} role="article">
         ${linkWrapperStart}
@@ -365,7 +369,7 @@ function _createPostHtml(post, postID, config) {
  * @param {object} config The configuration object for the block.
  * @returns {string} The HTML string for the block header, or an empty string if no title is provided.
  */
-function _createBlockHeader(config) {
+window._createBlockHeader = function(config) {
     if (!config.dataTitle) {
         return '';
     }
@@ -385,8 +389,8 @@ function _createBlockHeader(config) {
  * @param {object} response The JSON response object from the Blogger feed.
  * @returns {string} The HTML string for the block footer.
  */
-function _createBlockFooter(config, response) {
-    if (config.moreText === "" && config.blockType === config.BLOCK_TYPE_COVER) {
+window._createBlockFooter = function(config, response) {
+    if (config.moreText === "" && config.blockType === BLOCK_COVER) {
         return '';
     }
 
@@ -415,7 +419,7 @@ function _createBlockFooter(config, response) {
  * @param {object} config The configuration object for the block.
  * @returns {{prev: string, next: string}} An object containing the HTML for the previous and next buttons.
  */
-function _createCarouselControls(config) {
+window._createCarouselControls = function(config) {
     const prevClass = `carousel-control-prev link-secondary${config.containsNavigation ? " nav-prev" : " pb-5"}`;
     const nextClass = `carousel-control-next link-secondary${config.containsNavigation ? " nav-next" : " pb-5"}`;
     const target = `#m${config.mBlockID}`;
@@ -435,7 +439,7 @@ function _createCarouselControls(config) {
  * Fades in an element.
  * @param {HTMLElement | null} el The element to fade in.
  */
-function fadeIn(el) {
+window.fadeIn = function(el) {
     if (!el) return;
     el.style.opacity = 0;
     // Use a more generic display value; 'block' can break layouts for inline-flex, etc.
@@ -456,7 +460,7 @@ function fadeIn(el) {
  * Fades out an element.
  * @param {HTMLElement | null} el The element to fade out.
  */
-function fadeOut(el) {
+window.fadeOut = function(el) {
     if (!el) return;
     el.style.opacity = 1;
     (function fade() {
@@ -473,7 +477,7 @@ function fadeOut(el) {
  * @param {HTMLElement} rawElement The main block element.
  * @param {object} config The configuration object for the block.
  */
-function _bindShowcaseEvents(rawElement, config) {
+window._bindShowcaseEvents = function(rawElement, config) {
     const featuredImageNode = rawElement.querySelector(".feature-image");
     if (!featuredImageNode) return;
 
@@ -546,7 +550,7 @@ function _bindShowcaseEvents(rawElement, config) {
  * Binds click events for simple pagination (non-carousel next/previous).
  * @param {HTMLElement} rawElement The main block element.
  */
-function _bindPaginationEvents(rawElement) {
+window._bindPaginationEvents = function(rawElement) {
     const prevButton = rawElement.querySelector(".nav-prev");
     if (prevButton) {
         const prevNav = function() {
@@ -584,7 +588,7 @@ function _bindPaginationEvents(rawElement) {
  * that is appropriately sized for the container, saving bandwidth.
  * @param {HTMLElement} rawElement The parent element containing image placeholders.
  */
-function _loadOptimalImages(rawElement) {
+window._loadOptimalImages = function(rawElement) {
     const imagePlaceholders = rawElement.querySelectorAll('.m-blox-image-to-load');
 
     imagePlaceholders.forEach(el => {
@@ -639,11 +643,11 @@ function _loadOptimalImages(rawElement) {
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
  */
-function mBlocks(blockItem) {
+window.mBlocks = async function(blockItem) {
     // Stage 1 jQuery Removal: Use native JS for element selection and looping.
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
-    elements.forEach(function (rawElement) {
+    for (const rawElement of elements) {
         // --- Block Configuration Parsing ---
         const
             dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
@@ -717,10 +721,11 @@ function mBlocks(blockItem) {
         }
         feedURL += `?alt=json-in-script&start-index=${(stageID - 1) * postsPerBlock + 1}&max-results=${postsPerBlock}`;
 
-        // --- Data Fetching ---
-        fetchJSONP(feedURL, {
-            success: function (response) {
+        try {
+            const response = await window.fetchJSONP(feedURL);
+            // --- Data Processing ---
                 if (response.feed.entry) {
+
                     const postsInFeed = response.feed.entry.length,//Total number of actual posts in feed
                         totalPostsAvailable = response.feed.openSearch$totalResults.$t, // Total posts available on the blog for this query
                         snippetSize = rawElement.getAttribute("data-snippetSize") || 150, // Max characters for snippets
@@ -761,9 +766,6 @@ function mBlocks(blockItem) {
                     // This simplifies passing data to helper functions.
                     const blockConfig = {
                         siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
-                        // Pass block-type constants
-                        BLOCK_TYPE_COVER: BLOCK_COVER, BLOCK_TYPE_SHOWCASE: BLOCK_SHOWCASE, BLOCK_TYPE_LIST: BLOCK_LIST, BLOCK_TYPE_CARD: BLOCK_CARD, BLOCK_TYPE_GALLERY: BLOCK_GALLERY, BLOCK_TYPE_PANCAKE: BLOCK_PANCAKE, BLOCK_TYPE_STACK: BLOCK_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
-                        // Pass other dynamic variables needed inside the helper
                         isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false, articleHeight
                     };
 
@@ -772,7 +774,7 @@ function mBlocks(blockItem) {
 
                         // --- Block Header (Title & Description) ---
                         // Appends the main title and description for the entire block if provided.
-                        rawElement.insertAdjacentHTML('beforeend', _createBlockHeader(blockConfig));
+                        rawElement.insertAdjacentHTML('beforeend', window._createBlockHeader(blockConfig));
                     }
 
                     if (columnCount === null) { // Only set default if data-cols is not present at all
@@ -821,13 +823,19 @@ function mBlocks(blockItem) {
                     // Iterates through each post from the feed to build its HTML.
                     for (let postID = 0; postID < postsInFeed; postID++) {
                         const post = response.feed.entry[postID];
-                        const { postHTML, showcaseHTML, carouselIndicator } = _createPostHtml(post, postID, blockConfig);
+
+                        // Side effect removal: Handle column count change for 'list' type here.
+                        if (blockType === BLOCK_LIST && postID === 1 && showHeader) {
+                            columnCount--;
+                        }
+
+                        const { postHTML, showcaseHTML, carouselIndicator } = window._createPostHtml(post, postID, blockConfig);
                         
                         if (carouselIndicator) {
                             if (isCarousel) carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
                         }
                         if (showcaseHTML && firstInstance && postID === 0) {
-                             contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
+                            contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
                         }
 
                         // --- Item Wrapper ---
@@ -835,7 +843,7 @@ function mBlocks(blockItem) {
                         if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_LIST && postID == 1)) {
                             blockBody += `<div class="row  g-${gutterSize} mx-0`;
                             if (isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); } // Add active class to first item
-                            isComplexLayout && (blockType == BLOCK_LIST) && (blockBody += ' col flex-grow-1');
+                            isComplexLayout && (blockType === BLOCK_LIST) && (blockBody += ' col flex-grow-1');
                             (finalType != BLOCK_COVER) && (!(isComplexLayout && (finalType == BLOCK_STACK || finalType == BLOCK_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             blockBody += ` ${RESPONSIVE_GRID_CLASSES[columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
                         }
@@ -852,14 +860,14 @@ function mBlocks(blockItem) {
                         if (isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                         // --- Carousel/Pagination Navigation ---
-                        const { prev: prevButton, next: nextButton } = _createCarouselControls(blockConfig);
+                        const { prev: prevButton, next: nextButton } = window._createCarouselControls(blockConfig);
                         if (isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
 
                         if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
                     // --- Block Footer (More Link) ---
-                    contentWrapper.insertAdjacentHTML('afterend', _createBlockFooter(blockConfig, response));
+                    contentWrapper.insertAdjacentHTML('afterend', window._createBlockFooter(blockConfig, response));
                 }//if
                 else { // If response.feed.entry is empty or doesn't exist
                     switch (contentType) { // Handle cases where the feed is empty
@@ -868,23 +876,24 @@ function mBlocks(blockItem) {
                         default: rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No content found for "${dataLabel}"!</div>`);
                     }
                 } 
-            },//success
-            complete: function () {
-                _loadOptimalImages(rawElement);
-                if (containsNavigation) _bindPaginationEvents(rawElement);
-                // --- Showcase Block Interactivity ---
-                // The showcase event binding logic is very complex.
-                // It will be moved into the _bindShowcaseEvents function in a future step.
-                // For now, we just call the function if the block type is showcase.
-                // Note: We need to re-fetch the blockConfig here as it's not in scope.
-                // This is temporary until the complete() callback is refactored.
-                const tempConfig = {
-                    articleHeight: (rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`)
-                };
-                if (blockType === BLOCK_SHOWCASE) _bindShowcaseEvents(rawElement, tempConfig);
-            }//complete
-        })//ajax
-    });//forEach
+        } catch (error) {
+            console.error(`mBlocks failed to initialize for element:`, rawElement, error);
+            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-danger p-4 w-100">Sorry! An error occurred while loading content.</div>`);
+        } finally {
+            // --- Finalization ---
+            // This code runs whether the fetch succeeded or failed.
+            window._loadOptimalImages(rawElement);
+            if (rawElement.querySelector('.nav-prev, .nav-next')) {
+                window._bindPaginationEvents(rawElement);
+            }
+            
+            const finalBlockType = (rawElement.getAttribute("data-type") || "v").substring(0, 1);
+            if (finalBlockType === BLOCK_SHOWCASE) {
+                const articleHeight = rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`;
+                window._bindShowcaseEvents(rawElement, { articleHeight });
+            }
+        }
+    } // end for...of loop
 }
 
 } // End of the guard clause `if (typeof window.mBloxInitialized === 'undefined')`

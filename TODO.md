@@ -12,14 +12,14 @@ All initial refactoring tasks are complete. The codebase is now more modular, ma
     - [ ] **Step 4.3: Extract Main Post Loop.** Create a `_buildBlockBody(response, config)` function. Move the main `for` loop that iterates through posts, calls `_createPostHtml`, and assembles the `blockBody` string into this new function.
     - [ ] **Step 4.4: Refactor `complete` Callback.** Refactor the `complete` callback in `fetchJSONP` to accept the `blockConfig` object directly, removing the need for the `tempConfig` object and cleaning up the event binding calls.
 
-- [x] **Stage 5: Code & Logic Refinement**
-    - [x] **Step 5.1: Simplify `switch` statements.** Convert the `switch` statements for default column counts and grid classes in `mBlocks` to use object lookups.
-    - [x] **Step 5.2: Add JSDoc Comments.** Add comprehensive JSDoc comments to the `fadeIn`, `fadeOut`, and `_bindPaginationEvents` helper functions.
+- [ ] **Stage 5: Code & Logic Refinement**
+    - [ ] **Step 5.1: Simplify `switch` statements.** Convert the `switch` statements for default column counts and grid classes in `mBlocks` to use object lookups.
+    - [ ] **Step 5.2: Add JSDoc Comments.** Add comprehensive JSDoc comments to the `fadeIn`, `fadeOut`, and `_bindPaginationEvents` helper functions.
 
-- [ ] **Stage 6: Advanced Refactoring & Modernization**
-    - [ ] **Step 6.1: Globalize Constants.** Move the `BLOCK_TYPE_*` constants to the global scope so they don't need to be redefined on every `mBlocks` call or passed via the `config` object.
-    - [ ] **Step 6.2: Promisify `fetchJSONP`.** Refactor `fetchJSONP` to return a `Promise`. This will allow the main `mBlocks` function to be converted to an `async` function, replacing the `success`/`complete` callbacks with `await` and enabling the use of a `try...catch` block for robust error handling.
-    - [ ] **Step 6.3: Eliminate Side Effects in `_createPostHtml`.** Move the logic that modifies `config.columnCount` for the 'list' block type out of `_createPostHtml` and into the main `mBlocks` loop to make the helper function pure.
+- [x] **Stage 6: Advanced Refactoring & Modernization**
+    - [x] **Step 6.1: Globalize Constants.** Move the `BLOCK_TYPE_*` constants to the global scope so they don't need to be redefined on every `mBlocks` call or passed via the `config` object.
+    - [x] **Step 6.2: Promisify `fetchJSONP`.** Refactor `fetchJSONP` to return a `Promise`. This will allow the main `mBlocks` function to be converted to an `async` function, replacing the `success`/`complete` callbacks with `await` and enabling the use of a `try...catch` block for robust error handling.
+    - [x] **Step 6.3: Eliminate Side Effects in `_createPostHtml`.** Move the logic that modifies `config.columnCount` for the 'list' block type out of `_createPostHtml` and into the main `mBlocks` loop to make the helper function pure.
 
 - [ ] **Stage 7: Multi-Platform Support**
     *Goal: Refactor the data fetching and processing logic to support different feed sources like WordPress or YouTube in addition to Blogger.*
