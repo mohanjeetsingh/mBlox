@@ -2,6 +2,7 @@
  * mBlox for Blogger
  * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
+ * @version 1.0.0
  * Copyright (c) 2022-2024, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
@@ -18,10 +19,8 @@ const // Constants for block types, improving readability over single-character 
     BLOCK_GALLERY = 'g',
     BLOCK_PANCAKE = 'p',
     BLOCK_STACK = 't',
-    
-    // Constants for block content types, improving readability over single-character strings
-    CONTENT_QUOTE = 'q',
-    CONTENT_COMMENT = 'm';
+    BLOCK_QUOTE = 'q',
+    BLOCK_COMMENT = 'm';
 
 
 
@@ -70,11 +69,11 @@ window.fetchJSONP = function(url) {
 
 const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_COVER]: 1,
-    [CONTENT_COMMENT]: 1,
+    [BLOCK_COMMENT]: 1,
     [BLOCK_STACK]: 1,
     [BLOCK_PANCAKE]: 3,
     [BLOCK_CARD]: 4,
-    [CONTENT_QUOTE]: 4,
+    [BLOCK_QUOTE]: 4,
     [BLOCK_GALLERY]: 5,
     [BLOCK_LIST]: 2,
     [BLOCK_SHOWCASE]: 6
@@ -227,181 +226,36 @@ window._mapBloggerResponseToStandardFormat = function(bloggerResponse) {
 window._createPostHtml = function(post, postID, config) {
     let postHTML = '';
     let showcaseHTML = '';
-    let carouselIndicator = '';
-    let highResImageURL = ''; // Declare here to ensure it's in scope for all block types.
-    
-    // Determine the videoID early and consistently.
-    const videoID = post.videoId || (post.thumbnailUrl.includes("img.youtube.com") ? post.thumbnailUrl.substr(post.thumbnailUrl.indexOf("/vi/") + 4, 11) : "regular");
-
-    const postTitle = post.title,
-        postSnippet = (config.showSnippet || config.showImage) && post.content;
-    let postAuthor = post.authorName,
-        snippetText = "",
-        snippetCode = "";
-
-    // --- List Block Type Transformation ---
-    // For a 'list' block, the first post (postID 0) uses the 'l' style. 
-    // Subsequent posts are transformed into either 'stack' (t) or 'card' (c) style for a more complex layout.
     let finalType = config.blockType; // Use a local variable for the type to avoid modifying the config object.
     if (config.blockType === BLOCK_LIST && postID > 0) {
-        if (config.showHeader) {
-            finalType = BLOCK_STACK;
-            // config.columnCount--; // Side effect removed. This is now handled in the main mBlocks loop.
-        } else {
-            finalType = BLOCK_CARD;
-        }
+        finalType = config.showHeader ? BLOCK_STACK : BLOCK_CARD;
     }
 
-    // --- Author Info ---
-    let authorCode = '',
-        authorURL = "";
-    if (config.showAuthor) {
-        if (config.contentType !== "comments") authorURL = (postAuthor === "Anonymous" || postAuthor === "Unknown") ? config.siteURL : post.authorUri;
+    const videoID = post.videoId || (post.thumbnailUrl && post.thumbnailUrl.includes("img.youtube.com") ? post.thumbnailUrl.substr(post.thumbnailUrl.indexOf("/vi/") + 4, 11) : "regular");
+    const postTitle = post.title;
+    const postSnippet = (config.showSnippet || config.showImage) && post.content;
 
-        // Author display varies by block type.
-        switch (finalType) {
-            case CONTENT_QUOTE:
-                authorCode = `<figcaption class="small fw-lighter">- ${postAuthor}</figcaption>`;
-                break;
-            case CONTENT_COMMENT:
-                authorCode = `<span class="small text-${config.dataTheme}" rel="author">${postAuthor}</span>`;
-                break;
-        }
-    }
+    // Prepare all the data and component parts
+    const parts = {
+        postURL: post.url,
+        videoID,
+        postTitle,
+        authorCode: _renderAuthor(finalType, config, post.authorName, post.authorUri),
+        dateCode: _renderDate(config, post.publishedDate),
+        ..._renderPostHeader(finalType, config, postTitle),
+        ..._renderSnippet(finalType, config, postSnippet),
+        ctaButtonCode: _renderCTA(finalType, config, postTitle),
+        ..._renderImage(finalType, postID, config, {
+            postSnippet, videoID, postTitle,
+            thumbnailUrl: post.thumbnailUrl,
+            authorImage: post.authorImage
+        })
+    };
 
-    // --- Date Formatting ---
-    let dateCode = ''; // Formats the publication date.
-    if (config.showDate) {
-        const formattedDate = config.dateFormatter.format(new Date(post.publishedDate));
-        dateCode = `<span class="small fw-lighter">${config.showAuthor ? ' &#8226; ' : ''} ${formattedDate}</span>`;
-    }
-
-    // --- Title / Header ---
-    let displayHeaderCode = "",
-        normalHeaderCode = "",
-        commentHeaderCode = "";
-    if (finalType === CONTENT_QUOTE) {
-        normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
-    } else if (config.showHeader) {
-        displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
-        normalHeaderCode = `<h5 class="card-title fw-normal">${postTitle}</h5>`;
-        commentHeaderCode = `<span class="d-block my-2">"${postTitle}"</span>`;
-    }
-
-    // --- Snippet ---
-    if (config.showSnippet) {
-        (snippetText = postSnippet.replace(/<\S[^>]*>/g, "")).length > 70 && (snippetText = snippetText.substring(0, config.snippetSize) + "...");
-        snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == BLOCK_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
-    }
-
-    // --- Post Link ---
-    let postURL = "";
-    postURL = post.url;
-    // --- Image & Video Processing ---
-    // Extracts image or video thumbnail from the post content.
-    let imageCode = "",
-        showcaseImageCode = ''; // This was missing
-    // Prioritize the direct thumbnail URL from the standardized post object.
-    let videoThumbnailURL = post.thumbnailUrl || ""; 
-
-    if (config.showImage) {
-        let imageURL = videoThumbnailURL; // Start with the provided thumbnail.
-
-        // If no thumbnail is provided by the provider, fall back to parsing the content.
-        if (!imageURL) {
-            const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
-            if (config.contentType == 'comments') {
-                imageURL = post.authorImage;
-            } else {
-                const firstImage = contentParser.querySelector("img");
-                imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
-            }
-        }
-        
-        // Ensure videoThumbnailURL is set for showcase logic.
-        if (!videoThumbnailURL) videoThumbnailURL = imageURL;
-
-        // Get the base s1600 (or original) URL for optimal loading for Blogger images.
-        highResImageURL = imageURL.includes('/s72-c') ? imageURL.replace('/s72-c', '/s1600') : imageURL;
-        highResImageURL = highResImageURL.includes('/w640-h424') ? highResImageURL.replace('/w640-h424', '/s1600') : highResImageURL;
-
-        // Prepare image classes and styles based on block type and settings.
-        let imageCoverStyle = "object-fit:cover;height:100%!important;",
-            imageBSClass = ' w-100 img-fluid',
-            fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
-            tooltipAttributes = ``;
-        switch (finalType) {
-            case BLOCK_SHOWCASE:
-                tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
-                if (postID === 0) {
-                    showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
-                }
-                imageBSClass += `${config.aspectRatio} shadow-sm`;
-                break;
-            case BLOCK_PANCAKE:
-                imageBSClass = config.aspectRatio;
-                break;
-            case CONTENT_COMMENT:
-                imageCoverStyle += ' height:3rem!important;width:3rem;';
-                fixedImageStyle += ' height:3rem!important;width:3rem;';
-                imageBSClass = ' rounded-circle m-2';
-                break;
-            case CONTENT_QUOTE:
-                imageCoverStyle += ' height:6rem!important;width:6rem;';
-                fixedImageStyle += ' height:6rem!important;width:6rem;';
-                imageBSClass = ' rounded-circle mx-auto mt-3';
-                break;
-            case BLOCK_STACK:
-                imageBSClass = " col-4 h-100";
-                break;
-            case BLOCK_COVER:
-                fixedImageStyle += config.articleHeight;
-                break;
-        }
-        if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
-
-        const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-        imageCode = config.isImageFixed
-            ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-            : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
-    } //IMAGE SETTINGS
-
-    // --- CTA Button ---
-    let ctaButtonCode = "";
-    if (config.callToAction != "") {
-        switch (finalType) {
-            case BLOCK_GALLERY:
-                break;
-            case CONTENT_COMMENT:
-                ctaButtonCode = `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
-                break;
-            default:
-                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == CONTENT_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
-                switch (finalType) {
-                    case BLOCK_SHOWCASE:
-                        ctaClasses += " p-3 px-lg-5 float-end";
-                        break;
-                    case BLOCK_COVER:
-                        ctaClasses += ' p-2 px-4 mx-lg-5 mt-4';
-                        break;
-                    case BLOCK_PANCAKE:
-                    case CONTENT_QUOTE:
-                        ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`;
-                        break;
-                    case BLOCK_STACK:
-                        ctaClasses += ' mt-3';
-                        break;
-                    case BLOCK_CARD:
-                    case BLOCK_LIST:
-                        ctaClasses += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto';
-                        break;
-                }
-                ctaClasses += ` border-0 btn-${config.dataTheme}`;
-                ctaButtonCode = `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
-        }
-    }
+    ({ postHTML, showcaseHTML } = _renderPostByType(finalType, postID, config, parts));
 
     // --- Carousel Indicators ---
+    let carouselIndicator = '';
     if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
         const slideIndex = postID / (config.actualColumnCount * config.blockRows);
         const activeClass = postID === 0 ? ' active' : '';
@@ -409,78 +263,343 @@ window._createPostHtml = function(post, postID, config) {
         carouselIndicator = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${activeClass}" ${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
     }
 
-    // --- Showcase Block Specific ---
-    // The first post of a showcase block is handled separately to create the large featured image area.
-    if (finalType === BLOCK_SHOWCASE && config.firstInstance && postID === 0) {
-        const showcaseContent = config.showHeader
-            ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
-            : '';
-        const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
+    return { postHTML, showcaseHTML, carouselIndicator };
+}
 
-        showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
+/**
+ * Dispatches to the correct block-specific rendering function.
+ * @param {string} finalType The final block type.
+ * @param {number} postID The index of the post.
+ * @param {object} config The block configuration.
+ * @param {object} parts An object containing all pre-rendered HTML component strings.
+ * @returns {{postHTML: string, showcaseHTML: string}}
+ */
+function _renderPostByType(finalType, postID, config, parts) {
+    if (finalType === BLOCK_SHOWCASE) {
+        return _renderShowcasePost(postID, config, parts);
     }
+    return { postHTML: _renderStandardPost(finalType, config, parts), showcaseHTML: '' };
+}
 
-    let textContentHTML = '';
-    let linkWrapperStart = '';
-    let linkWrapperEnd = '';
+/**
+ * Renders the HTML for a standard post type (card, list, pancake, etc.).
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {object} parts An object containing all pre-rendered HTML component strings.
+ * @returns {string} The complete HTML for the post article.
+ */
+function _renderStandardPost(finalType, config, parts) {
+    const { postURL, postTitle, snippetText, videoID, videoThumbnailURL, highResImageURL, imageCode, ...contentParts } = parts;
 
-    // --- Text Content ---
-    if (config.showHeader && finalType != BLOCK_SHOWCASE && finalType != BLOCK_GALLERY) {
-        switch (finalType) {
-            case CONTENT_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
-                case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
-                case BLOCK_PANCAKE: case CONTENT_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
-                    break;
-                case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
-                case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
-                    switch (config.textVerticalAlign) {
-                        case "top": textContentHTML += ' h-auto">'; break;
-                        case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
-                        case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto;">'; break;
-                        case "overlay": textContentHTML += '">'; break;
-                    }
-                    break;
-                case BLOCK_COVER: finalType == BLOCK_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
-                    switch (config.textVerticalAlign) {
-                        case "top": textContentHTML += '-x mt-5">'; break;
-                        case "middle": textContentHTML += ' top-50">'; break;
-                        case "bottom": textContentHTML += '-x  bottom-0 mb-5">'; break;
-                        case "overlay": textContentHTML += ' top-50 h-100 w-100">'; break;
-                    }
-            }
+    const textContentHTML = _renderPostContent(finalType, config, contentParts);
+    const linkClasses = _getLinkWrapperClasses(finalType, config);
+    const linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
+    const linkWrapperEnd = `</a>`;
 
-            textContentHTML += `${authorCode}${dateCode}`;
-            if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === CONTENT_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
-            textContentHTML += snippetCode;
-            !(finalType == BLOCK_PANCAKE || finalType == CONTENT_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
-
-            textContentHTML += `</div>`;
-            if (finalType === BLOCK_STACK && config.showImage) textContentHTML += `</div>`;
-            if (finalType === BLOCK_PANCAKE || finalType === CONTENT_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
-        }//TEXT
-    
-    // Link wrapper for the entire article (except for showcase items)
-    if (finalType !== BLOCK_SHOWCASE) {
-        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != BLOCK_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != CONTENT_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
-            if (f === CONTENT_QUOTE || f === BLOCK_COVER) return ' text-center h-100';
-            if (f === BLOCK_STACK || f === CONTENT_COMMENT) return ' row g-0';
-            if (f === BLOCK_LIST || f === BLOCK_CARD || f === BLOCK_GALLERY) return `${config.aspectRatio}${(f === BLOCK_LIST ? ` mt-${config.gutterSize}` : '')}`;
-            return '';
-        })(finalType)}`;
-        linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
-        linkWrapperEnd = `</a>`;
-    }
-
-    const articleClasses = `col${finalType === BLOCK_SHOWCASE ? ' d-inline-flex sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-img-high="' + highResImageURL + '" data-toggle="tooltip"' : ' d-inline-flex'}`;
+    const articleClasses = _getArticleClasses(finalType, { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL });
     const articleStyle = finalType === BLOCK_COVER ? ` style="${config.articleHeight}"` : '';
 
-    postHTML = `<article class="${articleClasses}"${articleStyle} role="article">
+    return `<article class="${articleClasses}"${articleStyle} role="article">
         ${linkWrapperStart}
         ${config.showImage ? imageCode : ''}
         ${textContentHTML}
         ${linkWrapperEnd}
     </article>`;
-    return { postHTML, showcaseHTML, carouselIndicator };
+}
+
+/**
+ * Renders the HTML for a showcase post.
+ * @param {number} postID The index of the post.
+ * @param {object} config The block configuration.
+ * @param {object} parts An object containing all pre-rendered HTML component strings.
+ * @returns {{postHTML: string, showcaseHTML: string}}
+ */
+function _renderShowcasePost(postID, config, parts) {
+    // For showcase, the first post is the large feature item.
+    if (postID === 0 && config.firstInstance) {
+        const { postURL, postTitle, normalHeaderCode, snippetCode, ctaButtonCode, showcaseImageCode } = parts;
+        const showcaseContent = config.showHeader
+            ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
+            : '';
+        const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
+
+        const showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
+        
+        // The main feature item doesn't have a separate `postHTML`.
+        return { postHTML: '', showcaseHTML };
+    }
+
+    // Subsequent posts are the smaller items in the grid.
+    return { postHTML: _renderStandardPost(BLOCK_SHOWCASE, config, parts), showcaseHTML: '' };
+}
+
+/**
+ * Renders the author information for a post.
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {string} authorName The name of the author.
+ * @param {string} authorUri The URI of the author.
+ * @returns {string} The HTML for the author.
+ */
+function _renderAuthor(finalType, config, authorName, authorUri) {
+    if (!config.showAuthor) return '';
+
+    let authorCode = '';
+    if (config.contentType !== "comments") {
+        const authorURL = (authorName === "Anonymous" || authorName === "Unknown") ? config.siteURL : authorUri;
+    }
+
+    switch (finalType) {
+        case BLOCK_QUOTE:
+            authorCode = `<figcaption class="small fw-lighter">- ${authorName}</figcaption>`;
+            break;
+        case BLOCK_COMMENT:
+            authorCode = `<span class="small text-${config.dataTheme}" rel="author">${authorName}</span>`;
+            break;
+    }
+    return authorCode;
+}
+
+/**
+ * Renders the formatted date for a post.
+ * @param {object} config The block configuration.
+ * @param {string} publishedDate The ISO date string.
+ * @returns {string} The HTML for the date.
+ */
+function _renderDate(config, publishedDate) {
+    if (!config.showDate) return '';
+    const formattedDate = config.dateFormatter.format(new Date(publishedDate));
+    return `<span class="small fw-lighter">${config.showAuthor ? ' &#8226; ' : ''} ${formattedDate}</span>`;
+}
+
+/**
+ * Renders the header/title for a post.
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {string} postTitle The title of the post.
+ * @returns {{displayHeaderCode: string, normalHeaderCode: string, commentHeaderCode: string}}
+ */
+function _renderPostHeader(finalType, config, postTitle) {
+    let displayHeaderCode = "", normalHeaderCode = "", commentHeaderCode = "";
+    if (finalType === BLOCK_QUOTE) {
+        normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
+    } else if (config.showHeader) {
+        displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
+        normalHeaderCode = `<h5 class="card-title fw-normal">${postTitle}</h5>`;
+        commentHeaderCode = `<span class="d-block my-2">"${postTitle}"</span>`;
+    }
+    return { displayHeaderCode, normalHeaderCode, commentHeaderCode };
+}
+
+/**
+ * Renders the snippet for a post.
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {string} postSnippet The raw HTML content of the post.
+ * @returns {{snippetText: string, snippetCode: string}}
+ */
+function _renderSnippet(finalType, config, postSnippet) {
+    if (!config.showSnippet || !postSnippet) return { snippetText: '', snippetCode: '' };
+
+    const doc = new DOMParser().parseFromString(postSnippet, 'text/html');
+    let snippetText = doc.body.textContent || "";
+    if (snippetText.length > config.snippetSize) snippetText = snippetText.substring(0, config.snippetSize) + "...";
+    
+    const snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == BLOCK_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
+    return { snippetText, snippetCode };
+}
+
+/**
+ * Renders the image for a post.
+ * @param {string} finalType The final block type.
+ * @param {number} postID The index of the post.
+ * @param {object} config The block configuration.
+ * @param {object} data Post-specific data for images.
+ * @returns {{imageCode: string, showcaseImageCode: string, videoThumbnailURL: string, highResImageURL: string}}
+ */
+function _renderImage(finalType, postID, config, data) {
+    if (!config.showImage) return { imageCode: '', showcaseImageCode: '', videoThumbnailURL: '', highResImageURL: '' };
+
+    const { postSnippet, videoID, postTitle, thumbnailUrl, authorImage } = data;
+    let videoThumbnailURL = thumbnailUrl || "";
+    let imageURL = videoThumbnailURL;
+
+    if (!imageURL) {
+        if (config.contentType == 'comments') {
+            imageURL = authorImage;
+        } else {
+            const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
+            const firstImage = contentParser.querySelector("img");
+            imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
+        }
+    }
+    if (!videoThumbnailURL) videoThumbnailURL = imageURL;
+
+    let highResImageURL = imageURL.includes('/s72-c') ? imageURL.replace('/s72-c', '/s1600') : imageURL;
+    highResImageURL = highResImageURL.includes('/w640-h424') ? highResImageURL.replace('/w640-h424', '/s1600') : highResImageURL;
+
+    let imageCoverStyle = "object-fit:cover;height:100%!important;",
+        imageBSClass = ' w-100 img-fluid',
+        fixedImageStyle = ` background:url(${highResImageURL}) fixed center center;background-size:cover;`,
+        tooltipAttributes = ``;
+    let showcaseImageCode = '';
+
+    switch (finalType) {
+        case BLOCK_SHOWCASE:
+            tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
+            if (postID === 0) {
+                showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
+            }
+            imageBSClass += `${config.aspectRatio} shadow-sm`;
+            break;
+        case BLOCK_PANCAKE: imageBSClass = config.aspectRatio; break;
+        case BLOCK_COMMENT:
+            imageCoverStyle += ' height:3rem!important;width:3rem;';
+            fixedImageStyle += ' height:3rem!important;width:3rem;';
+            imageBSClass = ' rounded-circle m-2';
+            break;
+        case BLOCK_QUOTE:
+            imageCoverStyle += ' height:6rem!important;width:6rem;';
+            fixedImageStyle += ' height:6rem!important;width:6rem;';
+            imageBSClass = ' rounded-circle mx-auto mt-3';
+            break;
+        case BLOCK_STACK: imageBSClass = " col-4 h-100"; break;
+        case BLOCK_COVER: fixedImageStyle += config.articleHeight; break;
+    }
+    if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
+
+    const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    const imageCode = config.isImageFixed
+        ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
+        : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
+
+    return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
+}
+
+/**
+ * Renders the Call To Action button for a post.
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {string} postTitle The title of the post.
+ * @returns {string} The HTML for the CTA button.
+ */
+function _renderCTA(finalType, config, postTitle) {
+    if (config.callToAction === "") return '';
+
+    switch (finalType) {
+        case BLOCK_GALLERY: return '';
+        case BLOCK_COMMENT: return `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
+        default:
+            let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
+            switch (finalType) {
+                case BLOCK_SHOWCASE: ctaClasses += " p-3 px-lg-5 float-end"; break;
+                case BLOCK_COVER: ctaClasses += ' p-2 px-4 mx-lg-5 mt-4'; break;
+                case BLOCK_PANCAKE: case BLOCK_QUOTE: ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`; break;
+                case BLOCK_STACK: ctaClasses += ' mt-3'; break;
+                case BLOCK_CARD: case BLOCK_LIST: ctaClasses += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
+            }
+            ctaClasses += ` border-0 btn-${config.dataTheme}`;
+            return `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
+    }
+}
+
+/**
+ * Builds the class string for the main link wrapper of a post.
+ * @param {string} finalType The final block type for the post.
+ * @param {object} config The configuration object for the block.
+ * @returns {string} The complete class string for the link wrapper.
+ */
+function _getLinkWrapperClasses(finalType, config) {
+    const classes = ['overflow-hidden', 'w-100', 'shadow-sm'];
+
+    classes.push(finalType !== BLOCK_COVER ? config.cornerStyle : 'rounded-0');
+    classes.push(finalType !== BLOCK_COMMENT ? 'card' : `text-bg-${config.inverseTheme}`);
+    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
+    switch (finalType) {
+        case BLOCK_QUOTE:
+        case BLOCK_COVER:
+            classes.push('text-center', 'h-100');
+            break;
+        case BLOCK_STACK:
+        case BLOCK_COMMENT:
+            classes.push('row', 'g-0');
+            break;
+        case BLOCK_LIST:
+            classes.push(config.aspectRatio.trim(), `mt-${config.gutterSize}`);
+            break;
+        case BLOCK_CARD:
+        case BLOCK_GALLERY:
+            classes.push(config.aspectRatio.trim());
+            break;
+    }
+
+    return classes.join(' ');
+}
+
+/**
+ * Builds the class string for the <article> element.
+ * @param {string} finalType The final block type for the post.
+ * @param {object} postData An object containing post-specific data for showcase attributes.
+ * @returns {string} The complete class string for the article element.
+ */
+function _getArticleClasses(finalType, postData) {
+    if (finalType === BLOCK_SHOWCASE) {
+        const { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL } = postData;
+        return `col d-inline-flex sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"`;
+    }
+    return 'col d-inline-flex';
+}
+
+/**
+ * Renders the inner text content of a post.
+ * @param {string} finalType The final block type for the post.
+ * @param {object} config The configuration object for the block.
+ * @param {object} contentParts An object containing pre-built HTML strings for content.
+ * @returns {string} The HTML string for the post's text content.
+ */
+function _renderPostContent(finalType, config, contentParts) {
+    if (!config.showHeader || finalType === BLOCK_SHOWCASE || finalType === BLOCK_GALLERY) {
+        return '';
+    }
+
+    const { authorCode, dateCode, displayHeaderCode, commentHeaderCode, normalHeaderCode, snippetCode, ctaButtonCode } = contentParts;
+    let textContentHTML = '';
+
+    switch (finalType) {
+        case BLOCK_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
+        case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
+        case BLOCK_PANCAKE: case BLOCK_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
+            break;
+        case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
+        case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
+            switch (config.textVerticalAlign) {
+                case "top": textContentHTML += ' h-auto">'; break;
+                case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
+                case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto;">'; break;
+                case "overlay": textContentHTML += '">'; break;
+            }
+            break;
+        case BLOCK_COVER: finalType == BLOCK_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
+            switch (config.textVerticalAlign) {
+                case "top": textContentHTML += '-x mt-5">'; break;
+                case "middle": textContentHTML += ' top-50">'; break;
+                case "bottom": textContentHTML += '-x  bottom-0 mb-5">'; break;
+                case "overlay": textContentHTML += ' top-50 h-100 w-100">'; break;
+            }
+    }
+
+    textContentHTML += `${authorCode}${dateCode}`;
+    if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === BLOCK_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
+    textContentHTML += snippetCode;
+    if (finalType !== BLOCK_PANCAKE && finalType !== BLOCK_QUOTE) {
+        textContentHTML += ctaButtonCode; // CTA
+    }
+    textContentHTML += `</div>`;
+    if (finalType === BLOCK_STACK && config.showImage) textContentHTML += `</div>`;
+    if (finalType === BLOCK_PANCAKE || finalType === BLOCK_QUOTE) textContentHTML += ctaButtonCode; // CTA for card-footer style
+
+    return textContentHTML;
 }
 
 /**
@@ -753,6 +872,43 @@ window._loadOptimalImages = function(rawElement) {
 }
 
 /**
+ * Applies default configuration values based on block type and other settings.
+ * This separates default logic from the initial parsing of attributes.
+ * @param {object} config The partially parsed configuration object.
+ * @returns {object} The configuration object with defaults applied.
+ */
+function _applyDefaultConfig(config) {
+    // Determine the height of the section, with specific defaults for cover and showcase types.
+    if (!config.sectionHeight) {
+        if (config.blockType === BLOCK_COVER) config.sectionHeight = "100vh";
+        else if (config.blockType === BLOCK_SHOWCASE) config.sectionHeight = "70vh";
+        else config.sectionHeight = "m";
+    }
+    config.articleHeight = config.sectionHeight === 'm' ? '' : `height:${config.sectionHeight}!important;`;
+
+    // Determine if the image should be blurred.
+    if (config.blurImage === null) {
+        // Default behavior: Blur image if header is present, except for specific block types
+        const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_QUOTE];
+        config.blurImage = config.showHeader && !excludedBlurTypes.includes(config.blockType);
+    }
+
+    // Determine the vertical alignment of text.
+    if (!config.textVerticalAlign) {
+        if (config.blockType === 'v') config.textVerticalAlign = "middle";
+        else if (config.blockType === 'l') config.textVerticalAlign = "bottom";
+        else config.textVerticalAlign = 'overlay';
+    }
+
+    // Set default column count if not specified.
+    if (config.columnCount === null) {
+        config.columnCount = DEFAULT_COLUMN_COUNTS[config.blockType] || 3;
+    }
+
+    return config;
+}
+
+/**
  * Parses the data attributes of a block element to create a configuration object.
  * @param {HTMLElement} rawElement The block element to parse.
  * @returns {object} A complete configuration object for the block.
@@ -773,34 +929,10 @@ window._parseBlockConfig = function(rawElement) {
         showAuthor = componentList.includes("a"), // 'a' for author
         showDate = componentList.includes("d"); // 'd' for date
 
-    // Determine the height of the section, with specific defaults for cover and showcase types.
-    let sectionHeight = rawElement.getAttribute("data-iHeight");
-    if (!sectionHeight) {
-        if (blockType === BLOCK_COVER) sectionHeight = "100vh";
-        else if (blockType === BLOCK_SHOWCASE) sectionHeight = "70vh";
-        else sectionHeight = "m";
-    }
-
     // --- Pagination and Identity ---
     const stageID = rawElement.getAttribute("data-s") || 1; // For paginated navigation, tracks the current page/stage
     const firstInstance = !rawElement.hasAttribute("data-s"); // Is this the first time the block is being loaded?
     const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
-
-    const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
-    const widget = rawElement.closest(".widget");
-    const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
-
-    let blurImage;
-    const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
-    if (dataBlur === "true") {
-        blurImage = true;
-    } else if (dataBlur === "false") {
-        blurImage = false;
-    } else {
-        // Default behavior: Blur image if header is present, except for specific block types
-        const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, CONTENT_QUOTE];
-        blurImage = showHeader && !excludedBlurTypes.includes(blockType);
-    }
 
     const inverseTheme = (dataTheme == "light" ? "primary" : "light");// Inverse theme for contrast
     let textVerticalAlign = (rawElement.getAttribute("data-textVAlign") || "").toLowerCase();
@@ -810,6 +942,10 @@ window._parseBlockConfig = function(rawElement) {
         else textVerticalAlign = 'overlay';
     }
 
+    const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
+    const widget = rawElement.closest(".widget");
+    const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
+
     // Create the date formatter once, outside the loop, for efficiency.
     const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', {
         year: 'numeric',
@@ -817,19 +953,20 @@ window._parseBlockConfig = function(rawElement) {
         day: 'numeric'
     }) : null;
 
-    return {
+    let config = {
         // Base attributes
         dataLabel, contentType, siteURL, dataTitle, dataDescription, blockType, dataTheme,
         // Component visibility
         showHeader, showImage, showSnippet, showAuthor, showDate,
         // Layout & Style
-        columnCount: rawElement.getAttribute("data-cols"),
+        columnCount: rawElement.getAttribute("data-cols"), // Will be parsed to int later
         blockRows: parseInt(rawElement.getAttribute("data-rows") || "1", 10),
         isCarousel: (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true",
-        articleHeight,
-        blurImage,
+        sectionHeight: rawElement.getAttribute("data-iHeight"),
+        articleHeight: '', // Will be set in _applyDefaultConfig
+        blurImage: dataBlur === "true" ? true : (dataBlur === "false" ? false : null),
         inverseTheme,
-        textVerticalAlign,
+        textVerticalAlign: (rawElement.getAttribute("data-textVAlign") || "").toLowerCase(),
         cornerStyle: ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
         aspectRatio: ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,
         gutterSize: rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3),
@@ -850,6 +987,8 @@ window._parseBlockConfig = function(rawElement) {
         containsNavigation: false,
         actualColumnCount: 0,
     };
+
+    return _applyDefaultConfig(config);
 }
 
 /**
@@ -862,12 +1001,7 @@ window._calculateLayout = function(config, postsInFeed) {
     // Use a mutable copy to avoid directly modifying the original object passed in.
     let newConfig = { ...config };
 
-    if (newConfig.columnCount === null) { // Only set default if data-cols is not present at all
-        newConfig.columnCount = DEFAULT_COLUMN_COUNTS[newConfig.blockType] || 3; // Default to 3 if type is unknown
-    } else {
-        newConfig.columnCount = parseInt(newConfig.columnCount, 10);
-        newConfig.columnCount = Math.max(1, Math.min(newConfig.columnCount, 6)); // Clamp between 1 and 6
-    }
+    newConfig.columnCount = parseInt(newConfig.columnCount, 10);
 
     // Disable carousel for single-post blocks or list-style blocks
     if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) {

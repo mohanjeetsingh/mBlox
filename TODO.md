@@ -1,35 +1,32 @@
-This file tracks planned improvements and refactoring tasks for the mBlox project.
+This file tracks the next set of refactoring and feature implementation tasks for the mBlox project.
 
-All initial refactoring tasks are complete. The codebase is now more modular, maintainable, and uses modern JavaScript features.
+## Stage 9: Final Code Cleanup & Simplification
 
-## Next Steps: Further Refinement
+*Goal: Address remaining complexities and inefficiencies in the rendering logic, and improve the overall code structure.*
 
-*Goal: Continue to improve the structure and clarity of the main `mBlocks` function by extracting the remaining large logic blocks into dedicated helper functions.*
+- [x] **Step 9.1: Complete the Simplification of `_createPostHtml`**
+    - [x] **Extract Block-Specific Renderers:** The `_createPostHtml` function is now a simplified orchestrator that calls component renderers and a dispatcher (`_renderPostByType`) which in turn calls block-specific renderers. This dramatically improves readability and maintainability.
 
-- [x] **Stage 4: Final `mBlocks` Cleanup**
-    - [x] **Step 4.1: Extract Configuration Parsing.** Create a `_parseBlockConfig(rawElement)` function that reads all `data-*` attributes and returns a complete `config` object.
-    - [x] **Step 4.2: Extract Carousel & Column Logic.** Create a `_calculateLayout(config, postsInFeed)` function. Move the logic for calculating responsive columns (`actualColumnCount`) and determining if a block should be a carousel or use simple navigation. This function should return an updated config object.
-    - [x] **Step 4.3: Extract Main Post Loop.** Create a `_buildBlockBody(response, config)` function. Move the main `for` loop that iterates through posts, calls `_createPostHtml`, and assembles the `blockBody` string into this new function.
-    - [x] **Step 4.4: Refactor `complete` Callback.** This step became obsolete with the Stage 6 `async/await` refactoring, which replaced the `complete` callback with a `finally` block, achieving the same goal of cleanup and event binding in a more modern way.
+## Stage 10: Bug Fixes & Performance Enhancements
 
-- [x] **Stage 5: Code & Logic Refinement**
-    - [x] **Step 5.1: Simplify `switch` statements.** Convert the `switch` statements for default column counts and grid classes in `mBlocks` to use object lookups.
-    - [x] **Step 5.2: Add JSDoc Comments.** Add comprehensive JSDoc comments to the `fadeIn`, `fadeOut`, and `_bindPaginationEvents` helper functions.
+*Goal: Address specific functional bugs, performance bottlenecks, and structural issues identified in the code review.*
 
-- [x] **Stage 6: Advanced Refactoring & Modernization**
-    - [x] **Step 6.1: Globalize Constants.** Move the `BLOCK_TYPE_*` constants to the global scope so they don't need to be redefined on every `mBlocks` call or passed via the `config` object.
-    - [x] **Step 6.2: Promisify `fetchJSONP`.** Refactor `fetchJSONP` to return a `Promise`. This will allow the main `mBlocks` function to be converted to an `async` function, replacing the `success`/`complete` callbacks with `await` and enabling the use of a `try...catch` block for robust error handling.
-    - [x] **Step 6.3: Eliminate Side Effects in `_createPostHtml`.** Move the logic that modifies `config.columnCount` for the 'list' block type out of `_createPostHtml` and into the main `mBlocks` loop to make the helper function pure.
+- [ ] **Step 10.1: Unify Constants**
+    - [ ] Rename `CONTENT_QUOTE` and `CONTENT_COMMENT` to `BLOCK_TYPE_QUOTE` and `BLOCK_TYPE_COMMENT` respectively, and update their usage throughout the script for consistency.
 
-- [x] **Stage 7: Multi-Platform Support**
-    *Goal: Refactor the data fetching and processing logic to support different feed sources like WordPress or YouTube in addition to Blogger.*
-    - [x] **Step 7.1: Create Data Provider Interface.** Designed a provider pattern. Created a `BloggerProvider` that encapsulates the `fetchJSONP` and Blogger-specific URL/data mapping logic. It exposes a `fetch()` method that returns data in a standardized internal format.
-    - [x] **Step 7.2: Refactor `mBlocks` to Use Providers.** Created a `_getProvider(config)` function that returns the appropriate provider instance. The main `mBlocks` function now uses this provider to fetch data.
-    - [x] **Step 7.3: Implement a `WordPressProvider`.** Created the `WordPressProvider` class. It uses the standard `fetch` API to get posts from the WP REST API and maps the response to the standard internal format. The `_getProvider` function now detects `/wp-json/` in the feed URL to use this provider, with Blogger as the default.
+- [ ] **Step 10.2: Fix Showcase Block Rendering**
+    - [ ] **Correct Grid/Carousel Structure:** Refactor `_buildBlockBody` to ensure the smaller showcase items (`sPost`) are correctly wrapped in Bootstrap `row` and `carousel-item` divs. This will fix the bug where `data-cols`, `data-rows`, and `data-isCarousel` are ignored for them.
+    - [ ] **Isolate Feature Item Logic:** In `_createPostHtml`, completely separate the rendering of the main showcase item (`postID === 0`) from the logic for other posts to improve clarity and prevent bugs.
 
-- [x] **Stage 8: Implement "Measure, then Fetch" for Images**
-    *Goal: Replace the predictive image size calculation with a more accurate and robust method that measures the container after rendering and then fetches the optimally sized image.*
-    - [x] **Step 8.1: Render with Placeholders.** Modify `_createPostHtml` to render `<img>` tags with a low-quality placeholder in `src` and the high-resolution base URL in a `data-img-src` attribute. The `calculateImageResolution` function will no longer be called here.
-    - [x] **Step 8.2: Create `_loadOptimalImages` Function.** Create a new helper function that iterates over placeholder images. For each image, it will measure the container's actual width, calculate the optimal resolution (considering device pixel ratio), construct the new image URL, and set the `src` attribute to trigger the load.
-    - [x] **Step 8.3: Integrate into `mBlocks`.** Call the new `_loadOptimalImages` function from the `complete` callback in `mBlocks` after the HTML has been rendered to the DOM.
-    - [x] **Step 8.4: Cleanup.** Remove the now-obsolete `calculateImageResolution` function and any related logic.
+- [ ] **Step 10.3: Optimize Event Handling & Data Access**
+    - [ ] **Improve `_bindShowcaseEvents`:** Refactor the function to read all necessary `data-*` attributes from the `.sPost` elements into a JavaScript array on initialization. The click handler should then read from this array instead of querying the DOM on every click, improving performance.
+    - [ ] **Unify `videoID` Calculation:** Consolidate the `videoID` calculation to a single, reliable point at the top of `_createPostHtml` to prevent `ReferenceError` bugs and redundant processing.
+
+- [ ] **Step 10.4: Improve Code Encapsulation**
+    - [ ] **Wrap Script in an IIFE:** Encapsulate the entire `mBloxScript.js` in an Immediately Invoked Function Expression (IIFE) to move all helper functions out of the global `window` scope. Expose only the main `mBlocks` function to the outside world.
+
+- [ ] **Step 10.5: Enhance Error Handling**
+    - [ ] **Provide Specific Error Messages:** Refactor the `catch` block in the main `mBlocks` function to provide more specific, user-friendly error messages based on the error type (e.g., "Feed not found (404)", "Invalid feed format", "CORS policy error").
+
+## Completed Tasks
+*All previous refactoring stages (4 through 8) are considered complete.*
