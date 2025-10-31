@@ -10,17 +10,18 @@
 // Guard clause to prevent re-initialization if the script is loaded multiple times.
 if (typeof window.mBloxInitialized === 'undefined') {
     window.mBloxInitialized = true;
+    (function() { // IIFE to encapsulate the entire script
 
-const // Constants for block types, improving readability over single-character strings.
-    BLOCK_COVER = 'v',
-    BLOCK_SHOWCASE = 's',
-    BLOCK_LIST = 'l',
-    BLOCK_CARD = 'c',
-    BLOCK_GALLERY = 'g',
-    BLOCK_PANCAKE = 'p',
-    BLOCK_STACK = 't',
-    BLOCK_QUOTE = 'q',
-    BLOCK_COMMENT = 'm';
+    const // Constants for block types, improving readability over single-character strings.
+        BLOCK_COVER = 'v',
+        BLOCK_SHOWCASE = 's',
+        BLOCK_LIST = 'l',
+        BLOCK_CARD = 'c',
+        BLOCK_GALLERY = 'g',
+        BLOCK_PANCAKE = 'p',
+        BLOCK_STACK = 't',
+        BLOCK_QUOTE = 'q',
+        BLOCK_COMMENT = 'm';
 
 
 
@@ -33,7 +34,7 @@ const // Constants for block types, improving readability over single-character 
  * @param {object} options Configuration for the request.
  * @returns {Promise<object>} A promise that resolves with the JSON data or rejects on error.
  */
-window.fetchJSONP = function(url) {
+function fetchJSONP(url) {
     return new Promise((resolve, reject) => {
         const callbackName = `jsonp_callback_${Math.round(100000 * Math.random())}`;
         const script = document.createElement('script');
@@ -94,7 +95,7 @@ const RESPONSIVE_GRID_CLASSES = {
  * @param {object} headers The response headers from the fetch call.
  * @returns {{posts: Array<object>, totalResults: number}} A standardized data object.
  */
-window._mapWordPressResponseToStandardFormat = function(wpResponse, headers) {
+function _mapWordPressResponseToStandardFormat(wpResponse, headers) {
     if (!Array.isArray(wpResponse)) {
         return { posts: [], totalResults: 0 };
     }
@@ -121,7 +122,7 @@ window._mapWordPressResponseToStandardFormat = function(wpResponse, headers) {
  * @param {XMLDocument} xmlDoc The parsed XML document.
  * @returns {{posts: Array<object>, totalResults: number, feedUrl: string}} A standardized data object.
  */
-window._mapRssResponseToStandardFormat = function(xmlDoc) {
+function _mapRssResponseToStandardFormat(xmlDoc) {
     // Find all items, supporting both <item> (RSS) and <entry> (Atom) tags.
     const items = xmlDoc.querySelectorAll('item, entry');
     if (!items.length) {
@@ -189,7 +190,7 @@ window._mapRssResponseToStandardFormat = function(xmlDoc) {
  * @param {object} bloggerResponse The raw JSON object from the Blogger API.
  * @returns {{posts: Array<object>, totalResults: number, feedUrl: string}} A standardized data object.
  */
-window._mapBloggerResponseToStandardFormat = function(bloggerResponse) {
+function _mapBloggerResponseToStandardFormat(bloggerResponse) {
     if (!bloggerResponse.feed || !bloggerResponse.feed.entry) {
         return { posts: [], totalResults: 0, feedUrl: '' };
     }
@@ -223,7 +224,7 @@ window._mapBloggerResponseToStandardFormat = function(bloggerResponse) {
  * @param {object} config The configuration object for the block.
  * @returns {{postHTML: string, showcaseHTML: string, carouselIndicator: string}} An object containing the HTML for the post and other related components.
  */
-window._createPostHtml = function(post, postID, config) {
+function _createPostHtml(post, postID, config) {
     let postHTML = '';
     let showcaseHTML = '';
     let finalType = config.blockType; // Use a local variable for the type to avoid modifying the config object.
@@ -622,7 +623,7 @@ function _renderPostContent(finalType, config, contentParts) {
  * @param {object} config The configuration object for the block.
  * @returns {string} The HTML string for the block header, or an empty string if no title is provided.
  */
-window._createBlockHeader = function(config) {
+function _createBlockHeader(config) {
     if (!config.dataTitle) {
         return '';
     }
@@ -642,7 +643,7 @@ window._createBlockHeader = function(config) {
  * @param {object} response The JSON response object from the Blogger feed.
  * @returns {string} The HTML string for the block footer.
  */
-window._createBlockFooter = function(config, response) {
+function _createBlockFooter(config, response) {
     if (config.moreText === "" && config.blockType === BLOCK_COVER) {
         return '';
     }
@@ -667,7 +668,7 @@ window._createBlockFooter = function(config, response) {
  * @param {object} config The configuration object for the block.
  * @returns {{prev: string, next: string}} An object containing the HTML for the previous and next buttons.
  */
-window._createCarouselControls = function(config) {
+function _createCarouselControls(config) {
     const prevClass = `carousel-control-prev link-secondary${config.containsNavigation ? " nav-prev" : " pb-5"}`;
     const nextClass = `carousel-control-next link-secondary${config.containsNavigation ? " nav-next" : " pb-5"}`;
     const target = `#m${config.mBlockID}`;
@@ -687,7 +688,7 @@ window._createCarouselControls = function(config) {
  * Fades in an element.
  * @param {HTMLElement | null} el The element to fade in.
  */
-window.fadeIn = function(el) {
+function fadeIn(el) {
     if (!el) return;
     el.style.opacity = 0;
     // Use a more generic display value; 'block' can break layouts for inline-flex, etc.
@@ -708,7 +709,7 @@ window.fadeIn = function(el) {
  * Fades out an element.
  * @param {HTMLElement | null} el The element to fade out.
  */
-window.fadeOut = function(el) {
+function fadeOut(el) {
     if (!el) return;
     el.style.opacity = 1;
     (function fade() {
@@ -725,7 +726,7 @@ window.fadeOut = function(el) {
  * @param {HTMLElement} rawElement The main block element.
  * @param {object} config The configuration object for the block.
  */
-window._bindShowcaseEvents = function(rawElement, config) {
+function _bindShowcaseEvents(rawElement, config) {
     const featuredImageNode = rawElement.querySelector('.feature-image');
     const contentWrapper = rawElement.querySelector('.sFeature'); // The wrapper for the smaller items
 
@@ -817,29 +818,7 @@ window._bindShowcaseEvents = function(rawElement, config) {
  * Binds click events for simple pagination (non-carousel next/previous).
  * @param {HTMLElement} rawElement The main block element.
  */
-window._bindPaginationEvents = function(rawElement) {
-    const featuredImageNode = rawElement.querySelector('.feature-image');
-    const contentWrapper = rawElement.querySelector('.sFeature'); // The wrapper for the smaller items
-
-    if (!featuredImageNode) return;
-
-    const figureNode = featuredImageNode.querySelector('figure');
-    const iFrameNode = featuredImageNode.querySelector('.sIframe');
-    const contentNode = featuredImageNode.querySelector('.sContent');
-
-    // Event listener for the main feature image (to play video)
-    if (figureNode) {
-        figureNode.addEventListener('click', function() {
-            const clickedVideoID = this.getAttribute('data-vidid');
-            if (clickedVideoID !== "regular") {
-                if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
-                fadeIn(iFrameNode);
-                fadeOut(figureNode);
-                if (contentNode) fadeOut(contentNode);
-            }
-        }, { once: true }); // Use 'once' to prevent re-binding if the script runs again
-    }
-
+function _bindPaginationEvents(rawElement) {
     const prevButton = rawElement.querySelector(".nav-prev");
     if (prevButton) {
         const prevNav = function() {
@@ -877,7 +856,7 @@ window._bindPaginationEvents = function(rawElement) {
  * that is appropriately sized for the container, saving bandwidth.
  * @param {HTMLElement} rawElement The parent element containing image placeholders.
  */
-window._loadOptimalImages = function(rawElement) {
+function _loadOptimalImages(rawElement) {
     const imagePlaceholders = rawElement.querySelectorAll('.m-blox-image-to-load');
 
     imagePlaceholders.forEach(el => {
@@ -969,7 +948,7 @@ function _applyDefaultConfig(config) {
  * @param {HTMLElement} rawElement The block element to parse.
  * @returns {object} A complete configuration object for the block.
  */
-window._parseBlockConfig = function(rawElement) {
+function _parseBlockConfig(rawElement) {
     const dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
         contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
         siteURL = rawElement.getAttribute("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
@@ -1053,7 +1032,7 @@ window._parseBlockConfig = function(rawElement) {
  * @param {number} postsInFeed The number of posts returned from the feed.
  * @returns {object} The updated configuration object.
  */
-window._calculateLayout = function(config, postsInFeed) {
+function _calculateLayout(config, postsInFeed) {
     // Use a mutable copy to avoid directly modifying the original object passed in.
     let newConfig = { ...config };
 
@@ -1089,7 +1068,7 @@ window._calculateLayout = function(config, postsInFeed) {
  * @param {object} config The block's configuration object.
  * @returns {{blockBody: string, carouselIndicators: HTMLElement | null, showcaseHTML: string}}
  */
-window._buildBlockBody = function(response, config) {
+function _buildBlockBody(response, config) {
     let blockBody = '';
     let showcaseHTML = '';
     let carouselIndicators = null;
@@ -1104,7 +1083,7 @@ window._buildBlockBody = function(response, config) {
 
     // Handle the main showcase item separately, outside the loop.
     if (config.blockType === BLOCK_SHOWCASE && config.firstInstance && postsInFeed > 0) {
-        const { showcaseHTML: singleShowcaseHTML } = window._createPostHtml(response.posts[0], 0, config);
+        const { showcaseHTML: singleShowcaseHTML } = _createPostHtml(response.posts[0], 0, config);
         showcaseHTML = singleShowcaseHTML;
     }
 
@@ -1120,7 +1099,7 @@ window._buildBlockBody = function(response, config) {
             currentColumnCount--;
         }
 
-        const { postHTML, showcaseHTML: singleShowcaseHTML, carouselIndicator } = window._createPostHtml(post, postID, config);
+        const { postHTML, showcaseHTML: singleShowcaseHTML, carouselIndicator } = _createPostHtml(post, postID, config);
 
         if (carouselIndicator && config.isCarousel) {
             // Adjust slide index for showcase since its loop starts from 1
@@ -1205,7 +1184,7 @@ class WordPressProvider {
             throw new Error(`WordPress API request failed: ${response.statusText}`);
         }
         const rawData = await response.json();
-        return window._mapWordPressResponseToStandardFormat(rawData, response.headers);
+        return _mapWordPressResponseToStandardFormat(rawData, response.headers);
     }
 }
 
@@ -1248,7 +1227,7 @@ class RssProvider {
         if (xmlDoc.getElementsByTagName("parsererror").length) {
             throw new Error("Failed to parse RSS feed.");
         }
-        return window._mapRssResponseToStandardFormat(xmlDoc);
+        return _mapRssResponseToStandardFormat(xmlDoc);
     }
 }
 
@@ -1290,8 +1269,8 @@ class BloggerProvider {
      */
     async fetch() {
         const url = this._buildFeedUrl();
-        const rawData = await window.fetchJSONP(url);
-        return window._mapBloggerResponseToStandardFormat(rawData);
+        const rawData = await fetchJSONP(url);
+        return _mapBloggerResponseToStandardFormat(rawData);
     }
 }
 
@@ -1300,7 +1279,7 @@ class BloggerProvider {
  * @param {object} config The block's configuration object.
  * @returns {BloggerProvider} An instance of the correct provider.
  */
-window._getProvider = function(config) {
+function _getProvider(config) {
     const url = config.siteURL.toLowerCase();
 
     // Check for WordPress REST API endpoint.
@@ -1322,20 +1301,19 @@ window._getProvider = function(config) {
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
  */
-window.mBlocks = async function(blockItem) {
+const mBlocks = async function(blockItem) {
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
     for (const rawElement of elements) {
-        let blockConfig = window._parseBlockConfig(rawElement);
+        let blockConfig = _parseBlockConfig(rawElement);
         try {
-            const provider = window._getProvider(blockConfig);
+            const provider = _getProvider(blockConfig);
             const response = await provider.fetch();
 
             if (response.posts && response.posts.length > 0) {
                 const postsInFeed = response.posts.length;
                 const totalPostsAvailable = response.totalResults;
                 const totalStages = Math.ceil(totalPostsAvailable / blockConfig.postsPerBlock); // Total pages/stages available for navigation
-
                 if (blockConfig.contentType === "comments") {
                     blockConfig.moreText = "";
                 }
@@ -1344,10 +1322,10 @@ window.mBlocks = async function(blockItem) {
                     rawElement.setAttribute("data-s", blockConfig.stageID);
 
                     // --- Block Header (Title & Description) ---
-                    rawElement.insertAdjacentHTML('beforeend', window._createBlockHeader(blockConfig));
+                    rawElement.insertAdjacentHTML('beforeend', _createBlockHeader(blockConfig));
                 }
 
-                blockConfig = window._calculateLayout(blockConfig, postsInFeed);
+                blockConfig = _calculateLayout(blockConfig, postsInFeed);
 
                 // --- Main Content Wrapper ---
                 const contentWrapper = document.createElement('div');
@@ -1356,7 +1334,7 @@ window.mBlocks = async function(blockItem) {
                 contentWrapper.className = `overflow-hidden bg-${blockConfig.dataTheme}${blockConfig.blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((blockConfig.isCarousel || blockConfig.containsNavigation) ? ` st${blockConfig.stageID} carousel carousel-fade` : "")}`;
                 contentWrapper.setAttribute("data-bs-ride", "carousel");
 
-                const { blockBody, carouselIndicators, showcaseHTML } = window._buildBlockBody(response, blockConfig);
+                const { blockBody, carouselIndicators, showcaseHTML } = _buildBlockBody(response, blockConfig);
 
                 if (showcaseHTML) {
                     contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
@@ -1368,7 +1346,7 @@ window.mBlocks = async function(blockItem) {
                     if (blockConfig.isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                     // --- Carousel/Pagination Navigation ---
-                    const { prev: prevButton, next: nextButton } = window._createCarouselControls(blockConfig);
+                    const { prev: prevButton, next: nextButton } = _createCarouselControls(blockConfig);
                     if (blockConfig.isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
 
                     if (blockConfig.containsNavigation) { if (blockConfig.stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (blockConfig.stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
@@ -1377,7 +1355,7 @@ window.mBlocks = async function(blockItem) {
                 }
 
                 // --- Block Footer (More Link) ---
-                contentWrapper.insertAdjacentHTML('afterend', window._createBlockFooter(blockConfig, response));
+                contentWrapper.insertAdjacentHTML('afterend', _createBlockFooter(blockConfig, response));
             } //if
             else { // If response.posts is empty or doesn't exist
                 switch (blockConfig.contentType) {
@@ -1392,24 +1370,36 @@ window.mBlocks = async function(blockItem) {
                 }
             }
         } catch (error) {
-            console.error(`mBlocks failed to initialize for element:`, rawElement, error);
-            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-danger p-4 w-100">Sorry! An error occurred while loading content.</div>`);
+            console.error(`mBlox failed to initialize for element:`, rawElement, error);
+            let errorMessage = 'Sorry! An error occurred while loading content.';
+            const errorString = error.toString().toLowerCase();
+
+            if (errorString.includes('failed to fetch') || errorString.includes('networkerror')) {
+                errorMessage = 'Network error: Could not fetch the feed. Please check the feed URL and your connection.';
+            } else if (errorString.includes('404')) {
+                errorMessage = 'Feed not found (404). Please check the feed URL.';
+            } else if (errorString.includes('parse')) {
+                errorMessage = 'Error: The feed format is invalid or could not be parsed.';
+            }
+
+            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-danger p-4 w-100">${errorMessage}</div>`);
         } finally {
             // --- Finalization ---
-            window._loadOptimalImages(rawElement);
+            _loadOptimalImages(rawElement);
             if (rawElement.querySelector('.nav-prev, .nav-next')) {
-                window._bindPaginationEvents(rawElement);
+                _bindPaginationEvents(rawElement);
             }
 
             const finalBlockType = (rawElement.getAttribute("data-type") || "v").substring(0, 1);
             if (finalBlockType === BLOCK_SHOWCASE) {
                 // Delay binding to allow Bootstrap's carousel to initialize and clone items first.
                 setTimeout(() => {
-                    window._bindShowcaseEvents(rawElement, blockConfig);
+                    _bindShowcaseEvents(rawElement, blockConfig);
                 }, 0);
             }
         }
     } // end for...of loop
 }
-
+    window.mBlocks = mBlocks;
+})(); // End of IIFE
 } // End of the guard clause `if (typeof window.mBloxInitialized === 'undefined')`
