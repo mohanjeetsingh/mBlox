@@ -47,33 +47,6 @@ function fetchJSONP(url, options) {
 }
 
 /**
- * Calculates the optimal image resolution based on layout and screen size.
- * This helps in requesting appropriately sized images from Blogger's servers to save bandwidth.
- * @param {boolean} isImageFixed - Whether the image is a fixed background.
- * @param {number} columnCount - The number of columns in the layout.
- * @param {number} windowInnerWidth - The width of the browser window.
- * @returns {number} The calculated image resolution, rounded up to the nearest 100.
- */
-function calculateImageResolution(isImageFixed, columnCount, windowInnerWidth) {
-    let resolution = 100;
-    if (isImageFixed) {
-        resolution = windowInnerWidth;
-    } else {
-        if (columnCount === 1) { resolution = windowInnerWidth; }
-        else if (columnCount === 2) { resolution = windowInnerWidth < 768 ? windowInnerWidth : windowInnerWidth / 2; }
-        else if (columnCount === 3) { resolution = windowInnerWidth < 768 ? windowInnerWidth : (windowInnerWidth < 992 ? windowInnerWidth / 2 : windowInnerWidth / 3); }
-        else if (columnCount === 4) { resolution = windowInnerWidth < 576 ? windowInnerWidth : (windowInnerWidth < 768 ? windowInnerWidth / 2 : (windowInnerWidth < 992 ? windowInnerWidth / 3 : windowInnerWidth / 4)); }
-        else if (columnCount === 5) { resolution = windowInnerWidth < 576 ? windowInnerWidth / 2 : (windowInnerWidth < 768 ? windowInnerWidth / 3 : (windowInnerWidth < 1200 ? windowInnerWidth / 4 : windowInnerWidth / 5)); }
-        else if (columnCount >= 6) { resolution = windowInnerWidth < 576 ? windowInnerWidth / 3 : (windowInnerWidth < 992 ? windowInnerWidth / 4 : (windowInnerWidth < 1200 ? windowInnerWidth / 5 : windowInnerWidth / 6)); }
-    }
-    resolution = Math.ceil(resolution / 100) * 100;
-    if (resolution < 100) resolution = 100;
-    if (resolution > 1600) resolution = 1600;
-
-    return resolution;
-}
-
-/**
  * Creates the HTML for a single post item.
  * This is a helper function for mBlocks.
  * @param {object} post The post data object from the Blogger feed.
@@ -85,6 +58,7 @@ function _createPostHtml(post, postID, config) {
     let postHTML = '';
     let showcaseHTML = '';
     let carouselIndicator = '';
+    let highResImageURL = ''; // Declare here to ensure it's in scope for all block types.
 
     const postTitle = post.title.$t,
         postSnippet = (config.showSnippet || config.showImage) && (("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""));
@@ -160,7 +134,6 @@ function _createPostHtml(post, postID, config) {
     let imageCode = "",
         videoThumbnailURL = "",
         showcaseImageCode = ''; // This was missing
-    let highResImageURL = noImg; // Declare here to ensure it's in scope
     if (config.showImage) {
         let imageURL = noImg;
         // Use DOMParser for robust HTML string parsing to find images/videos.
@@ -178,16 +151,16 @@ function _createPostHtml(post, postID, config) {
                 const firstImage = contentParser.querySelector("img");
                 // Extract image URL and attempt to get a higher resolution version from Blogger's image server.
                 imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
-                if (-1 !== imageURL.indexOf("/s72-c")) highResImageURL = imageURL.replace("/s72-c", "/s1600");
-                else if (-1 !== imageURL.indexOf("/w640-h424")) highResImageURL = imageURL.replace("/w640-h424", "/s1600");
-                else highResImageURL = imageURL;
-                if (-1 !== highResImageURL.indexOf("/s1600")) imageURL = highResImageURL.replace("/s1600", "/s" + config.imageResolution);
             }
         }
         (videoThumbnailURL == "") && (videoThumbnailURL = imageURL);
 
+        // Get the base s1600 (or original) URL for optimal loading.
+        highResImageURL = imageURL.includes('/s72-c') ? imageURL.replace('/s72-c', '/s1600') : imageURL;
+        highResImageURL = highResImageURL.includes('/w640-h424') ? highResImageURL.replace('/w640-h424', '/s1600') : highResImageURL;
+
         // Prepare image classes and styles based on block type and settings.
-        let imageCoverStyle = " object-fit:cover;height:100%!important;",
+        let imageCoverStyle = "object-fit:cover;height:100%!important;",
             imageBSClass = ' w-100 img-fluid',
             fixedImageStyle = ' background:url(' + highResImageURL + ') fixed center center;background-size:cover;',
             tooltipAttributes = ``;
@@ -196,7 +169,7 @@ function _createPostHtml(post, postID, config) {
                 const videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
                 tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
                 if (postID === 0) {
-                    showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle}" style="${fixedImageStyle}${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
+                    showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
                 }
                 imageBSClass += config.aspectRatio + ' shadow-sm';
                 break;
@@ -222,9 +195,10 @@ function _createPostHtml(post, postID, config) {
         }
         if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
 
+        const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
         imageCode = config.isImageFixed
-            ? `<figure class="m-0${imageBSClass}" style="${fixedImageStyle}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-            : `<img class="${imageBSClass}" style="${imageCoverStyle}" src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
+            ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
+            : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
     } //IMAGE SETTINGS
 
     // --- CTA Button ---
@@ -563,6 +537,62 @@ function _bindPaginationEvents(rawElement) {
 }
 
 /**
+ * Loads optimally sized images for all placeholders within a given element.
+ * It measures the container and requests an image from Blogger's server
+ * that is appropriately sized for the container, saving bandwidth.
+ * @param {HTMLElement} rawElement The parent element containing image placeholders.
+ */
+function _loadOptimalImages(rawElement) {
+    const imagePlaceholders = rawElement.querySelectorAll('.m-blox-image-to-load');
+
+    imagePlaceholders.forEach(el => {
+        const isBg = el.hasAttribute('data-bg-src');
+        const isFixed = el.getAttribute('data-is-fixed') === 'true';
+        const highResUrl = isBg ? el.getAttribute('data-bg-src') : el.getAttribute('data-img-src');
+
+        if (!highResUrl || !highResUrl.includes('/s1600')) {
+            // Not a resizable Blogger image, just load it directly.
+            if (isBg) {
+                el.style.backgroundImage = `url(${highResUrl})`;
+                if (isFixed) {
+                    el.style.backgroundAttachment = 'fixed';
+                    el.style.backgroundPosition = 'center center';
+                    el.style.backgroundSize = 'cover';
+                }
+            } else {
+                el.src = highResUrl;
+            }
+            return;
+        }
+
+        const dpr = window.devicePixelRatio || 1;
+        let requiredWidth;
+
+        if (isFixed) {
+            // For fixed images, resolution is based on the viewport width.
+            requiredWidth = window.innerWidth * dpr;
+        } else {
+            // For other images, it's based on the container's measured width.
+            requiredWidth = el.getBoundingClientRect().width * dpr;
+        }
+
+        // Round up to the nearest 100, but not less than 100, and not more than 1600.
+        const optimalSize = Math.min(1600, Math.max(100, Math.ceil(requiredWidth / 100) * 100));
+        const optimalUrl = highResUrl.replace('/s1600', `/s${optimalSize}`);
+
+        if (isBg) { 
+            el.style.backgroundImage = `url(${optimalUrl})`;
+            if (isFixed) {
+                el.style.backgroundAttachment = 'fixed';
+                el.style.backgroundPosition = 'center center';
+                el.style.backgroundSize = 'cover';
+            }
+        }
+        else { el.src = optimalUrl; }
+    });
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
@@ -696,20 +726,10 @@ function mBlocks(blockItem) {
                         day: 'numeric'
                     }) : null;
                     
-                    let windowInnerWidth = 0;
-                    if (isCarousel || showImage) { windowInnerWidth = window.innerWidth; }
-
-                    // --- Image Resolution Calculation ---
-                    // Determines the optimal image resolution to request from Blogger's servers based on column count and window size to save bandwidth.
-                    let imageResolution = 100;
-                    if (showImage && !blurImage) {
-                        imageResolution = calculateImageResolution(isImageFixed, columnCount, windowInnerWidth);
-                    }
-
                     // Consolidate all configuration variables into a single blockConfig object.
                     // This simplifies passing data to helper functions.
                     const blockConfig = {
-                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, imageResolution, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
+                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
                         // Pass block-type constants
                         BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
@@ -742,6 +762,7 @@ function mBlocks(blockItem) {
                     // --- Carousel Column Calculation ---
                     // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
                     if (isCarousel) {
+                        const windowInnerWidth = window.innerWidth;
                         if (windowInnerWidth < 576) { actualColumnCount = columnCount < 5 ? 1 : (columnCount === 5 ? 2 : 3); }
                         else if (windowInnerWidth < 768) { actualColumnCount = columnCount < 4 ? 1 : (columnCount === 4 ? 2 : (columnCount === 5 ? 3 : 4)); }
                         else if (windowInnerWidth < 992) { actualColumnCount = columnCount === 3 ? 2 : (columnCount === 4 ? 3 : 4); }
@@ -833,6 +854,7 @@ function mBlocks(blockItem) {
                 } 
             },//success
             complete: function () {
+                _loadOptimalImages(rawElement);
                 if (containsNavigation) _bindPaginationEvents(rawElement);
                 // --- Showcase Block Interactivity ---
                 // The showcase event binding logic is very complex.

@@ -27,9 +27,9 @@ All initial refactoring tasks are complete. The codebase is now more modular, ma
     - [ ] **Step 7.2: Refactor `mBlocks` to Use Providers.** Create a `detectProvider(url)` function that uses regular expressions to check the `data-feed` URL and returns the appropriate provider instance (e.g., `new BloggerProvider()`, `new WordPressProvider()`).
     - [ ] **Step 7.3: Implement a `WordPressProvider`.** As the first new implementation, create a `WordPressProvider` that uses the standard `fetch` API. It will be responsible for building the correct WordPress REST API URL and mapping the WP JSON response to the same standardized internal format that the rendering functions expect.
 
-- [ ] **Stage 8: Implement "Measure, then Fetch" for Images**
+- [x] **Stage 8: Implement "Measure, then Fetch" for Images**
     *Goal: Replace the predictive image size calculation with a more accurate and robust method that measures the container after rendering and then fetches the optimally sized image.*
-    - [ ] **Step 8.1: Render with Placeholders.** Modify `_createPostHtml` to render `<img>` tags with a low-quality placeholder in `src` and the high-resolution base URL in a `data-img-src` attribute. The `calculateImageResolution` function will no longer be called here.
-    - [ ] **Step 8.2: Create `_loadOptimalImages` Function.** Create a new helper function that iterates over placeholder images. For each image, it will measure the container's actual width, calculate the optimal resolution (considering device pixel ratio), construct the new image URL, and set the `src` attribute to trigger the load.
-    - [ ] **Step 8.3: Integrate into `mBlocks`.** Call the new `_loadOptimalImages` function from the `complete` callback in `mBlocks` after the HTML has been rendered to the DOM.
-    - [ ] **Step 8.4: Cleanup.** Remove the now-obsolete `calculateImageResolution` function and any related logic.
+    - [x] **Step 8.1: Render with Placeholders.** Modify `_createPostHtml` to render `<img>` tags with a low-quality placeholder in `src` and the high-resolution base URL in a `data-img-src` attribute. The `calculateImageResolution` function will no longer be called here.
+    - [x] **Step 8.2: Create `_loadOptimalImages` Function.** Create a new helper function that iterates over placeholder images. For each image, it will measure the container's actual width, calculate the optimal resolution (considering device pixel ratio), construct the new image URL, and set the `src` attribute to trigger the load.
+    - [x] **Step 8.3: Integrate into `mBlocks`.** Call the new `_loadOptimalImages` function from the `complete` callback in `mBlocks` after the HTML has been rendered to the DOM.
+    - [x] **Step 8.4: Cleanup.** Remove the now-obsolete `calculateImageResolution` function and any related logic.
