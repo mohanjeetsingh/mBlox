@@ -11,12 +11,12 @@ This file tracks the next set of refactoring and feature implementation tasks fo
 
 *Goal: Address specific functional bugs, performance bottlenecks, and structural issues identified in the code review.*
 
-- [ ] **Step 10.1: Unify Constants**
-    - [ ] Rename `CONTENT_QUOTE` and `CONTENT_COMMENT` to `BLOCK_TYPE_QUOTE` and `BLOCK_TYPE_COMMENT` respectively, and update their usage throughout the script for consistency.
+- [x] **Step 10.1: Unify Constants**
+    - [x] Rename `CONTENT_QUOTE` and `CONTENT_COMMENT` to `BLOCK_TYPE_QUOTE` and `BLOCK_TYPE_COMMENT` respectively, and update their usage throughout the script for consistency.
 
-- [ ] **Step 10.2: Fix Showcase Block Rendering**
-    - [ ] **Correct Grid/Carousel Structure:** Refactor `_buildBlockBody` to ensure the smaller showcase items (`sPost`) are correctly wrapped in Bootstrap `row` and `carousel-item` divs. This will fix the bug where `data-cols`, `data-rows`, and `data-isCarousel` are ignored for them.
-    - [ ] **Isolate Feature Item Logic:** In `_createPostHtml`, completely separate the rendering of the main showcase item (`postID === 0`) from the logic for other posts to improve clarity and prevent bugs.
+- [x] **Step 10.2: Fix Showcase Block Rendering**
+    - [x] **Correct Grid/Carousel Structure:** Refactored `_buildBlockBody` to ensure the smaller showcase items (`sPost`) are correctly wrapped in Bootstrap `row` and `carousel-item` divs, fixing layout bugs.
+    - [x] **Isolate Feature Item Logic:** The main showcase feature item is now generated outside the main loop in `_buildBlockBody`, clarifying the logic and preventing rendering conflicts.
 
 - [ ] **Step 10.3: Optimize Event Handling & Data Access**
     - [ ] **Improve `_bindShowcaseEvents`:** Refactor the function to read all necessary `data-*` attributes from the `.sPost` elements into a JavaScript array on initialization. The click handler should then read from this array instead of querying the DOM on every click, improving performance.

@@ -308,6 +308,21 @@ function _renderStandardPost(finalType, config, parts) {
 }
 
 /**
+ * Renders the HTML for a small grid item within a showcase block.
+ * @param {string} finalType The final block type.
+ * @param {object} config The block configuration.
+ * @param {object} parts An object containing all pre-rendered HTML component strings.
+ * @returns {string} The complete HTML for the post article.
+ */
+function _renderShowcaseGridPost(finalType, config, parts) {
+    const { postURL, postTitle, snippetText, videoID, videoThumbnailURL, highResImageURL, imageCode } = parts;
+    const articleClasses = _getArticleClasses(finalType, { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL });
+    const articleStyle = ` style="${config.articleHeight}"`; // Showcase items can have height
+
+    return `<article class="${articleClasses}"${articleStyle} role="article">${config.showImage ? imageCode : ''}</article>`;
+}
+
+/**
  * Renders the HTML for a showcase post.
  * @param {number} postID The index of the post.
  * @param {object} config The block configuration.
@@ -330,7 +345,7 @@ function _renderShowcasePost(postID, config, parts) {
     }
 
     // Subsequent posts are the smaller items in the grid.
-    return { postHTML: _renderStandardPost(BLOCK_SHOWCASE, config, parts), showcaseHTML: '' };
+    return { postHTML: _renderShowcaseGridPost(BLOCK_SHOWCASE, config, parts), showcaseHTML: '' };
 }
 
 /**
@@ -711,72 +726,81 @@ window.fadeOut = function(el) {
  * @param {object} config The configuration object for the block.
  */
 window._bindShowcaseEvents = function(rawElement, config) {
-    const featuredImageNode = rawElement.querySelector(".feature-image");
+    const featuredImageNode = rawElement.querySelector('.feature-image');
+    const contentWrapper = rawElement.querySelector('.sFeature'); // The wrapper for the smaller items
+
     if (!featuredImageNode) return;
 
-    const figureNode = featuredImageNode.querySelector("figure");
-    const iFrameNode = featuredImageNode.querySelector(".sIframe");
-    const contentNode = featuredImageNode.querySelector(".sContent");
+    const figureNode = featuredImageNode.querySelector('figure');
+    const iFrameNode = featuredImageNode.querySelector('.sIframe');
+    const contentNode = featuredImageNode.querySelector('.sContent');
 
+    // Event listener for the main feature image (to play video)
     if (figureNode) {
         figureNode.addEventListener('click', function() {
-            let clickedVideoID = this.getAttribute("data-vidid");
+            const clickedVideoID = this.getAttribute('data-vidid');
             if (clickedVideoID !== "regular") {
                 if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
                 fadeIn(iFrameNode);
                 fadeOut(figureNode);
                 if (contentNode) fadeOut(contentNode);
             }
-        });
+        }, { once: true }); // Use 'once' to prevent re-binding if the script runs again
     }
 
-    rawElement.querySelectorAll(".sPost").forEach(showcasePost => {
-        showcasePost.addEventListener('click', function() {
-            const videoID = this.getAttribute("data-vidid");
-            const postTitle = this.getAttribute("data-title")
-            let playIcon = figureNode ? figureNode.querySelector("svg") : null;
+    // Use a single delegated event listener on the container.
+    // This is more performant and works correctly with carousel-cloned items.
+    if (contentWrapper) {
+        contentWrapper.addEventListener('click', function(event) {
+            const clickedPost = event.target.closest('.sPost');
+            if (!clickedPost) return; // Click was not on a showcase item
 
+            const videoID = clickedPost.getAttribute('data-vidid');
+            const postTitle = clickedPost.getAttribute('data-title');
+            const postSummary = clickedPost.getAttribute('data-summary');
+            const postLink = clickedPost.getAttribute('data-link');
+            const highResImg = clickedPost.getAttribute('data-img-high');
+
+            // --- Update the main feature image ---
             if (figureNode) {
-                // Update the main figure with the new post's data (image, title, video ID).
-                let videoTitle = postTitle;
-                if (videoID.toLowerCase() != "regular") {
-                    videoTitle = "Click here to load the video!";
+                let playIcon = figureNode.querySelector('svg');
+                if (videoID && videoID !== 'regular') {
                     if (!playIcon) {
                         figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
-                    } else {
+                    } else if (playIcon.style.display === 'none') {
                         fadeIn(playIcon);
                     }
-                } else {
-                    if (playIcon) fadeOut(playIcon);
+                } else if (playIcon) {
+                    fadeOut(playIcon);
                 }
-                figureNode.setAttribute("title", videoTitle);
-                figureNode.setAttribute("aria-label", videoTitle);
-                figureNode.style.background = `url(${this.getAttribute("data-img-high")}) center center`;
+                figureNode.setAttribute('data-vidid', videoID);
+                figureNode.style.backgroundImage = `url(${highResImg})`;
                 figureNode.style.backgroundSize = 'cover';
-                figureNode.setAttribute("data-vidid", videoID);
             }
 
+            // --- Reset any playing video and show the figure ---
             fadeOut(iFrameNode);
             fadeIn(figureNode);
+
+            // --- Update the content overlay ---
             if (contentNode) {
-                // Update the content overlay with the new post's title and snippet.
                 fadeIn(contentNode);
-                const h5 = contentNode.querySelector("h5");
-                if (h5) h5.innerHTML = postTitle;
-                const summary = contentNode.querySelector("summary");
-                if (summary) summary.innerHTML = this.getAttribute("data-summary");
+                const h5 = contentNode.querySelector('h5');
+                if (h5) h5.textContent = postTitle;
+                const summary = contentNode.querySelector('summary');
+                if (summary) summary.textContent = postSummary;
             }
 
-            // Update the link and button titles.
-            const link = featuredImageNode.querySelector("a");
+            // --- Update the main link and button ---
+            const link = featuredImageNode.querySelector('a');
             if (link) {
-                link.setAttribute("href", this.getAttribute("data-link"));
-                link.setAttribute("title", postTitle);
+                link.href = postLink;
+                link.title = postTitle;
             }
-            const button = featuredImageNode.querySelector("button");
-            if (button) button.setAttribute("title", postTitle);
+            const button = featuredImageNode.querySelector('button');
+            if (button) button.title = postTitle;
         });
-    });
+    }
 }
 
 /**
@@ -1046,39 +1070,51 @@ window._buildBlockBody = function(response, config) {
         if (config.blockType !== BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
     }
 
+    // Handle the main showcase item separately, outside the loop.
+    if (config.blockType === BLOCK_SHOWCASE && config.firstInstance && postsInFeed > 0) {
+        const { showcaseHTML: singleShowcaseHTML } = window._createPostHtml(response.posts[0], 0, config);
+        showcaseHTML = singleShowcaseHTML;
+    }
+
     for (let postID = 0; postID < postsInFeed; postID++) {
+        // For showcase, the first post is already handled, so we skip it in the main loop.
+        if (config.blockType === BLOCK_SHOWCASE && postID === 0) continue;
+
         const post = response.posts[postID];
         let currentColumnCount = config.columnCount;
 
         // Side effect removal: Handle column count change for 'list' type here.
-        if (config.blockType === BLOCK_LIST && postID === 1 && config.showHeader) {
+        if (config.blockType === BLOCK_LIST && postID === 1 && config.showHeader) { // This logic is correct as is.
             currentColumnCount--;
         }
 
         const { postHTML, showcaseHTML: singleShowcaseHTML, carouselIndicator } = window._createPostHtml(post, postID, config);
 
         if (carouselIndicator && config.isCarousel) {
-            carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
-        }
-        if (singleShowcaseHTML && config.firstInstance && postID === 0) {
-            showcaseHTML = singleShowcaseHTML;
+            // Adjust slide index for showcase since its loop starts from 1
+            const adjustedIndicator = config.blockType === BLOCK_SHOWCASE ? carouselIndicator.replace('data-bs-slide-to="0"', 'data-bs-slide-to="1"') : carouselIndicator;
+            carouselIndicators.insertAdjacentHTML('beforeend', adjustedIndicator);
         }
 
         // Creates a new row/carousel-item wrapper when needed.
-        if (postID === 0 || (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || (config.blockType === BLOCK_LIST && postID === 1)) {
+        const isFirstItemInLoop = (config.blockType === BLOCK_SHOWCASE) ? postID === 1 : postID === 0;
+        const startNewRow = isFirstItemInLoop || (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || (config.blockType === BLOCK_LIST && postID === 1);
+
+        if (startNewRow) {
             blockBody += `<div class="row g-${config.gutterSize} mx-0`;
             if (config.isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); }
             if (isComplexLayout && config.blockType === BLOCK_LIST) { blockBody += ' col flex-grow-1'; }
-            if (config.blockType !== BLOCK_COVER && !(isComplexLayout && [BLOCK_STACK, BLOCK_CARD].includes(config.finalType)) && (blockBody += ` pb-${config.gutterSize}`), (config.isCarousel || config.containsNavigation)) {
+            if (config.blockType !== BLOCK_COVER) {
                 blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
             }
             blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
         }
 
         blockBody += postHTML;
-
         // Close the row/carousel-item div at the end of a slide or at the last post.
-        if (postID === (postsInFeed - 1) || (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1)))) {
+        const isLastItemInSlide = config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
+        const isLastPostOverall = postID === (postsInFeed - 1);
+        if (isLastPostOverall || isLastItemInSlide) {
             blockBody += `</div>`; // close .row
         }
     }
@@ -1335,8 +1371,10 @@ window.mBlocks = async function(blockItem) {
 
             const finalBlockType = (rawElement.getAttribute("data-type") || "v").substring(0, 1);
             if (finalBlockType === BLOCK_SHOWCASE) {
-                const articleHeight = rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`;
-                window._bindShowcaseEvents(rawElement, { articleHeight });
+                // Delay binding to allow Bootstrap's carousel to initialize and clone items first.
+                setTimeout(() => {
+                    window._bindShowcaseEvents(rawElement, blockConfig);
+                }, 0);
             }
         }
     } // end for...of loop
