@@ -639,87 +639,233 @@ window._loadOptimalImages = function(rawElement) {
 }
 
 /**
+ * Parses the data attributes of a block element to create a configuration object.
+ * @param {HTMLElement} rawElement The block element to parse.
+ * @returns {object} A complete configuration object for the block.
+ */
+window._parseBlockConfig = function(rawElement) {
+    const dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
+        contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
+        siteURL = rawElement.getAttribute("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
+        dataTitle = rawElement.getAttribute("data-title") || "", // Optional title for the block
+        dataDescription = rawElement.getAttribute("data-description") || "", // Optional description for the block
+        dataType = (rawElement.getAttribute("data-type") || "v-ih").toLowerCase(), // Combined type and component string (e.g., "s-ihs")
+        blockType = dataType.substring(0, 1), // The base layout type (v, s, l, c, etc.)
+        componentList = dataType.substring(1), // The components to display (i, h, s, a, d) 
+        dataTheme = (rawElement.getAttribute("data-theme") || "light").toLowerCase(),// Color theme [light, dark, primary, secondary]
+        showHeader = componentList.includes("h"), // 'h' for heading/title
+        showImage = componentList.includes("i"), // 'i' for image
+        showSnippet = componentList.includes("s"), // 's' for snippet
+        showAuthor = componentList.includes("a"), // 'a' for author
+        showDate = componentList.includes("d"); // 'd' for date
+
+    // Determine the height of the section, with specific defaults for cover and showcase types.
+    let sectionHeight = rawElement.getAttribute("data-iHeight");
+    if (!sectionHeight) {
+        if (blockType === BLOCK_COVER) sectionHeight = "100vh";
+        else if (blockType === BLOCK_SHOWCASE) sectionHeight = "70vh";
+        else sectionHeight = "m";
+    }
+
+    // --- Pagination and Identity ---
+    const stageID = rawElement.getAttribute("data-s") || 1; // For paginated navigation, tracks the current page/stage
+    const firstInstance = !rawElement.hasAttribute("data-s"); // Is this the first time the block is being loaded?
+    const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
+
+    const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
+    const widget = rawElement.closest(".widget");
+    const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
+
+    let blurImage;
+    const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
+    if (dataBlur === "true") {
+        blurImage = true;
+    } else if (dataBlur === "false") {
+        blurImage = false;
+    } else {
+        // Default behavior: Blur image if header is present, except for specific block types
+        const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_TYPE_QUOTE];
+        blurImage = showHeader && !excludedBlurTypes.includes(blockType);
+    }
+
+    const inverseTheme = (dataTheme == "light" ? "primary" : "light");// Inverse theme for contrast
+    let textVerticalAlign = (rawElement.getAttribute("data-textVAlign") || "").toLowerCase();
+    if (!textVerticalAlign) {
+        if (blockType === 'v') textVerticalAlign = "middle";
+        else if (blockType === 'l') textVerticalAlign = "bottom";
+        else textVerticalAlign = 'overlay';
+    }
+
+    // Create the date formatter once, outside the loop, for efficiency.
+    const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'short', // Use 'short' to match original format (e.g., "Oct")
+        day: 'numeric'
+    }) : null;
+
+    return {
+        // Base attributes
+        dataLabel, contentType, siteURL, dataTitle, dataDescription, blockType, dataTheme,
+        // Component visibility
+        showHeader, showImage, showSnippet, showAuthor, showDate,
+        // Layout & Style
+        columnCount: rawElement.getAttribute("data-cols"),
+        blockRows: parseInt(rawElement.getAttribute("data-rows") || "1", 10),
+        isCarousel: (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true",
+        articleHeight,
+        blurImage,
+        inverseTheme,
+        textVerticalAlign,
+        cornerStyle: ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
+        aspectRatio: ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,
+        gutterSize: rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3),
+        isImageFixed: (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true",
+        lowContrast: (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true",
+        hasRoundedBorder: (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true",
+        // Content & Text
+        snippetSize: rawElement.getAttribute("data-snippetSize") || 150,
+        callToAction: rawElement.getAttribute("data-CTAText") || "",
+        moreText: rawElement.getAttribute("data-moreText") || "",
+        // State & Identity
+        stageID,
+        firstInstance,
+        postsPerBlock,
+        mBlockID,
+        dateFormatter,
+        // Initial empty/default values
+        containsNavigation: false,
+        actualColumnCount: 0,
+    };
+}
+
+/**
+ * Calculates responsive columns and determines carousel/navigation behavior.
+ * @param {object} config The block's configuration object.
+ * @param {number} postsInFeed The number of posts returned from the feed.
+ * @returns {object} The updated configuration object.
+ */
+window._calculateLayout = function(config, postsInFeed) {
+    // Use a mutable copy to avoid directly modifying the original object passed in.
+    let newConfig = { ...config };
+
+    if (newConfig.columnCount === null) { // Only set default if data-cols is not present at all
+        newConfig.columnCount = DEFAULT_COLUMN_COUNTS[newConfig.blockType] || 3; // Default to 3 if type is unknown
+    } else {
+        newConfig.columnCount = parseInt(newConfig.columnCount, 10);
+        newConfig.columnCount = Math.max(1, Math.min(newConfig.columnCount, 6)); // Clamp between 1 and 6
+    }
+
+    // Disable carousel for single-post blocks or list-style blocks
+    if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) {
+        newConfig.isCarousel = false;
+    }
+
+    // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
+    if (newConfig.isCarousel) {
+        const windowInnerWidth = window.innerWidth;
+        if (windowInnerWidth < 576) { newConfig.actualColumnCount = newConfig.columnCount < 5 ? 1 : (newConfig.columnCount === 5 ? 2 : 3); }
+        else if (windowInnerWidth < 768) { newConfig.actualColumnCount = newConfig.columnCount < 4 ? 1 : (newConfig.columnCount === 4 ? 2 : (newConfig.columnCount === 5 ? 3 : 4)); }
+        else if (windowInnerWidth < 992) { newConfig.actualColumnCount = newConfig.columnCount === 3 ? 2 : (newConfig.columnCount === 4 ? 3 : 4); }
+        else if (windowInnerWidth < 1200) { newConfig.actualColumnCount = newConfig.columnCount > 4 ? (newConfig.columnCount === 5 ? 4 : 5) : newConfig.columnCount; }
+        else { newConfig.actualColumnCount = newConfig.columnCount; }
+
+        // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
+        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.actualColumnCount)) newConfig.blockRows = Math.ceil(postsInFeed / newConfig.actualColumnCount);
+        if (postsInFeed <= (newConfig.actualColumnCount * newConfig.blockRows)) {
+            newConfig.isCarousel = false;
+            newConfig.containsNavigation = true;
+        }
+    }
+    return newConfig;
+}
+
+/**
+ * Builds the HTML for all posts in the feed.
+ * @param {object} response The full response from the data feed.
+ * @param {object} config The block's configuration object.
+ * @returns {{blockBody: string, carouselIndicators: HTMLElement | null, showcaseHTML: string}}
+ */
+window._buildBlockBody = function(response, config) {
+    let blockBody = '';
+    let showcaseHTML = '';
+    let carouselIndicators = null;
+    const postsInFeed = response.feed.entry.length;
+    const isComplexLayout = (config.blockType === BLOCK_LIST || config.blockType === BLOCK_SHOWCASE);
+
+    if (config.isCarousel) {
+        carouselIndicators = document.createElement("div");
+        carouselIndicators.classList.add('carousel-indicators');
+        if (config.blockType !== BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
+    }
+
+    for (let postID = 0; postID < postsInFeed; postID++) {
+        const post = response.feed.entry[postID];
+        let currentColumnCount = config.columnCount;
+
+        // Side effect removal: Handle column count change for 'list' type here.
+        if (config.blockType === BLOCK_LIST && postID === 1 && config.showHeader) {
+            currentColumnCount--;
+        }
+
+        const { postHTML, showcaseHTML: singleShowcaseHTML, carouselIndicator } = window._createPostHtml(post, postID, config);
+
+        if (carouselIndicator && config.isCarousel) {
+            carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
+        }
+        if (singleShowcaseHTML && config.firstInstance && postID === 0) {
+            showcaseHTML = singleShowcaseHTML;
+        }
+
+        // Creates a new row/carousel-item wrapper when needed.
+        if (postID === 0 || (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || (config.blockType === BLOCK_LIST && postID === 1)) {
+            blockBody += `<div class="row g-${config.gutterSize} mx-0`;
+            if (config.isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); }
+            if (isComplexLayout && config.blockType === BLOCK_LIST) { blockBody += ' col flex-grow-1'; }
+            if (config.blockType !== BLOCK_COVER && !(isComplexLayout && [BLOCK_STACK, BLOCK_CARD].includes(config.finalType)) && (blockBody += ` pb-${config.gutterSize}`), (config.isCarousel || config.containsNavigation)) {
+                blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
+            }
+            blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
+        }
+
+        blockBody += postHTML;
+
+        // Close the row/carousel-item div at the end of a slide or at the last post.
+        if (postID === (postsInFeed - 1) || (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1)))) {
+            blockBody += `</div>`; // close .row
+        }
+    }
+
+    return { blockBody, carouselIndicators, showcaseHTML };
+}
+
+/**
  * Initializes and renders dynamic content blocks based on data attributes.
  * It fetches Blogger post or comment data and displays it in various layouts.
  * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
  */
 window.mBlocks = async function(blockItem) {
-    // Stage 1 jQuery Removal: Use native JS for element selection and looping.
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
     for (const rawElement of elements) {
-        // --- Block Configuration Parsing ---
-        const
-            dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
-            contentType = (rawElement.getAttribute("data-contentType") || "recent").toLowerCase(),// Type of content: 'recent', 'comments', or a specific label
-            siteURL = rawElement.getAttribute("data-feed") || "/",// Blogspot site URL (e.g., "https://myblog.blogspot.com/")
-            dataTitle = rawElement.getAttribute("data-title") || "", // Optional title for the block
-            dataDescription = rawElement.getAttribute("data-description") || "", // Optional description for the block
-            dataType = (rawElement.getAttribute("data-type") || "v-ih").toLowerCase(), // Combined type and component string (e.g., "s-ihs")
-            blockType = dataType.substring(0, 1), // The base layout type (v, s, l, c, etc.)
-            componentList = dataType.substring(1), // The components to display (i, h, s, a, d) 
-            dataTheme = (rawElement.getAttribute("data-theme") || "light").toLowerCase(),// Color theme [light, dark, primary, secondary]
-            showHeader = componentList.includes("h"), // 'h' for heading/title
-            showImage = componentList.includes("i"), // 'i' for image
-            showSnippet = componentList.includes("s"), // 's' for snippet
-            showAuthor = componentList.includes("a"), // 'a' for author
-            showDate = componentList.includes("d"); // 'd' for date
-        
-        // Determine the height of the section, with specific defaults for cover and showcase types.
-        let sectionHeight = rawElement.getAttribute("data-iHeight");
-        if (!sectionHeight) {
-            if (blockType === BLOCK_COVER) sectionHeight = "100vh";
-            else if (blockType === BLOCK_SHOWCASE) sectionHeight = "70vh";
-            else sectionHeight = "m";
-        }
-
-        // --- Pagination and Identity ---
-        const stageID = rawElement.getAttribute("data-s") || 1; // For paginated navigation, tracks the current page/stage
-        const firstInstance = !rawElement.hasAttribute("data-s"); // Is this the first time the block is being loaded?
-        const postsPerBlock = parseInt(rawElement.getAttribute("data-posts") || 3, 10); // Number of posts to fetch
-        
-        const articleHeight = sectionHeight === 'm' ? '' : `height:${sectionHeight}!important;`; // CSS style for the item height
-        const widget = rawElement.closest(".widget");
-        const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
-        
-        let blurImage;
-        const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
-        if (dataBlur === "true") {
-            blurImage = true;
-        } else if (dataBlur === "false") {
-            blurImage = false;
-        } else {
-            // Default behavior: Blur image if header is present, except for specific block types
-            const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_TYPE_QUOTE];
-            blurImage = showHeader && !excludedBlurTypes.includes(blockType);
-        }
-        // --- Layout and Feed Configuration ---
-        let
-            columnCount = rawElement.getAttribute("data-cols"), // Number of columns for the grid
-            blockRows = parseInt(rawElement.getAttribute("data-rows") || "1", 10), // Number of rows per carousel slide
-            isCarousel = (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true", // Check if the block should be a carousel
-            containsNavigation = false,
-            contentWrapper = "",
-            feedURL = siteURL + "feeds/",
-            carouselIndicators = '',// HTML for carousel indicators
-            actualColumnCount = 0;
+        let blockConfig = window._parseBlockConfig(rawElement);
 
         // --- Feed URL Construction ---
-        switch (contentType) { // Construct the feed URL based on content type
+        let feedURL = blockConfig.siteURL + "feeds/";
+        switch (blockConfig.contentType) { // Construct the feed URL based on content type
             case "recent":
                 feedURL += "posts";
-                feedURL += showImage ? "/default" : "/summary";
+                feedURL += blockConfig.showImage ? "/default" : "/summary";
                 break;
             case "comments":
                 feedURL += "comments";
-                feedURL += showImage ? "/default" : "/summary";
+                feedURL += blockConfig.showImage ? "/default" : "/summary";
                 break;
             default:
                 feedURL += "posts";
-                feedURL += showImage ? "/default" : "/summary";
-                feedURL += "/-/" + dataLabel;
+                feedURL += blockConfig.showImage ? "/default" : "/summary";
+                feedURL += "/-/" + blockConfig.dataLabel;
         }
-        feedURL += `?alt=json-in-script&start-index=${(stageID - 1) * postsPerBlock + 1}&max-results=${postsPerBlock}`;
+        feedURL += `?alt=json-in-script&start-index=${(blockConfig.stageID - 1) * blockConfig.postsPerBlock + 1}&max-results=${blockConfig.postsPerBlock}`;
 
         try {
             const response = await window.fetchJSONP(feedURL);
@@ -727,153 +873,57 @@ window.mBlocks = async function(blockItem) {
                 if (response.feed.entry) {
 
                     const postsInFeed = response.feed.entry.length,//Total number of actual posts in feed
-                        totalPostsAvailable = response.feed.openSearch$totalResults.$t, // Total posts available on the blog for this query
-                        snippetSize = rawElement.getAttribute("data-snippetSize") || 150, // Max characters for snippets
-                        cornerStyle = ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded", // 'sharp' or 'rounded' corners
-                        inverseTheme = (dataTheme == "light" ? "primary" : "light");// Inverse theme for contrast
-                    
-                    let textVerticalAlign = (rawElement.getAttribute("data-textVAlign") || "").toLowerCase();
-                    if (!textVerticalAlign) {
-                        if (blockType === 'v') textVerticalAlign = "middle";
-                        else if (blockType === 'l') textVerticalAlign = "bottom";
-                        else textVerticalAlign = 'overlay';
+                        totalPostsAvailable = response.feed.openSearch$totalResults.$t; // Total posts available on the blog for this query
+                    const totalStages = Math.ceil(totalPostsAvailable / blockConfig.postsPerBlock);// Total pages/stages available for navigation
+
+                    if (blockConfig.contentType === "comments") {
+                        blockConfig.moreText = "";
                     }
-                    const
-                        aspectRatio = ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`, // Aspect ratio for media [1x1, 4x3, 16x9, etc.]
-                        gutterSize = rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
-                        isImageFixed = (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true", // Use fixed background images
-                        lowContrast = (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true", // Lower contrast for text/elements
-                        hasRoundedBorder = (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true", // Add a border around items
-                        callToAction = rawElement.getAttribute("data-CTAText") || "", // Call-to-action button text
-                        isComplexLayout = (blockType == BLOCK_LIST || blockType == BLOCK_SHOWCASE), // Flag for layouts with special structures
-                        totalStages = Math.ceil(totalPostsAvailable / postsPerBlock);// Total pages/stages available for navigation
-                    let blockBody = '',//block body
-                    moreText = rawElement.getAttribute("data-moreText") || "", // Text for the "View All" link in the footer.
-                    finalType = blockType;
 
-                    // Disable carousel for single-post blocks or list-style blocks
-                    (postsPerBlock <= 1 || blockType == BLOCK_LIST) && (isCarousel = false);
-                    (contentType == "comments") && (moreText="");
-
-                    // Create the date formatter once, outside the loop, for efficiency.
-                    const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', {
-                        year: 'numeric',
-                        month: 'short', // Use 'short' to match original format (e.g., "Oct")
-                        day: 'numeric'
-                    }) : null;
-                    
-                    // Consolidate all configuration variables into a single blockConfig object.
-                    // This simplifies passing data to helper functions.
-                    const blockConfig = {
-                        siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
-                        isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false, articleHeight
-                    };
-
-                    if (firstInstance) {
-                        rawElement.setAttribute("data-s", stageID);
+                    if (blockConfig.firstInstance) {
+                        rawElement.setAttribute("data-s", blockConfig.stageID);
 
                         // --- Block Header (Title & Description) ---
                         // Appends the main title and description for the entire block if provided.
                         rawElement.insertAdjacentHTML('beforeend', window._createBlockHeader(blockConfig));
                     }
 
-                    if (columnCount === null) { // Only set default if data-cols is not present at all
-                        columnCount = DEFAULT_COLUMN_COUNTS[blockType] || 3; // Default to 3 if type is unknown
-                    } else { 
-                        columnCount = parseInt(columnCount, 10); 
-                        columnCount = Math.max(1, Math.min(columnCount, 6)); // Clamp between 1 and 6
-                    }
-
-                    // --- Carousel Column Calculation ---
-                    // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
-                    if (isCarousel) {
-                        const windowInnerWidth = window.innerWidth;
-                        if (windowInnerWidth < 576) { actualColumnCount = columnCount < 5 ? 1 : (columnCount === 5 ? 2 : 3); }
-                        else if (windowInnerWidth < 768) { actualColumnCount = columnCount < 4 ? 1 : (columnCount === 4 ? 2 : (columnCount === 5 ? 3 : 4)); }
-                        else if (windowInnerWidth < 992) { actualColumnCount = columnCount === 3 ? 2 : (columnCount === 4 ? 3 : 4); }
-                        else if (windowInnerWidth < 1200) { actualColumnCount = columnCount > 4 ? (columnCount === 5 ? 4 : 5) : columnCount; }
-                        else { actualColumnCount = columnCount; }
-                        
-                        blockConfig.actualColumnCount = actualColumnCount; // Update config with the calculated value
-
-                        // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
-                        if (blockRows > Math.ceil(postsInFeed / actualColumnCount)) blockRows = Math.ceil(postsInFeed / actualColumnCount);
-                        if (postsInFeed <= (actualColumnCount * blockRows)) { isCarousel = false; containsNavigation = true; }
-
-                        blockConfig.isCarousel = isCarousel; // Update config with potentially modified value
-                        blockConfig.containsNavigation = containsNavigation; // Update config
-                    }
-
-                    // --- Carousel Initialization ---
-                    if (isCarousel) {
-                        carouselIndicators = document.createElement("div");
-                        carouselIndicators.classList.add('carousel-indicators');
-                        if (blockType != BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
-                    }(isCarousel || containsNavigation) && (blockBody += `<div class="carousel-inner">`);
+                    blockConfig = window._calculateLayout(blockConfig, postsInFeed);
 
                     // --- Main Content Wrapper ---
                     // Creates the main container for the block content.
-                    contentWrapper = document.createElement('div');
-                    contentWrapper.id = 'm' + mBlockID;
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.id = 'm' + blockConfig.mBlockID;
                     rawElement.appendChild(contentWrapper);
-                    contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
+                    contentWrapper.className = `overflow-hidden bg-${blockConfig.dataTheme}${blockConfig.blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((blockConfig.isCarousel || blockConfig.containsNavigation) ? ` st${blockConfig.stageID} carousel carousel-fade` : "")}`;
                     contentWrapper.setAttribute("data-bs-ride", "carousel");
 
-                    // =========================== POST PROCESSING LOOP ===========================
-                    // Iterates through each post from the feed to build its HTML.
-                    for (let postID = 0; postID < postsInFeed; postID++) {
-                        const post = response.feed.entry[postID];
+                    const { blockBody, carouselIndicators, showcaseHTML } = window._buildBlockBody(response, blockConfig);
 
-                        // Side effect removal: Handle column count change for 'list' type here.
-                        if (blockType === BLOCK_LIST && postID === 1 && showHeader) {
-                            columnCount--;
-                        }
+                    if (showcaseHTML) {
+                        contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
+                    }
 
-                        const { postHTML, showcaseHTML, carouselIndicator } = window._createPostHtml(post, postID, blockConfig);
-                        
-                        if (carouselIndicator) {
-                            if (isCarousel) carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
-                        }
-                        if (showcaseHTML && firstInstance && postID === 0) {
-                            contentWrapper.insertAdjacentHTML('beforebegin', showcaseHTML);
-                        }
-
-                        // --- Item Wrapper ---
-                        // Creates a new row/carousel-item wrapper when needed.
-                        if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_LIST && postID == 1)) {
-                            blockBody += `<div class="row  g-${gutterSize} mx-0`;
-                            if (isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); } // Add active class to first item
-                            isComplexLayout && (blockType === BLOCK_LIST) && (blockBody += ' col flex-grow-1');
-                            (finalType != BLOCK_COVER) && (!(isComplexLayout && (finalType == BLOCK_STACK || finalType == BLOCK_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
-                            blockBody += ` ${RESPONSIVE_GRID_CLASSES[columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
-                        }
-
-                        // --- Article HTML Construction ---
-                        blockBody += postHTML;
-
-                        // Close the row/carousel-item div at the end of a slide or at the last post.
-                        if (postID === (postsInFeed - 1) || (isCarousel && (postID % (actualColumnCount * blockRows) === (actualColumnCount * blockRows - 1)))) blockBody += `</div>`; // close .row
-                    }// End of post processing loop
-
-                    if (isCarousel || containsNavigation) {
+                    if (blockConfig.isCarousel || blockConfig.containsNavigation) {
+                        let bodyWrapper = `<div class="carousel-inner">${blockBody}</div>`;
                         contentWrapper.insertAdjacentHTML('beforeend', blockBody + '</div>'); // Append and close carousel-inner
-                        if (isCarousel) contentWrapper.appendChild(carouselIndicators);
+                        if (blockConfig.isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                         // --- Carousel/Pagination Navigation ---
                         const { prev: prevButton, next: nextButton } = window._createCarouselControls(blockConfig);
-                        if (isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
+                        if (blockConfig.isCarousel) contentWrapper.insertAdjacentHTML('beforeend', prevButton + nextButton);
 
-                        if (containsNavigation) { if (stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
+                        if (blockConfig.containsNavigation) { if (blockConfig.stageID > 1) contentWrapper.insertAdjacentHTML('beforeend', prevButton); if (blockConfig.stageID < totalStages) contentWrapper.insertAdjacentHTML('beforeend', nextButton); }
                     } else { contentWrapper.insertAdjacentHTML('beforeend', blockBody); }
 
                     // --- Block Footer (More Link) ---
                     contentWrapper.insertAdjacentHTML('afterend', window._createBlockFooter(blockConfig, response));
                 }//if
                 else { // If response.feed.entry is empty or doesn't exist
-                    switch (contentType) { // Handle cases where the feed is empty
-                        case "recent": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
-                        case "comments": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
-                        default: rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${dataTheme} display-6 p-4 w-100">Sorry! No content found for "${dataLabel}"!</div>`);
+                    switch (blockConfig.contentType) { // Handle cases where the feed is empty
+                        case "recent": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`); break;
+                        case "comments": rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`); break;
+                        default: rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found for "${blockConfig.dataLabel}"!</div>`);
                     }
                 } 
         } catch (error) {

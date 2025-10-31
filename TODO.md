@@ -6,15 +6,15 @@ All initial refactoring tasks are complete. The codebase is now more modular, ma
 
 *Goal: Continue to improve the structure and clarity of the main `mBlocks` function by extracting the remaining large logic blocks into dedicated helper functions.*
 
-- [ ] **Stage 4: Final `mBlocks` Cleanup**
-    - [ ] **Step 4.1: Extract Configuration Parsing.** Create a `_parseBlockConfig(rawElement)` function that reads all `data-*` attributes and returns a complete `config` object.
-    - [ ] **Step 4.2: Extract Carousel & Column Logic.** Create a `_calculateLayout(config, postsInFeed)` function. Move the logic for calculating responsive columns (`actualColumnCount`) and determining if a block should be a carousel or use simple navigation. This function should return an updated config object.
-    - [ ] **Step 4.3: Extract Main Post Loop.** Create a `_buildBlockBody(response, config)` function. Move the main `for` loop that iterates through posts, calls `_createPostHtml`, and assembles the `blockBody` string into this new function.
-    - [ ] **Step 4.4: Refactor `complete` Callback.** Refactor the `complete` callback in `fetchJSONP` to accept the `blockConfig` object directly, removing the need for the `tempConfig` object and cleaning up the event binding calls.
+- [x] **Stage 4: Final `mBlocks` Cleanup**
+    - [x] **Step 4.1: Extract Configuration Parsing.** Create a `_parseBlockConfig(rawElement)` function that reads all `data-*` attributes and returns a complete `config` object.
+    - [x] **Step 4.2: Extract Carousel & Column Logic.** Create a `_calculateLayout(config, postsInFeed)` function. Move the logic for calculating responsive columns (`actualColumnCount`) and determining if a block should be a carousel or use simple navigation. This function should return an updated config object.
+    - [x] **Step 4.3: Extract Main Post Loop.** Create a `_buildBlockBody(response, config)` function. Move the main `for` loop that iterates through posts, calls `_createPostHtml`, and assembles the `blockBody` string into this new function.
+    - [x] **Step 4.4: Refactor `complete` Callback.** This step became obsolete with the Stage 6 `async/await` refactoring, which replaced the `complete` callback with a `finally` block, achieving the same goal of cleanup and event binding in a more modern way.
 
-- [ ] **Stage 5: Code & Logic Refinement**
-    - [ ] **Step 5.1: Simplify `switch` statements.** Convert the `switch` statements for default column counts and grid classes in `mBlocks` to use object lookups.
-    - [ ] **Step 5.2: Add JSDoc Comments.** Add comprehensive JSDoc comments to the `fadeIn`, `fadeOut`, and `_bindPaginationEvents` helper functions.
+- [x] **Stage 5: Code & Logic Refinement**
+    - [x] **Step 5.1: Simplify `switch` statements.** Convert the `switch` statements for default column counts and grid classes in `mBlocks` to use object lookups.
+    - [x] **Step 5.2: Add JSDoc Comments.** Add comprehensive JSDoc comments to the `fadeIn`, `fadeOut`, and `_bindPaginationEvents` helper functions.
 
 - [x] **Stage 6: Advanced Refactoring & Modernization**
     - [x] **Step 6.1: Globalize Constants.** Move the `BLOCK_TYPE_*` constants to the global scope so they don't need to be redefined on every `mBlocks` call or passed via the `config` object.
