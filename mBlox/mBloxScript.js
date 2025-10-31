@@ -46,6 +46,39 @@ function fetchJSONP(url, options) {
     document.head.appendChild(script);
 }
 
+const // Constants for block types, improving readability over single-character strings.
+    BLOCK_TYPE_COVER = 'v',
+    BLOCK_TYPE_SHOWCASE = 's',
+    BLOCK_TYPE_LIST = 'l',
+    BLOCK_TYPE_CARD = 'c',
+    BLOCK_TYPE_GALLERY = 'g',
+    BLOCK_TYPE_PANCAKE = 'p',
+    BLOCK_TYPE_STACK = 't',
+    BLOCK_TYPE_QUOTE = 'q',
+    BLOCK_TYPE_COMMENT = 'm';
+
+const DEFAULT_COLUMN_COUNTS = {
+    [BLOCK_TYPE_COVER]: 1,
+    [BLOCK_TYPE_COMMENT]: 1,
+    [BLOCK_TYPE_STACK]: 1,
+    [BLOCK_TYPE_PANCAKE]: 3,
+    [BLOCK_TYPE_CARD]: 4,
+    [BLOCK_TYPE_QUOTE]: 4,
+    [BLOCK_TYPE_GALLERY]: 5,
+    [BLOCK_TYPE_LIST]: 2,
+    [BLOCK_TYPE_SHOWCASE]: 6
+};
+
+const RESPONSIVE_GRID_CLASSES = {
+    1: 'row-cols-1',
+    2: 'row-cols-1 row-cols-sm-1 row-cols-md-2',
+    3: 'row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3',
+    4: 'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4',
+    5: 'row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5',
+    6: 'row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6'
+};
+
+
 /**
  * Creates the HTML for a single post item.
  * This is a helper function for mBlocks.
@@ -197,7 +230,7 @@ function _createPostHtml(post, postID, config) {
 
         const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
         imageCode = config.isImageFixed
-            ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
+            ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
             : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
     } //IMAGE SETTINGS
 
@@ -395,14 +428,18 @@ function _createCarouselControls(config) {
 
 /**
  * Fades in an element.
- * @param {HTMLElement} el The element to fade in.
+ * @param {HTMLElement | null} el The element to fade in.
  */
 function fadeIn(el) {
     if (!el) return;
     el.style.opacity = 0;
-    el.style.display = 'block';
+    // Use a more generic display value; 'block' can break layouts for inline-flex, etc.
+    // We assume the element's default display is appropriate.
+    el.style.display = ''; 
+
     (function fade() {
         let val = parseFloat(el.style.opacity);
+        // Check if the animation should continue
         if (!((val += .1) > 1)) {
             el.style.opacity = val;
             requestAnimationFrame(fade);
@@ -412,7 +449,7 @@ function fadeIn(el) {
 
 /**
  * Fades out an element.
- * @param {HTMLElement} el The element to fade out.
+ * @param {HTMLElement | null} el The element to fade out.
  */
 function fadeOut(el) {
     if (!el) return;
@@ -602,17 +639,6 @@ function mBlocks(blockItem) {
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
     elements.forEach(function (rawElement) {
-        const // Constants for block types, improving readability over single-character strings.
-            BLOCK_TYPE_COVER = 'v',
-            BLOCK_TYPE_SHOWCASE = 's',
-            BLOCK_TYPE_LIST = 'l',
-            BLOCK_TYPE_CARD = 'c',
-            BLOCK_TYPE_GALLERY = 'g',
-            BLOCK_TYPE_PANCAKE = 'p',
-            BLOCK_TYPE_STACK = 't',
-            BLOCK_TYPE_QUOTE = 'q',
-            BLOCK_TYPE_COMMENT = 'm';
-
         // --- Block Configuration Parsing ---
         const
             dataLabel = rawElement.getAttribute("data-label") || "Label Name missing", // Blogger label to fetch posts from
@@ -745,18 +771,10 @@ function mBlocks(blockItem) {
                     }
 
                     if (columnCount === null) { // Only set default if data-cols is not present at all
-                        switch (blockType) {
-                            case BLOCK_TYPE_COVER: case BLOCK_TYPE_COMMENT: case BLOCK_TYPE_STACK: columnCount = 1; break;
-                            case BLOCK_TYPE_PANCAKE: columnCount = 3; break;
-                            case BLOCK_TYPE_CARD: case BLOCK_TYPE_QUOTE: columnCount = 4; break;
-                            case BLOCK_TYPE_GALLERY: columnCount = 5; break;
-                            case BLOCK_TYPE_LIST: columnCount = 2; break;
-                            case BLOCK_TYPE_SHOWCASE: columnCount = 6; break;
-                        }
+                        columnCount = DEFAULT_COLUMN_COUNTS[blockType] || 3; // Default to 3 if type is unknown
                     } else { 
                         columnCount = parseInt(columnCount, 10); 
-                        if (columnCount < 1) columnCount = 1;
-                        if (columnCount > 6) columnCount = 6;
+                        columnCount = Math.max(1, Math.min(columnCount, 6)); // Clamp between 1 and 6
                     }
 
                     // --- Carousel Column Calculation ---
@@ -814,14 +832,7 @@ function mBlocks(blockItem) {
                             if (isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); } // Add active class to first item
                             isComplexLayout && (blockType == BLOCK_TYPE_LIST) && (blockBody += ' col flex-grow-1');
                             (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
-                            switch (columnCount) {
-                                case 1: blockBody += ' row-cols-1">'; break;
-                                case 2: blockBody += ' row-cols-1 row-cols-sm-1 row-cols-md-2">'; break;
-                                case 3: blockBody += ' row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3">'; break;
-                                case 4: blockBody += ' row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4">'; break;
-                                case 5: blockBody += ' row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5">'; break;
-                                case 6: blockBody += ' row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6">'; break;
-                            }
+                            blockBody += ` ${RESPONSIVE_GRID_CLASSES[columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
                         }
 
                         // --- Article HTML Construction ---
