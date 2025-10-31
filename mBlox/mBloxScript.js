@@ -285,52 +285,66 @@ function _createPostHtml(post, postID, config) {
     let videoID = "regular"; // Default videoID
     if (finalType == config.BLOCK_TYPE_SHOWCASE) videoID = (-1 !== videoThumbnailURL.indexOf("img.youtube.com")) ? (videoThumbnailURL.substr(videoThumbnailURL.indexOf("/vi/") + 4, 11)) : "regular";
 
-    postHTML += `<article class="col d-inline-flex${(finalType == config.BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : (finalType == config.BLOCK_TYPE_COVER ? `" style="${config.articleHeight}"` : '"'))}" role="article">`;
-
-    // Link wrapper for the entire article (except for showcase items)
-    if (finalType !== config.BLOCK_TYPE_SHOWCASE) postHTML += `<a class="overflow-hidden w-100 shadow-sm${(finalType != config.BLOCK_TYPE_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != config.BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((finalType == config.BLOCK_TYPE_QUOTE || finalType == config.BLOCK_TYPE_COVER) ? ' text-center h-100' : ((finalType == config.BLOCK_TYPE_STACK||finalType==config.BLOCK_TYPE_COMMENT) ? " row g-0" : ((finalType == config.BLOCK_TYPE_LIST || finalType == config.BLOCK_TYPE_CARD || finalType == config.BLOCK_TYPE_GALLERY) ? `${config.aspectRatio}${(finalType == config.BLOCK_TYPE_LIST ? ` mt-${config.gutterSize}` : '')}` : "")))}" href="${postURL}" title="${postTitle}">`;
-
-    //IMAGE
-    if (config.showImage) postHTML += imageCode; // Add image HTML if it exists
+    let textContentHTML = '';
+    let linkWrapperStart = '';
+    let linkWrapperEnd = '';
 
     // --- Text Content ---
     if (config.showHeader && finalType != config.BLOCK_TYPE_SHOWCASE && finalType != config.BLOCK_TYPE_GALLERY) {
         switch (finalType) {
-            case config.BLOCK_TYPE_COMMENT: postHTML += `<div class="col p-2 ps-0">`; break;
-                case config.BLOCK_TYPE_STACK: config.showImage && (postHTML += '<div class="col-8 h-100">');
-                case config.BLOCK_TYPE_PANCAKE: case config.BLOCK_TYPE_QUOTE: postHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == config.BLOCK_TYPE_PANCAKE || (config.blockType == config.BLOCK_TYPE_LIST && finalType == config.BLOCK_TYPE_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
+            case config.BLOCK_TYPE_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
+                case config.BLOCK_TYPE_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
+                case config.BLOCK_TYPE_PANCAKE: case config.BLOCK_TYPE_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == config.BLOCK_TYPE_PANCAKE || (config.blockType == config.BLOCK_TYPE_LIST && finalType == config.BLOCK_TYPE_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
                     break;
-                case config.BLOCK_TYPE_LIST: postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
-                case config.BLOCK_TYPE_CARD: postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
+                case config.BLOCK_TYPE_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
+                case config.BLOCK_TYPE_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
                     switch (config.textVerticalAlign) {
-                        case "top": postHTML += ' h-auto">'; break;
-                        case "middle": postHTML += ' h-auto top-50 translate-middle-y">'; break;
-                        case "bottom": postHTML += ' h-auto bottom-0" style="top:auto;">'; break;
-                        case "overlay": postHTML += '">'; break;
+                        case "top": textContentHTML += ' h-auto">'; break;
+                        case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
+                        case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto;">'; break;
+                        case "overlay": textContentHTML += '">'; break;
                     }
                     break;
-                case config.BLOCK_TYPE_COVER: finalType == config.BLOCK_TYPE_COVER && (postHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
+                case config.BLOCK_TYPE_COVER: finalType == config.BLOCK_TYPE_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
                     switch (config.textVerticalAlign) {
-                        case "top": postHTML += '-x mt-5">'; break;
-                        case "middle": postHTML += ' top-50">'; break;
-                        case "bottom": postHTML += '-x  bottom-0 mb-5">'; break;
-                        case "overlay": postHTML += ' top-50 h-100 w-100">'; break;
+                        case "top": textContentHTML += '-x mt-5">'; break;
+                        case "middle": textContentHTML += ' top-50">'; break;
+                        case "bottom": textContentHTML += '-x  bottom-0 mb-5">'; break;
+                        case "overlay": textContentHTML += ' top-50 h-100 w-100">'; break;
                     }
             }
 
-            postHTML += `${authorCode}${dateCode}`;
-            if (finalType === config.BLOCK_TYPE_COVER) postHTML += displayHeaderCode; else if (finalType === config.BLOCK_TYPE_COMMENT) postHTML += commentHeaderCode; else postHTML += normalHeaderCode;
-            postHTML += snippetCode;
-            !(finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) && (postHTML += ctaButtonCode);//CTA 
+            textContentHTML += `${authorCode}${dateCode}`;
+            if (finalType === config.BLOCK_TYPE_COVER) textContentHTML += displayHeaderCode; else if (finalType === config.BLOCK_TYPE_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
+            textContentHTML += snippetCode;
+            !(finalType == config.BLOCK_TYPE_PANCAKE || finalType == config.BLOCK_TYPE_QUOTE) && (textContentHTML += ctaButtonCode);//CTA 
 
-            postHTML += `</div>`;
-            if (finalType === config.BLOCK_TYPE_STACK && config.showImage) postHTML += `</div>`;
-            if (finalType === config.BLOCK_TYPE_PANCAKE || finalType === config.BLOCK_TYPE_QUOTE) postHTML += ctaButtonCode;// CTA for card-footer style
+            textContentHTML += `</div>`;
+            if (finalType === config.BLOCK_TYPE_STACK && config.showImage) textContentHTML += `</div>`;
+            if (finalType === config.BLOCK_TYPE_PANCAKE || finalType === config.BLOCK_TYPE_QUOTE) textContentHTML += ctaButtonCode;// CTA for card-footer style
         }//TEXT
-    if (finalType !== config.BLOCK_TYPE_SHOWCASE) postHTML += `</a>`;
+    
+    // Link wrapper for the entire article (except for showcase items)
+    if (finalType !== config.BLOCK_TYPE_SHOWCASE) {
+        const linkClasses = `overflow-hidden w-100 shadow-sm${(finalType != config.BLOCK_TYPE_COVER ? config.cornerStyle : ' rounded-0')}${(finalType != config.BLOCK_TYPE_COMMENT ? ' card' : ` text-bg-${config.inverseTheme}`)}${(config.hasRoundedBorder ? ` border border-3 border-opacity-75 border-${config.dataTheme}` : ' border-0')}${((f) => {
+            if (f === config.BLOCK_TYPE_QUOTE || f === config.BLOCK_TYPE_COVER) return ' text-center h-100';
+            if (f === config.BLOCK_TYPE_STACK || f === config.BLOCK_TYPE_COMMENT) return ' row g-0';
+            if (f === config.BLOCK_TYPE_LIST || f === config.BLOCK_TYPE_CARD || f === config.BLOCK_TYPE_GALLERY) return `${config.aspectRatio}${(f === config.BLOCK_TYPE_LIST ? ` mt-${config.gutterSize}` : '')}`;
+            return '';
+        })(finalType)}`;
+        linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
+        linkWrapperEnd = `</a>`;
+    }
 
-    postHTML += `</article>`;
+    const articleClasses = `col d-inline-flex${finalType === config.BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : ''}`;
+    const articleStyle = finalType === config.BLOCK_TYPE_COVER ? ` style="${config.articleHeight}"` : '';
 
+    postHTML = `<article class="${articleClasses}"${articleStyle} role="article">
+        ${linkWrapperStart}
+        ${config.showImage ? imageCode : ''}
+        ${textContentHTML}
+        ${linkWrapperEnd}
+    </article>`;
     return { postHTML, showcaseHTML, carouselIndicator };
 }
 
