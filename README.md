@@ -1,8 +1,8 @@
 # mBlox
 
-mBlox is a lightweight JavaScript library that enables dynamic, Elementor/Gutentor-like content blocks for **Blogger**. It fetches posts or comments from any Blogger/BlogSpot blog and displays them in a variety of customizable layouts.
+mBlox is a lightweight, dependency-free JavaScript library that enables dynamic, Elementor/Gutentor-like content blocks. It can fetch and display content from various sources like **Blogger**, **WordPress**, and any **RSS feed** (including YouTube) in a variety of customizable layouts.
 
-While originally intended for Blogger, it can be deployed on **any website** to display content from a Blogger feed.
+It can be deployed on **any website** to display content from any supported feed type.
 
 ## Features
 
@@ -11,6 +11,7 @@ While originally intended for Blogger, it can be deployed on **any website** to 
 *   **Variety of Layouts**: Includes showcases, carousels, grids, lists, and more.
 *   **Lazy Loading**: Content blocks can be lazy-loaded on scroll for better performance.
 *   **Responsive Design**: Built with Bootstrap 5 to be mobile-first and responsive.
+*   **Multi-Platform**: Supports Blogger, WordPress (REST API), and standard RSS/Atom feeds out of the box.
 *   **Easy Integration**: Add a `section` or `div` with the right class and data attributes, and the script does the rest.
 
 ## Dependencies
@@ -24,12 +25,19 @@ mBlox relies on the following libraries:
 1.  Include the necessary CSS and JS files in your Blogger template or website's `<head>` section.
 
     ```html
-    <link href='path/to/bootstrap.min.css' rel='stylesheet'/>
-    <link href='path/to/mCustom.css' rel='stylesheet'/>
-    <script src='path/to/bootstrap.bundle.min.js'></script>
-    <script src='path/to/mBloxCall.js'></script>
-    <script src='path/to/noImg.js'></script> <!-- Optional: for a placeholder image -->
+    <!-- Required: Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Required: mBlox CSS -->
+    <link href='path/to/mBlox.css' rel='stylesheet'/>
+    
+    <!-- Required: mBlox Initializer -->
+    <script src='path/to/mBloxCall.js' defer></script>
     ```
+    **Note on Scripts:**
+    *   `mBloxCall.js`: This is the lightweight entry point. Its sole purpose is to find `mBlock` (eager) and `mBlockL` (lazy-loaded) elements on the page and trigger the main `mBlox` library. It contains the `IntersectionObserver` for lazy loading and is designed to be kept simple.
+    *   `mBloxScript.js`: This is the core library that `mBloxCall.js` loads automatically. It contains all the logic for fetching data, rendering blocks, and handling interactivity. You do not need to include this script in your HTML manually.
+
 
 2.  Add an element (like `<section>` or `<div>`) to your HTML where you want the block to appear.
 
@@ -42,7 +50,7 @@ mBlox relies on the following libraries:
 ```html
 <section
     class='mBlockL'
-    data-contenttype='label'
+    data-contenttype='recent'
     data-label="Articles"
     data-feed='https://your-blog.blogspot.com/'
     data-posts="6"
@@ -81,7 +89,7 @@ Customize mBlox using the following `data-*` attributes on your placeholder elem
 | `data-rows` | Number of rows per carousel slide. | `1` | `2` |
 | `data-snippetSize` | The maximum number of characters for the post snippet. | `150` | `100` |
 | `data-textVAlign` | Vertical alignment of text on cards. Options: `top`, `middle`, `bottom`, `overlay`. | Varies by type | `bottom` |
-| `data-theme` | The color scheme for the block. Options: `light`, `dark`, `primary`, `secondary`. | `light` | `dark` |
+| `data-theme` | The color scheme for the block. Options: `light`, `dark`, `primary`, `secondary`, etc. | `light` | `dark` |
 | `data-title` | A title for the block, displayed in a header section. | `""` | `Latest News` |
 | `data-type` | Defines the visual style. A combination of a base type and modifiers (e.g., `s-ihs`). See **Types** below. | `v-ih` | `s-ihs` |
 
@@ -108,9 +116,3 @@ The `data-type` attribute is a powerful way to control the appearance of each po
 *   `s`: Show **S**nippet
 *   `a`: Show **A**uthor
 *   `d`: Show **D**ate
-
-## Collaboration
-
-The intent is to also create a WordPress version of this tool that would use the WP-JSON API. If you have knowledge and interest in collaborating on this or improving the current version, please get in touch!
-
-I'm a hobbyist designer and developer, so any guidance, suggestions, or feedback is heartily welcome. :)

@@ -12,6 +12,9 @@ if (typeof window.mBloxInitialized === 'undefined') {
     window.mBloxInitialized = true;
     (function() { // IIFE to encapsulate the entire script
 
+    const feedCache = new Map();
+    const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
     const // Constants for block types, improving readability over single-character strings.
         BLOCK_COVER = 'v',
         BLOCK_SHOWCASE = 's',
@@ -1063,6 +1066,52 @@ function _calculateLayout(config, postsInFeed) {
 }
 
 /**
+ * Builds the HTML for the smaller grid items in a showcase block.
+ * @param {object} response The full response from the data feed.
+ * @param {object} config The block's configuration object.
+ * @param {HTMLElement} carouselIndicators The element for carousel indicators.
+ * @returns {string} The HTML string for the showcase grid.
+ */
+function _buildShowcaseGridBody(response, config, carouselIndicators) {
+    let blockBody = '';
+    const postsInFeed = response.posts.length;
+
+    for (let postID = 1; postID < postsInFeed; postID++) {
+        const post = response.posts[postID];
+        const { postHTML, carouselIndicator } = _createPostHtml(post, postID, config);
+
+        if (carouselIndicator && config.isCarousel) {
+            // Adjust slide index for showcase since its loop starts from 1
+            const adjustedIndicator = carouselIndicator.replace('data-bs-slide-to="0"', 'data-bs-slide-to="1"');
+            carouselIndicators.insertAdjacentHTML('beforeend', adjustedIndicator);
+        }
+
+        // Creates a new row/carousel-item wrapper when needed.
+        const isFirstItemInLoop = postID === 1;
+        const startNewRow = isFirstItemInLoop || (config.isCarousel && (postID -1) % (config.actualColumnCount * config.blockRows) === 0);
+
+        if (startNewRow) {
+            blockBody += `<div class="row g-${config.gutterSize} mx-0`;
+            if (config.isCarousel) { blockBody += ' carousel-item' + (postID === 1 ? ' active' : ''); }
+            if (config.blockType !== BLOCK_COVER) {
+                blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
+            }
+            blockBody += ` ${RESPONSIVE_GRID_CLASSES[config.columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
+        }
+
+        blockBody += postHTML;
+
+        // Close the row/carousel-item div at the end of a slide or at the last post.
+        const isLastItemInSlide = config.isCarousel && ((postID-1) % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
+        const isLastPostOverall = postID === (postsInFeed - 1);
+        if (isLastPostOverall || isLastItemInSlide) {
+            blockBody += `</div>`; // close .row
+        }
+    }
+    return blockBody;
+}
+
+/**
  * Builds the HTML for all posts in the feed.
  * @param {object} response The full response from the data feed.
  * @param {object} config The block's configuration object.
@@ -1084,13 +1133,12 @@ function _buildBlockBody(response, config) {
     // Handle the main showcase item separately, outside the loop.
     if (config.blockType === BLOCK_SHOWCASE && config.firstInstance && postsInFeed > 0) {
         const { showcaseHTML: singleShowcaseHTML } = _createPostHtml(response.posts[0], 0, config);
-        showcaseHTML = singleShowcaseHTML;
+        showcaseHTML = singleShowcaseHTML; // The main feature image
+        blockBody = _buildShowcaseGridBody(response, config, carouselIndicators); // The grid of smaller items
+        return { blockBody, carouselIndicators, showcaseHTML };
     }
 
     for (let postID = 0; postID < postsInFeed; postID++) {
-        // For showcase, the first post is already handled, so we skip it in the main loop.
-        if (config.blockType === BLOCK_SHOWCASE && postID === 0) continue;
-
         const post = response.posts[postID];
         let currentColumnCount = config.columnCount;
 
@@ -1102,13 +1150,11 @@ function _buildBlockBody(response, config) {
         const { postHTML, showcaseHTML: singleShowcaseHTML, carouselIndicator } = _createPostHtml(post, postID, config);
 
         if (carouselIndicator && config.isCarousel) {
-            // Adjust slide index for showcase since its loop starts from 1
-            const adjustedIndicator = config.blockType === BLOCK_SHOWCASE ? carouselIndicator.replace('data-bs-slide-to="0"', 'data-bs-slide-to="1"') : carouselIndicator;
-            carouselIndicators.insertAdjacentHTML('beforeend', adjustedIndicator);
+            carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
         }
 
         // Creates a new row/carousel-item wrapper when needed.
-        const isFirstItemInLoop = (config.blockType === BLOCK_SHOWCASE) ? postID === 1 : postID === 0;
+        const isFirstItemInLoop = postID === 0;
         const startNewRow = isFirstItemInLoop || (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || (config.blockType === BLOCK_LIST && postID === 1);
 
         if (startNewRow) {
@@ -1179,12 +1225,20 @@ class WordPressProvider {
      */
     async fetch() {
         const url = this._buildFeedUrl();
+        const cached = feedCache.get(url);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+            return cached.data;
+        }
+
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`WordPress API request failed: ${response.statusText}`);
         }
         const rawData = await response.json();
-        return _mapWordPressResponseToStandardFormat(rawData, response.headers);
+        const formattedData = _mapWordPressResponseToStandardFormat(rawData, response.headers);
+
+        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+        return formattedData;
     }
 }
 
@@ -1213,6 +1267,11 @@ class RssProvider {
      */
     async fetch() {
         const url = this._buildFeedUrl();
+        const cached = feedCache.get(url);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+            return cached.data;
+        }
+
         const response = await fetch(url);
 
         if (!response.ok) {
@@ -1227,7 +1286,10 @@ class RssProvider {
         if (xmlDoc.getElementsByTagName("parsererror").length) {
             throw new Error("Failed to parse RSS feed.");
         }
-        return _mapRssResponseToStandardFormat(xmlDoc);
+        const formattedData = _mapRssResponseToStandardFormat(xmlDoc);
+
+        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+        return formattedData;
     }
 }
 
@@ -1269,8 +1331,15 @@ class BloggerProvider {
      */
     async fetch() {
         const url = this._buildFeedUrl();
+        const cached = feedCache.get(url);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+            return cached.data;
+        }
+
         const rawData = await fetchJSONP(url);
-        return _mapBloggerResponseToStandardFormat(rawData);
+        const formattedData = _mapBloggerResponseToStandardFormat(rawData);
+        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+        return formattedData;
     }
 }
 
@@ -1400,6 +1469,24 @@ const mBlocks = async function(blockItem) {
         }
     } // end for...of loop
 }
+
+/**
+ * Destroys an mBlox instance, removing all generated HTML and event listeners.
+ * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
+ */
+mBlocks.destroy = function(blockItem) {
+    const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
+
+    for (const rawElement of elements) {
+        // 1. Remove all generated content.
+        // This is the most effective way to also remove all event listeners attached to child elements.
+        rawElement.innerHTML = '';
+
+        // 2. Remove attributes added by the script to the root element to restore its original state.
+        rawElement.removeAttribute('data-s');
+    }
+};
+
     window.mBlocks = mBlocks;
 })(); // End of IIFE
 } // End of the guard clause `if (typeof window.mBloxInitialized === 'undefined')`
