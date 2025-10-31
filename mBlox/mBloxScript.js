@@ -6,6 +6,11 @@
  * Released under the MIT license
  */
 
+// Guard clause to prevent re-initialization if the script is loaded multiple times.
+if (typeof window.mBloxInitialized === 'undefined') {
+    window.mBloxInitialized = true;
+
+
 /**
  * Fetches data from a URL using the JSONP technique.
  * This is a lightweight, native replacement for jQuery's $.ajax with dataType: 'jsonp'.
@@ -47,26 +52,26 @@ function fetchJSONP(url, options) {
 }
 
 const // Constants for block types, improving readability over single-character strings.
-    BLOCK_TYPE_COVER = 'v',
-    BLOCK_TYPE_SHOWCASE = 's',
-    BLOCK_TYPE_LIST = 'l',
-    BLOCK_TYPE_CARD = 'c',
-    BLOCK_TYPE_GALLERY = 'g',
-    BLOCK_TYPE_PANCAKE = 'p',
-    BLOCK_TYPE_STACK = 't',
+    BLOCK_COVER = 'v',
+    BLOCK_SHOWCASE = 's',
+    BLOCK_LIST = 'l',
+    BLOCK_CARD = 'c',
+    BLOCK_GALLERY = 'g',
+    BLOCK_PANCAKE = 'p',
+    BLOCK_STACK = 't',
     BLOCK_TYPE_QUOTE = 'q',
     BLOCK_TYPE_COMMENT = 'm';
 
 const DEFAULT_COLUMN_COUNTS = {
-    [BLOCK_TYPE_COVER]: 1,
+    [BLOCK_COVER]: 1,
     [BLOCK_TYPE_COMMENT]: 1,
-    [BLOCK_TYPE_STACK]: 1,
-    [BLOCK_TYPE_PANCAKE]: 3,
-    [BLOCK_TYPE_CARD]: 4,
+    [BLOCK_STACK]: 1,
+    [BLOCK_PANCAKE]: 3,
+    [BLOCK_CARD]: 4,
     [BLOCK_TYPE_QUOTE]: 4,
-    [BLOCK_TYPE_GALLERY]: 5,
-    [BLOCK_TYPE_LIST]: 2,
-    [BLOCK_TYPE_SHOWCASE]: 6
+    [BLOCK_GALLERY]: 5,
+    [BLOCK_LIST]: 2,
+    [BLOCK_SHOWCASE]: 6
 };
 
 const RESPONSIVE_GRID_CLASSES = {
@@ -204,7 +209,7 @@ function _createPostHtml(post, postID, config) {
                 if (postID === 0) {
                     showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
                 }
-                imageBSClass += config.aspectRatio + ' shadow-sm';
+                imageBSClass += `${config.aspectRatio} shadow-sm`;
                 break;
             case config.BLOCK_TYPE_PANCAKE:
                 imageBSClass = config.aspectRatio;
@@ -343,7 +348,7 @@ function _createPostHtml(post, postID, config) {
         linkWrapperEnd = `</a>`;
     }
 
-    const articleClasses = `col d-inline-flex${finalType === config.BLOCK_TYPE_SHOWCASE ? ` sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"` : ''}`;
+    const articleClasses = `col${finalType === config.BLOCK_TYPE_SHOWCASE ? ' d-inline-flex sPost" data-title="' + postTitle + '" data-link="' + postURL + '" data-summary="' + snippetText + '" data-vidid="' + videoID + '" data-img="' + videoThumbnailURL + '" data-img-high="' + highResImageURL + '" data-toggle="tooltip"' : ' d-inline-flex'}`;
     const articleStyle = finalType === config.BLOCK_TYPE_COVER ? ` style="${config.articleHeight}"` : '';
 
     postHTML = `<article class="${articleClasses}"${articleStyle} role="article">
@@ -659,8 +664,8 @@ function mBlocks(blockItem) {
         // Determine the height of the section, with specific defaults for cover and showcase types.
         let sectionHeight = rawElement.getAttribute("data-iHeight");
         if (!sectionHeight) {
-            if (blockType === BLOCK_TYPE_COVER) sectionHeight = "100vh";
-            else if (blockType === BLOCK_TYPE_SHOWCASE) sectionHeight = "70vh";
+            if (blockType === BLOCK_COVER) sectionHeight = "100vh";
+            else if (blockType === BLOCK_SHOWCASE) sectionHeight = "70vh";
             else sectionHeight = "m";
         }
 
@@ -681,7 +686,7 @@ function mBlocks(blockItem) {
             blurImage = false;
         } else {
             // Default behavior: Blur image if header is present, except for specific block types
-            const excludedBlurTypes = [BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_STACK, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_QUOTE];
+            const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_TYPE_QUOTE];
             blurImage = showHeader && !excludedBlurTypes.includes(blockType);
         }
         // --- Layout and Feed Configuration ---
@@ -729,20 +734,20 @@ function mBlocks(blockItem) {
                         else textVerticalAlign = 'overlay';
                     }
                     const
-                        aspectRatio = ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,// Aspect ratio for media [1x1, 4x3, 16x9, etc.]
+                        aspectRatio = ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`, // Aspect ratio for media [1x1, 4x3, 16x9, etc.]
                         gutterSize = rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3), // Bootstrap gutter size
                         isImageFixed = (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true", // Use fixed background images
                         lowContrast = (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true", // Lower contrast for text/elements
                         hasRoundedBorder = (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true", // Add a border around items
                         callToAction = rawElement.getAttribute("data-CTAText") || "", // Call-to-action button text
-                        isComplexLayout = (blockType == BLOCK_TYPE_LIST || blockType == BLOCK_TYPE_SHOWCASE), // Flag for layouts with special structures
+                        isComplexLayout = (blockType == BLOCK_LIST || blockType == BLOCK_SHOWCASE), // Flag for layouts with special structures
                         totalStages = Math.ceil(totalPostsAvailable / postsPerBlock);// Total pages/stages available for navigation
                     let blockBody = '',//block body
                     moreText = rawElement.getAttribute("data-moreText") || "", // Text for the "View All" link in the footer.
                     finalType = blockType;
 
                     // Disable carousel for single-post blocks or list-style blocks
-                    (postsPerBlock <= 1 || blockType == BLOCK_TYPE_LIST) && (isCarousel = false);
+                    (postsPerBlock <= 1 || blockType == BLOCK_LIST) && (isCarousel = false);
                     (contentType == "comments") && (moreText="");
 
                     // Create the date formatter once, outside the loop, for efficiency.
@@ -757,7 +762,7 @@ function mBlocks(blockItem) {
                     const blockConfig = {
                         siteURL, dataTitle, dataDescription, contentType, blockType, dataTheme, inverseTheme, showHeader, showImage, showSnippet, showAuthor, showDate, dateFormatter, lowContrast, snippetSize, cornerStyle, isImageFixed, blurImage, articleHeight, aspectRatio, hasRoundedBorder, callToAction, moreText, stageID,
                         // Pass block-type constants
-                        BLOCK_TYPE_COVER, BLOCK_TYPE_SHOWCASE, BLOCK_TYPE_LIST, BLOCK_TYPE_CARD, BLOCK_TYPE_GALLERY, BLOCK_TYPE_PANCAKE, BLOCK_TYPE_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
+                        BLOCK_TYPE_COVER: BLOCK_COVER, BLOCK_TYPE_SHOWCASE: BLOCK_SHOWCASE, BLOCK_TYPE_LIST: BLOCK_LIST, BLOCK_TYPE_CARD: BLOCK_CARD, BLOCK_TYPE_GALLERY: BLOCK_GALLERY, BLOCK_TYPE_PANCAKE: BLOCK_PANCAKE, BLOCK_TYPE_STACK: BLOCK_STACK, BLOCK_TYPE_QUOTE, BLOCK_TYPE_COMMENT,
                         // Pass other dynamic variables needed inside the helper
                         isCarousel, columnCount, actualColumnCount: 0, blockRows, mBlockID, firstInstance, textVerticalAlign, gutterSize, containsNavigation: false, articleHeight
                     };
@@ -801,7 +806,7 @@ function mBlocks(blockItem) {
                     if (isCarousel) {
                         carouselIndicators = document.createElement("div");
                         carouselIndicators.classList.add('carousel-indicators');
-                        if (blockType != BLOCK_TYPE_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
+                        if (blockType != BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
                     }(isCarousel || containsNavigation) && (blockBody += `<div class="carousel-inner">`);
 
                     // --- Main Content Wrapper ---
@@ -809,7 +814,7 @@ function mBlocks(blockItem) {
                     contentWrapper = document.createElement('div');
                     contentWrapper.id = 'm' + mBlockID;
                     rawElement.appendChild(contentWrapper);
-                    contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_TYPE_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
+                    contentWrapper.className = `overflow-hidden bg-${dataTheme}${blockType == BLOCK_SHOWCASE ? ' sFeature' : ""}${((isCarousel || containsNavigation) ? ` st${stageID} carousel carousel-fade` : "")}`;
                     contentWrapper.setAttribute("data-bs-ride", "carousel");
 
                     // =========================== POST PROCESSING LOOP ===========================
@@ -827,11 +832,11 @@ function mBlocks(blockItem) {
 
                         // --- Item Wrapper ---
                         // Creates a new row/carousel-item wrapper when needed.
-                        if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_TYPE_LIST && postID == 1)) {
+                        if (postID == 0 || (isCarousel && postID % (actualColumnCount * blockRows) == 0) || (blockType == BLOCK_LIST && postID == 1)) {
                             blockBody += `<div class="row  g-${gutterSize} mx-0`;
                             if (isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); } // Add active class to first item
-                            isComplexLayout && (blockType == BLOCK_TYPE_LIST) && (blockBody += ' col flex-grow-1');
-                            (finalType != BLOCK_TYPE_COVER) && (!(isComplexLayout && (finalType == BLOCK_TYPE_STACK || finalType == BLOCK_TYPE_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
+                            isComplexLayout && (blockType == BLOCK_LIST) && (blockBody += ' col flex-grow-1');
+                            (finalType != BLOCK_COVER) && (!(isComplexLayout && (finalType == BLOCK_STACK || finalType == BLOCK_CARD)) && (blockBody += ` pb-${gutterSize}`), (isCarousel || containsNavigation) && (blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5'));
                             blockBody += ` ${RESPONSIVE_GRID_CLASSES[columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
                         }
 
@@ -876,8 +881,10 @@ function mBlocks(blockItem) {
                 const tempConfig = {
                     articleHeight: (rawElement.getAttribute("data-iHeight") === 'm' ? '' : `height:${rawElement.getAttribute("data-iHeight")}!important;`)
                 };
-                if (blockType === BLOCK_TYPE_SHOWCASE) _bindShowcaseEvents(rawElement, tempConfig);
+                if (blockType === BLOCK_SHOWCASE) _bindShowcaseEvents(rawElement, tempConfig);
             }//complete
         })//ajax
     });//forEach
 }
+
+} // End of the guard clause `if (typeof window.mBloxInitialized === 'undefined')`
