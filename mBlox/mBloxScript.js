@@ -502,7 +502,10 @@ function _renderImage(finalType, postID, config, data) {
     if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
 
     const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-    const imageCode = config.isImageFixed
+    // For showcase, only the main feature image can be fixed. Thumbnails should never be fixed.
+    const canBeFixed = finalType === BLOCK_SHOWCASE ? postID === 0 && config.isImageFixed : config.isImageFixed;
+
+    const imageCode = canBeFixed
         ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
         : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
 
@@ -762,7 +765,8 @@ function _bindShowcaseEvents(rawElement, config) {
             title: el.getAttribute('data-title'),
             summary: el.getAttribute('data-summary'),
             link: el.getAttribute('data-link'),
-            imgHigh: el.getAttribute('data-img-high')
+            imgHigh: el.getAttribute('data-img-high'),
+            img: el.getAttribute('data-img') // Get the standard-res image for the background
         };
     });
 
@@ -805,7 +809,7 @@ function _bindShowcaseEvents(rawElement, config) {
                 figureNode.title = data.title;
             }
             figureNode.setAttribute('data-vidid', data.vidid);
-            figureNode.style.backgroundImage = `url(${data.imgHigh})`;
+            figureNode.style.backgroundImage = `url(${data.img})`; // Use the standard-res image from data-img
             figureNode.style.backgroundSize = 'cover';
         }
 
@@ -938,13 +942,17 @@ function _applyDefaultConfig(config) {
     }
     config.articleHeight = config.sectionHeight === 'm' ? '' : `height:${config.sectionHeight}!important;`;
 
+    if (config.isImageFixed === null) { // If data-iFix was not explicitly set
+        // Default behavior: Showcase and Cover types have fixed images by default.
+        config.isImageFixed = (config.blockType === BLOCK_SHOWCASE || config.blockType === BLOCK_COVER);
+    }
+
     // Determine if the image should be blurred.
     if (config.blurImage === null) {
         // Default behavior: Blur image if header is present, except for specific block types
         const excludedBlurTypes = [BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_STACK, BLOCK_PANCAKE, BLOCK_QUOTE];
         config.blurImage = config.showHeader && !excludedBlurTypes.includes(config.blockType);
     }
-
     // Determine the vertical alignment of text.
     if (!config.textVerticalAlign) {
         if (config.blockType === 'v') config.textVerticalAlign = "middle";
@@ -995,6 +1003,7 @@ function _parseBlockConfig(rawElement) {
     }
 
     const dataBlur = (rawElement.getAttribute("data-iBlur") || "").toLowerCase();
+    const dataIFix = (rawElement.getAttribute("data-iFix") || "").toLowerCase();
     const widget = rawElement.closest(".widget");
     const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
 
@@ -1022,7 +1031,8 @@ function _parseBlockConfig(rawElement) {
         cornerStyle: ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
         aspectRatio: ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,
         gutterSize: rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3),
-        isImageFixed: (rawElement.getAttribute("data-iFix") || "").toLowerCase() == "true",
+        // Parse data-iFix into true, false, or null if not set. The default is applied in _applyDefaultConfig.
+        isImageFixed: dataIFix === "true" ? true : (dataIFix === "false" ? false : null),
         lowContrast: (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true",
         hasRoundedBorder: (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true",
         // Content & Text
@@ -1043,6 +1053,30 @@ function _parseBlockConfig(rawElement) {
     return _applyDefaultConfig(config);
 }
 
+const RESPONSIVE_COLUMN_MAP = {
+    // baseCols: [xs, sm, md, lg, xl]
+    1: [1, 1, 1, 1, 1],
+    2: [1, 1, 2, 2, 2],
+    3: [1, 1, 2, 3, 3],
+    4: [1, 2, 3, 4, 4],
+    5: [2, 3, 4, 4, 5],
+    6: [3, 4, 4, 5, 6]
+};
+
+const BREAKPOINTS = {
+    sm: 576,
+    md: 768,
+    lg: 992,
+    xl: 1200
+};
+
+function _getBreakpointIndex(width) {
+    if (width < BREAKPOINTS.sm) return 0; // xs
+    if (width < BREAKPOINTS.md) return 1; // sm
+    if (width < BREAKPOINTS.lg) return 2; // md
+    if (width < BREAKPOINTS.xl) return 3; // lg
+    return 4; // xl
+}
 /**
  * Calculates responsive columns and determines carousel/navigation behavior.
  * @param {object} config The block's configuration object.
@@ -1062,13 +1096,11 @@ function _calculateLayout(config, postsInFeed) {
 
     // Adjusts the number of visible columns in a carousel based on screen width for responsiveness.
     if (newConfig.isCarousel) {
-        const windowInnerWidth = window.innerWidth;
-        if (windowInnerWidth < 576) { newConfig.actualColumnCount = newConfig.columnCount < 5 ? 1 : (newConfig.columnCount === 5 ? 2 : 3); }
-        else if (windowInnerWidth < 768) { newConfig.actualColumnCount = newConfig.columnCount < 4 ? 1 : (newConfig.columnCount === 4 ? 2 : (newConfig.columnCount === 5 ? 3 : 4)); }
-        else if (windowInnerWidth < 992) { newConfig.actualColumnCount = newConfig.columnCount === 3 ? 2 : (newConfig.columnCount === 4 ? 3 : 4); }
-        else if (windowInnerWidth < 1200) { newConfig.actualColumnCount = newConfig.columnCount > 4 ? (newConfig.columnCount === 5 ? 4 : 5) : newConfig.columnCount; }
-        else { newConfig.actualColumnCount = newConfig.columnCount; }
-
+        const baseCols = Math.max(1, Math.min(6, newConfig.columnCount)); // Clamp between 1 and 6
+        const breakpointIndex = _getBreakpointIndex(window.innerWidth);
+        const columnMap = RESPONSIVE_COLUMN_MAP[baseCols] || RESPONSIVE_COLUMN_MAP[6];
+        newConfig.actualColumnCount = columnMap[breakpointIndex];
+        
         // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
         if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.actualColumnCount)) newConfig.blockRows = Math.ceil(postsInFeed / newConfig.actualColumnCount);
         if (postsInFeed <= (newConfig.actualColumnCount * newConfig.blockRows)) {
