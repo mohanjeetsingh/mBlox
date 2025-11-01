@@ -198,16 +198,28 @@ function _mapBloggerResponseToStandardFormat(bloggerResponse) {
         return { posts: [], totalResults: 0, feedUrl: '' };
     }
 
-    const standardPosts = bloggerResponse.feed.entry.map(post => ({
-        title: post.title.$t,
-        content: ("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : ""),
-        authorName: post.author[0].name.$t,
-        authorUri: (post.author[0].name.$t === "Anonymous" || post.author[0].name.$t === "Unknown") ? '' : post.author[0].uri.$t,
-        authorImage: post.author[0].gd$image ? post.author[0].gd$image.src : '',
-        publishedDate: post.published.$t,
-        url: (post.link.find(l => l.rel === 'alternate') || {}).href || '',
-        thumbnailUrl: post.media$thumbnail ? post.media$thumbnail.url : ''
-    }));
+    const standardPosts = bloggerResponse.feed.entry.map(post => {
+        const content = ("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : "");
+        let thumbnailUrl = post.media$thumbnail ? post.media$thumbnail.url : '';
+
+        // If no media$thumbnail, try to find the first image in the content as a fallback.
+        if (!thumbnailUrl && content) {
+            const contentParser = new DOMParser().parseFromString(content, 'text/html');
+            const firstImage = contentParser.querySelector("img");
+            if (firstImage) thumbnailUrl = firstImage.src;
+        }
+
+        return {
+            title: post.title.$t,
+            content: content,
+            authorName: post.author[0].name.$t,
+            authorUri: (post.author[0].name.$t === "Anonymous" || post.author[0].name.$t === "Unknown") ? '' : post.author[0].uri.$t,
+            authorImage: post.author[0].gd$image ? post.author[0].gd$image.src : '',
+            publishedDate: post.published.$t,
+            url: (post.link.find(l => l.rel === 'alternate') || {}).href || '',
+            thumbnailUrl: thumbnailUrl
+        };
+    });
 
     const alternateLink = (bloggerResponse.feed.link.find(l => l.rel === 'alternate') || {}).href || '';
 
@@ -362,18 +374,20 @@ function _renderShowcasePost(postID, config, parts) {
  */
 function _renderAuthor(finalType, config, authorName, authorUri) {
     if (!config.showAuthor) return '';
-
     let authorCode = '';
-    if (config.contentType !== "comments") {
-        const authorURL = (authorName === "Anonymous" || authorName === "Unknown") ? config.siteURL : authorUri;
-    }
-
+    const authorURL = (authorName === "Anonymous" || authorName === "Unknown" || !authorUri) ? '' : authorUri;
+    const authorNameHTML = `<span class="small fw-lighter" rel="author">${authorName}</span>`;
+    const authorLinkHTML = `<a href="${authorURL}" class="small fw-lighter" rel="author">${authorName}</a>`;
+    
     switch (finalType) {
         case BLOCK_QUOTE:
             authorCode = `<figcaption class="small fw-lighter">- ${authorName}</figcaption>`;
             break;
         case BLOCK_COMMENT:
             authorCode = `<span class="small text-${config.dataTheme}" rel="author">${authorName}</span>`;
+            break;
+        default:
+            authorCode = authorURL ? authorLinkHTML : authorNameHTML;
             break;
     }
     return authorCode;
@@ -785,8 +799,10 @@ function _bindShowcaseEvents(rawElement, config) {
                 } else if (playIcon.style.display === 'none') {
                     fadeIn(playIcon);
                 }
+                figureNode.title = "Click here to load the video!";
             } else if (playIcon) {
                 fadeOut(playIcon);
+                figureNode.title = data.title;
             }
             figureNode.setAttribute('data-vidid', data.vidid);
             figureNode.style.backgroundImage = `url(${data.imgHigh})`;
@@ -829,7 +845,6 @@ function _bindPaginationEvents(rawElement) {
             rawElement.setAttribute("data-s", +currentStage - 1);
             fadeOut(rawElement.querySelector(".st" + currentStage));
             fadeIn(rawElement.querySelector(".st" + (+currentStage - 1)));
-            prevButton.removeEventListener('click', prevNav); // Unbind to prevent multiple clicks
         };
         prevButton.addEventListener('click', prevNav);
     }
@@ -847,7 +862,6 @@ function _bindPaginationEvents(rawElement) {
                 // If the next stage doesn't exist in the DOM, fetch it.
                 mBlocks(rawElement);
             }
-            nextButton.removeEventListener('click', nextNav); // Unbind
         };
         nextButton.addEventListener('click', nextNav);
     }
@@ -1079,13 +1093,6 @@ function _buildShowcaseGridBody(response, config, carouselIndicators) {
     for (let postID = 1; postID < postsInFeed; postID++) {
         const post = response.posts[postID];
         const { postHTML, carouselIndicator } = _createPostHtml(post, postID, config);
-
-        if (carouselIndicator && config.isCarousel) {
-            // Adjust slide index for showcase since its loop starts from 1
-            const adjustedIndicator = carouselIndicator.replace('data-bs-slide-to="0"', 'data-bs-slide-to="1"');
-            carouselIndicators.insertAdjacentHTML('beforeend', adjustedIndicator);
-        }
-
         // Creates a new row/carousel-item wrapper when needed.
         const isFirstItemInLoop = postID === 1;
         const startNewRow = isFirstItemInLoop || (config.isCarousel && (postID -1) % (config.actualColumnCount * config.blockRows) === 0);
@@ -1099,6 +1106,13 @@ function _buildShowcaseGridBody(response, config, carouselIndicators) {
             blockBody += ` ${RESPONSIVE_GRID_CLASSES[config.columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
         }
 
+        // For showcase carousels, we only add an indicator if a new carousel item is being created.
+        // The slide index needs to be calculated based on the item's position within the showcase grid.
+        if (startNewRow && config.isCarousel && carouselIndicators) {
+            const slideIndex = Math.floor((postID - 1) / (config.actualColumnCount * config.blockRows));
+            const indicatorHTML = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${slideIndex === 0 ? ' active' : ''}" ${slideIndex === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${slideIndex + 1}"></button>`;
+            carouselIndicators.insertAdjacentHTML('beforeend', indicatorHTML);
+        }
         blockBody += postHTML;
 
         // Close the row/carousel-item div at the end of a slide or at the last post.

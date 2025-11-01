@@ -116,3 +116,45 @@ The `data-type` attribute is a powerful way to control the appearance of each po
 *   `s`: Show **S**nippet
 *   `a`: Show **A**uthor
 *   `d`: Show **D**ate
+
+## 4. Content Fetching
+
+The library must support fetching and parsing data from multiple sources.
+
+### 4.1. Blogger
+
+*   **Method**: Use the public JSON-in-script feeds.
+*   **Endpoints**:
+    *   Recent Posts: `/feeds/posts/default?alt=json-in-script&max-results={n}`
+    *   Posts by Label: `/feeds/posts/default/-/{label}?alt=json-in-script&max-results={n}`
+    *   Recent Comments: `/feeds/comments/default?alt=json-in-script&max-results={n}`
+*   **Parsing**: The response is a JSON object passed to a callback function. The script should dynamically create a `<script>` tag and define a global callback to handle the data.
+
+### 4.2. WordPress
+
+*   **Method**: Use the public REST API.
+*   **Endpoints**:
+    *   Recent Posts: `/wp-json/wp/v2/posts?per_page={n}`
+    *   Posts by Category: Requires finding category ID first, then `/wp-json/wp/v2/posts?categories={id}&per_page={n}`
+*   **Parsing**: Standard JSON response from a `fetch` call.
+
+### 4.3. RSS/Atom
+
+*   **Method**: Fetch the public XML feed.
+*   **Endpoints**: Any valid RSS/Atom feed URL (e.g., YouTube, Pinterest, Substack).
+*   **Parsing**: Requires using `DOMParser` to parse the XML string into a DOM object, then traversing it to extract item data (title, link, description, etc.).
+
+## 5. Rendering Logic
+
+The rendering process should follow these steps:
+
+1.  **Fetch Data**: Based on `data-feed` and `data-contenttype`, call the appropriate data fetcher.
+2.  **Parse Data**: Normalize the data from the source (Blogger, WP, RSS) into a consistent internal format (e.g., an array of post objects with `title`, `url`, `image`, `snippet`, `author`, `date` properties).
+3.  **Generate Header**: If `data-title` is present, create the block's header section.
+4.  **Iterate and Render Items**: Loop through the normalized post objects. For each post:
+    *   Create the main wrapper for the item (e.g., `<div class="col">...</div>`).
+    *   Apply styles based on `data-type`, `data-ar`, `data-corner`, etc.
+    *   Conditionally build the inner HTML of the item based on the modifiers in `data-type` (`i`, `h`, `s`, `a`, `d`).
+5.  **Wrap in Carousel**: If `data-isCarousel="true"`, wrap the rendered items in the necessary Bootstrap 5 carousel markup.
+6.  **Inject into DOM**: Append the generated HTML into the placeholder element.
+7.  **Initialize Carousel**: If a carousel was created, initialize the Bootstrap carousel component on the new element.
