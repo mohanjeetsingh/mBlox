@@ -125,7 +125,7 @@ function _mapWordPressResponseToStandardFormat(wpResponse, headers) {
  * @param {XMLDocument} xmlDoc The parsed XML document.
  * @returns {{posts: Array<object>, totalResults: number, feedUrl: string}} A standardized data object.
  */
-function _mapRssResponseToStandardFormat(xmlDoc) {
+function _mapRssResponseToStandardFormat(xmlDoc) { // Note: `isYouTubeFeed` is added here
     // Find all items, supporting both <item> (RSS) and <entry> (Atom) tags.
     const items = xmlDoc.querySelectorAll('item, entry');
     if (!items.length) {
@@ -133,7 +133,7 @@ function _mapRssResponseToStandardFormat(xmlDoc) {
     }
 
     // Check if this is a YouTube feed by looking for a specific tag.
-    const isYouTube = xmlDoc.querySelector('yt\\:channelId') !== null;
+    const isYouTube = xmlDoc.querySelector('yt\\:channelId') !== null; // This is now only used for YouTube-specific parsing
 
     const standardPosts = Array.from(items).map(item => {
         const getTagContent = (tagName) => {
@@ -230,6 +230,35 @@ function _mapBloggerResponseToStandardFormat(bloggerResponse) {
     };
 }
 
+/**
+ * Extracts a YouTube video ID from a post object using a priority-based approach.
+ * 1. Uses the `videoId` property if it already exists (e.g., from a YouTube RSS feed).
+ * 2. Parses the `thumbnailUrl` if it's a YouTube thumbnail URL.
+ * 3. Parses the `content` for a YouTube embed URL as a last resort.
+ * @param {object} post The standardized post object.
+ * @returns {string} The YouTube video ID, or "noVideo" if not found.
+ */
+function _getYouTubeVideoId(post) {
+    // Use a consistent, prioritized check for all feed types.
+    if (post.videoId) { // 1. Check for direct videoId property (e.g., from YouTube RSS)
+        return post.videoId;
+    }
+    // 2. Fallback to parsing the thumbnail URL
+    if (post.thumbnailUrl && (post.thumbnailUrl.includes("ytimg.com/vi/") || post.thumbnailUrl.includes("youtube.com/vi/"))) {
+        const idStartIndex = post.thumbnailUrl.indexOf("/vi/") + 4;
+        const nextSlashIndex = post.thumbnailUrl.indexOf('/', idStartIndex);
+        // Extract the substring between "/vi/" and the next "/", which is the video ID.
+        if (nextSlashIndex !== -1) {
+            return post.thumbnailUrl.substring(idStartIndex, nextSlashIndex);
+        }
+    }
+    // 3. Last resort: parse the content for an embed URL
+    if (post.content && post.content.includes('youtube.com/embed/')) {
+        const match = post.content.match(/youtube\.com\/embed\/([^?"]+)/);
+        return (match && match[1]) ? match[1] : "noVideo";
+    }
+    return "noVideo";
+}
 
 /**
  * Creates the HTML for a single post item.
@@ -240,14 +269,44 @@ function _mapBloggerResponseToStandardFormat(bloggerResponse) {
  * @returns {{postHTML: string, showcaseHTML: string, carouselIndicator: string}} An object containing the HTML for the post and other related components.
  */
 function _createPostHtml(post, postID, config) {
-    let postHTML = '';
-    let showcaseHTML = '';
+    // Special, simplified rendering path for Showcase thumbnails.
+    if (config.blockType === BLOCK_SHOWCASE && postID > 0) {
+        const videoID = _getYouTubeVideoId(post);
+        let thumbnailUrl = post.thumbnailUrl || '';
+        let highResUrl = thumbnailUrl; // Start with the base thumbnail
+
+        // Upgrade URL to the highest available resolution
+        if (videoID !== 'noVideo' && highResUrl) {
+            highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); // Assumes a youtube-like URL structure
+        } else {
+            highResUrl = (highResUrl.includes('/s72-c') ? highResUrl.replace('/s72-c', '/s1600') : highResUrl);
+        }
+
+        const parts = {
+            postTitle: post.title,
+            postURL: post.url,
+            snippetText: (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...",
+            videoID: videoID,
+            videoThumbnailURL: thumbnailUrl,
+            highResImageURL: highResUrl
+        };
+
+        // Showcase thumbnails are just an image inside a data-rich article tag.
+        const imageClasses = `w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm m-blox-image-to-load`;
+        const imageTag = `<img class="${imageClasses}" style="object-fit:cover;height:100%!important;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${parts.highResImageURL}" alt="${parts.postTitle} image" loading="lazy" title="${parts.postTitle}" />`;
+        const articleClasses = _getArticleClasses(BLOCK_SHOWCASE, parts);
+        const postHTML = `<article class="${articleClasses}" role="article">${imageTag}</article>`;
+
+        return { postHTML, showcaseHTML: '', carouselIndicator: '' };
+    }
+
+    // --- Standard Rendering Path for all other block types ---
     let finalType = config.blockType; // Use a local variable for the type to avoid modifying the config object.
     if (config.blockType === BLOCK_LIST && postID > 0) {
         finalType = config.showHeader ? BLOCK_STACK : BLOCK_CARD;
     }
 
-    const videoID = post.videoId || (post.thumbnailUrl && post.thumbnailUrl.includes("img.youtube.com") ? post.thumbnailUrl.substr(post.thumbnailUrl.indexOf("/vi/") + 4, 11) : "regular");
+    const videoID = _getYouTubeVideoId(post);
     const postTitle = post.title;
     const postSnippet = (config.showSnippet || config.showImage) && post.content;
 
@@ -268,7 +327,7 @@ function _createPostHtml(post, postID, config) {
         })
     };
 
-    ({ postHTML, showcaseHTML } = _renderPostByType(finalType, postID, config, parts));
+    const { postHTML, showcaseHTML } = _renderPostByType(finalType, postID, config, parts);
 
     // --- Carousel Indicators ---
     let carouselIndicator = '';
@@ -291,36 +350,26 @@ function _createPostHtml(post, postID, config) {
  * @returns {{postHTML: string, showcaseHTML: string}}
  */
 function _renderPostByType(finalType, postID, config, parts) {
-    if (finalType === BLOCK_SHOWCASE) {
-        return _renderShowcasePost(postID, config, parts);
-    }
-    return { postHTML: _renderStandardPost(finalType, config, parts), showcaseHTML: '' };
-}
-
-/**
- * Renders the HTML for a standard post type (card, list, pancake, etc.).
- * @param {string} finalType The final block type.
- * @param {object} config The block configuration.
- * @param {object} parts An object containing all pre-rendered HTML component strings.
- * @returns {string} The complete HTML for the post article.
- */
-function _renderStandardPost(finalType, config, parts) {
-    const { postURL, postTitle, snippetText, videoID, videoThumbnailURL, highResImageURL, imageCode, ...contentParts } = parts;
-
+    const { postURL, postTitle, imageCode, ...contentParts } = parts;
     const textContentHTML = _renderPostContent(finalType, config, contentParts);
+
+    if (finalType === BLOCK_SHOWCASE) {
+        // Showcase has two distinct outputs: the main feature and the grid items.
+        if (postID === 0 && config.firstInstance) {
+            return { postHTML: '', showcaseHTML: _renderShowcaseFeature(config, parts) };
+        }
+        return { postHTML: _renderShowcaseGridPost(config, parts), showcaseHTML: '' };
+    }
+
+    // All other standard block types are assembled here.
     const linkClasses = _getLinkWrapperClasses(finalType, config);
     const linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
     const linkWrapperEnd = `</a>`;
-
-    const articleClasses = _getArticleClasses(finalType, { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL });
+    const articleClasses = _getArticleClasses(finalType, parts);
     const articleStyle = finalType === BLOCK_COVER ? ` style="${config.articleHeight}"` : '';
 
-    return `<article class="${articleClasses}"${articleStyle} role="article">
-        ${linkWrapperStart}
-        ${config.showImage ? imageCode : ''}
-        ${textContentHTML}
-        ${linkWrapperEnd}
-    </article>`;
+    const postHTML = `<article class="${articleClasses}"${articleStyle} role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
+    return { postHTML, showcaseHTML: '' };
 }
 
 /**
@@ -330,12 +379,10 @@ function _renderStandardPost(finalType, config, parts) {
  * @param {object} parts An object containing all pre-rendered HTML component strings.
  * @returns {string} The complete HTML for the post article.
  */
-function _renderShowcaseGridPost(finalType, config, parts) {
-    const { postURL, postTitle, snippetText, videoID, videoThumbnailURL, highResImageURL, imageCode } = parts;
-    const articleClasses = _getArticleClasses(finalType, { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL });
-    const articleStyle = ` style="${config.articleHeight}"`; // Showcase items can have height
-
-    return `<article class="${articleClasses}"${articleStyle} role="article">${config.showImage ? imageCode : ''}</article>`;
+function _renderShowcaseGridPost(config, parts) {
+    const { imageCode, postTitle } = parts;
+    const articleClasses = _getArticleClasses(BLOCK_SHOWCASE, parts);
+    return `<article class="${articleClasses}" role="article" title="${postTitle}">${config.showImage ? imageCode : ''}</article>`;
 }
 
 /**
@@ -345,23 +392,14 @@ function _renderShowcaseGridPost(finalType, config, parts) {
  * @param {object} parts An object containing all pre-rendered HTML component strings.
  * @returns {{postHTML: string, showcaseHTML: string}}
  */
-function _renderShowcasePost(postID, config, parts) {
-    // For showcase, the first post is the large feature item.
-    if (postID === 0 && config.firstInstance) {
-        const { postURL, postTitle, normalHeaderCode, snippetCode, ctaButtonCode, showcaseImageCode } = parts;
-        const showcaseContent = config.showHeader
-            ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
-            : '';
-        const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
+function _renderShowcaseFeature(config, parts) {
+    const { postURL, postTitle, normalHeaderCode, snippetCode, ctaButtonCode, showcaseImageCode } = parts;
+    const showcaseContent = config.showHeader
+        ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
+        : '';
+    const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
 
-        const showcaseHTML = `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
-        
-        // The main feature item doesn't have a separate `postHTML`.
-        return { postHTML: '', showcaseHTML };
-    }
-
-    // Subsequent posts are the smaller items in the grid.
-    return { postHTML: _renderShowcaseGridPost(BLOCK_SHOWCASE, config, parts), showcaseHTML: '' };
+    return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
 }
 
 /**
@@ -459,7 +497,13 @@ function _renderImage(finalType, postID, config, data) {
 
     if (!imageURL) {
         if (config.contentType == 'comments') {
-            imageURL = authorImage;
+            // For comments, use the author's avatar. If it's a default Blogger avatar (hosted on blogblog.com), fall back to the placeholder.
+            // This matches the original script's behavior.
+            if (authorImage && !authorImage.includes('blogblog.com')) {
+                imageURL = authorImage;
+            } else {
+                imageURL = noImg; // Use placeholder for default avatars
+            }
         } else {
             const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
             const firstImage = contentParser.querySelector("img");
@@ -468,12 +512,16 @@ function _renderImage(finalType, postID, config, data) {
     }
     if (!videoThumbnailURL) videoThumbnailURL = imageURL;
 
-    let highResImageURL = imageURL.includes('/s72-c') ? imageURL.replace('/s72-c', '/s1600') : imageURL;
-    highResImageURL = highResImageURL.includes('/w640-h424') ? highResImageURL.replace('/w640-h424', '/s1600') : highResImageURL;
+    let highResImageURL = imageURL;
+    // If it's a video, attempt to upgrade the thumbnail to max resolution.
+    if (videoID !== 'noVideo' && highResImageURL) {
+        highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); // Replaces hqdefault.jpg etc.
+    } else {
+        highResImageURL = highResImageURL.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
+    }
 
     let imageCoverStyle = "object-fit:cover;height:100%!important;",
         imageBSClass = ' w-100 img-fluid',
-        fixedImageStyle = ` background:url(${highResImageURL}) fixed center center;background-size:cover;`,
         tooltipAttributes = ``;
     let showcaseImageCode = '';
 
@@ -485,19 +533,19 @@ function _renderImage(finalType, postID, config, data) {
             }
             imageBSClass += `${config.aspectRatio} shadow-sm`;
             break;
-        case BLOCK_PANCAKE: imageBSClass = config.aspectRatio; break;
+        case BLOCK_PANCAKE: 
+            imageBSClass += ` ${config.aspectRatio.trim()}`; 
+            break;
         case BLOCK_COMMENT:
             imageCoverStyle += ' height:3rem!important;width:3rem;';
-            fixedImageStyle += ' height:3rem!important;width:3rem;';
             imageBSClass = ' rounded-circle m-2';
             break;
         case BLOCK_QUOTE:
             imageCoverStyle += ' height:6rem!important;width:6rem;';
-            fixedImageStyle += ' height:6rem!important;width:6rem;';
             imageBSClass = ' rounded-circle mx-auto mt-3';
             break;
         case BLOCK_STACK: imageBSClass = " col-4 h-100"; break;
-        case BLOCK_COVER: fixedImageStyle += config.articleHeight; break;
+        case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
     }
     if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
 
@@ -580,8 +628,8 @@ function _getLinkWrapperClasses(finalType, config) {
  * @returns {string} The complete class string for the article element.
  */
 function _getArticleClasses(finalType, postData) {
-    if (finalType === BLOCK_SHOWCASE) {
-        const { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL } = postData;
+    if (finalType === BLOCK_SHOWCASE && postData.videoID) { // Ensure it's for a showcase item
+        const { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL } = postData; // postData is the `parts` object
         return `col d-inline-flex sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"`;
     }
     return 'col d-inline-flex';
@@ -595,7 +643,7 @@ function _getArticleClasses(finalType, postData) {
  * @returns {string} The HTML string for the post's text content.
  */
 function _renderPostContent(finalType, config, contentParts) {
-    if (!config.showHeader || finalType === BLOCK_SHOWCASE || finalType === BLOCK_GALLERY) {
+    if (!config.showHeader || finalType === BLOCK_GALLERY) {
         return '';
     }
 
@@ -747,7 +795,7 @@ function fadeOut(el) {
  * @param {object} config The configuration object for the block.
  */
 function _bindShowcaseEvents(rawElement, config) {
-    const featuredImageNode = rawElement.querySelector('.feature-image');
+    const featuredImageNode = rawElement.closest('.mBlock, .mBlockL').querySelector('.feature-image');
     const contentWrapper = rawElement.querySelector('.sFeature'); // The wrapper for the smaller items
 
     if (!featuredImageNode || !contentWrapper) return;
@@ -773,14 +821,21 @@ function _bindShowcaseEvents(rawElement, config) {
     // Event listener for the main feature image (to play video)
     if (figureNode) {
         figureNode.addEventListener('click', function() {
-            const clickedVideoID = this.getAttribute('data-vidid');
-            if (clickedVideoID !== "regular") {
-                if (iFrameNode) iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${clickedVideoID}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
-                fadeIn(iFrameNode);
-                fadeOut(figureNode);
-                if (contentNode) fadeOut(contentNode);
+            const videoId = this.getAttribute('data-vidid');
+            // If it's a video, play it.
+            if (videoId && videoId !== "noVideo") {
+                if (iFrameNode) {
+                    iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
+                    fadeIn(iFrameNode);
+                    fadeOut(figureNode);
+                    if (contentNode) fadeOut(contentNode);
+                }
+            } else {
+                // Otherwise, navigate to the post's URL.
+                const link = featuredImageNode.querySelector('a');
+                if (link && link.href) window.location.href = link.href;
             }
-        }, { once: true }); // Use 'once' to prevent re-binding if the script runs again
+        });
     }
 
     // Use a single delegated event listener on the container.
@@ -797,7 +852,7 @@ function _bindShowcaseEvents(rawElement, config) {
         // --- Update the main feature image ---
         if (figureNode) {
             let playIcon = figureNode.querySelector('svg');
-            if (data.vidid && data.vidid !== 'regular') {
+            if (data.vidid && data.vidid !== 'noVideo') {
                 if (!playIcon) {
                     figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
                 } else if (playIcon.style.display === 'none') {
@@ -878,52 +933,48 @@ function _bindPaginationEvents(rawElement) {
  * @param {HTMLElement} rawElement The parent element containing image placeholders.
  */
 function _loadOptimalImages(rawElement) {
-    const imagePlaceholders = rawElement.querySelectorAll('.m-blox-image-to-load');
+    const imagePlaceholders = Array.from(rawElement.querySelectorAll('.m-blox-image-to-load'));
+    if (!imagePlaceholders.length) return;
 
-    imagePlaceholders.forEach(el => {
-        const isBg = el.hasAttribute('data-bg-src');
-        const isFixed = el.getAttribute('data-is-fixed') === 'true';
-        const highResUrl = isBg ? el.getAttribute('data-bg-src') : el.getAttribute('data-img-src');
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
 
-        if (!highResUrl || !highResUrl.includes('/s1600')) {
-            // Not a resizable Blogger image, just load it directly.
+            const el = entry.target;
+            const isBg = el.hasAttribute('data-bg-src');
+            const isFixed = el.getAttribute('data-is-fixed') === 'true';
+            const highResUrl = isBg ? el.getAttribute('data-bg-src') : el.getAttribute('data-img-src');
+            let finalUrl = highResUrl;
+
+            // A fixed image should ALWAYS use the highest resolution for a crisp parallax effect.
+            if (!isFixed && highResUrl && highResUrl.includes('/s1600')) {
+                const dpr = window.devicePixelRatio || 1;
+                const requiredWidth = el.getBoundingClientRect().width * dpr;
+
+                if (requiredWidth > 0) {
+                    const optimalSize = Math.min(1600, Math.max(100, Math.ceil(requiredWidth / 100) * 100));
+                    finalUrl = highResUrl.replace('/s1600', `/s${optimalSize}`);
+                }
+            }
+
             if (isBg) {
-                el.style.backgroundImage = `url(${highResUrl})`;
+                el.style.backgroundImage = `url(${finalUrl})`;
                 if (isFixed) {
                     el.style.backgroundAttachment = 'fixed';
                     el.style.backgroundPosition = 'center center';
                     el.style.backgroundSize = 'cover';
                 }
             } else {
-                el.src = highResUrl;
+                el.src = finalUrl;
             }
-            return;
-        }
 
-        const dpr = window.devicePixelRatio || 1;
-        let requiredWidth;
+            observer.unobserve(el);
+            el.classList.remove('m-blox-image-to-load');
+        });
+    }, { rootMargin: "0px 0px 200px 0px" });
 
-        if (isFixed) {
-            // For fixed images, resolution is based on the viewport width.
-            requiredWidth = window.innerWidth * dpr;
-        } else {
-            // For other images, it's based on the container's measured width.
-            requiredWidth = el.getBoundingClientRect().width * dpr;
-        }
-
-        // Round up to the nearest 100, but not less than 100, and not more than 1600.
-        const optimalSize = Math.min(1600, Math.max(100, Math.ceil(requiredWidth / 100) * 100));
-        const optimalUrl = highResUrl.replace('/s1600', `/s${optimalSize}`);
-
-        if (isBg) { 
-            el.style.backgroundImage = `url(${optimalUrl})`;
-            if (isFixed) {
-                el.style.backgroundAttachment = 'fixed';
-                el.style.backgroundPosition = 'center center';
-                el.style.backgroundSize = 'cover';
-            }
-        }
-        else { el.src = optimalUrl; }
+    imagePlaceholders.forEach(el => {
+        observer.observe(el);
     });
 }
 
@@ -1102,7 +1153,7 @@ function _calculateLayout(config, postsInFeed) {
         newConfig.actualColumnCount = columnMap[breakpointIndex];
         
         // If there aren't enough posts to fill a slide, disable the carousel and enable simple next/prev navigation instead.
-        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.actualColumnCount)) newConfig.blockRows = Math.ceil(postsInFeed / newConfig.actualColumnCount);
+        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.columnCount)) newConfig.blockRows = Math.ceil(postsInFeed / newConfig.columnCount);
         if (postsInFeed <= (newConfig.actualColumnCount * newConfig.blockRows)) {
             newConfig.isCarousel = false;
             newConfig.containsNavigation = true;
@@ -1456,8 +1507,8 @@ const mBlocks = async function(blockItem) {
                 }
 
                 if (blockConfig.isCarousel || blockConfig.containsNavigation) {
-                    let bodyWrapper = `<div class="carousel-inner">${blockBody}</div>`;
-                    contentWrapper.insertAdjacentHTML('beforeend', blockBody + '</div>'); // Append and close carousel-inner
+                    const bodyWrapper = `<div class="carousel-inner">${blockBody}</div>`;
+                    contentWrapper.insertAdjacentHTML('beforeend', bodyWrapper);
                     if (blockConfig.isCarousel) contentWrapper.appendChild(carouselIndicators);
 
                     // --- Carousel/Pagination Navigation ---
@@ -1535,4 +1586,4 @@ mBlocks.destroy = function(blockItem) {
 
     window.mBlocks = mBlocks;
 })(); // End of IIFE
-} // End of the guard clause `if (typeof window.mBloxInitialized === 'undefined')`
+}

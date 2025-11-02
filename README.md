@@ -4,6 +4,8 @@ mBlox is a lightweight, dependency-free JavaScript library that enables dynamic,
 
 It can be deployed on **any website** to display content from any supported feed type.
 
+Note: The initial version of this tool was created by me in the pre-GenAI era. Starting October 2025 AI tools are being used.
+
 ## Features
 
 *   **Dynamic Content**: Fetch recent posts, posts by label, or recent comments.
