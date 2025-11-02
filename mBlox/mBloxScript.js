@@ -261,6 +261,37 @@ function _getYouTubeVideoId(post) {
 }
 
 /**
+ * Renders the HTML for a single, simplified showcase thumbnail.
+ * @param {object} post The post data object.
+ * @param {object} config The block configuration.
+ * @returns {string} The HTML string for the thumbnail article.
+ */
+function _renderShowcaseThumbnail(post, config) {
+    const videoID = _getYouTubeVideoId(post);
+    let thumbnailUrl = post.thumbnailUrl || '';
+    let highResUrl = thumbnailUrl;
+
+    if (videoID !== 'noVideo' && highResUrl) {
+        highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
+    } else {
+        highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
+    }
+
+    const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...";
+    if (!highResUrl || highResUrl.includes('1.bp.blogspot.com/-_OR2rL6I9nU/Uq6H-t10-GI/AAAAAAAAA-E/61_1h5nKsoM/s1600/no-image.png')) {
+        highResUrl = noImg;
+    }
+
+    const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${thumbnailUrl}" data-img-high="${highResUrl}" data-toggle="tooltip"`;
+    const imageTag = `<img class="w-100 h-100 m-blox-image-to-load" style="object-fit:cover;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    
+    // Wrap the image in a figure to correctly apply aspect ratio and other layout classes.
+    const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
+
+    return `<article class="col d-inline-flex sPost" ${articleDataAttributes} role="article">${figureTag}</article>`;
+}
+
+/**
  * Creates the HTML for a single post item.
  * This is a helper function for mBlocks.
  * @param {object} post The post data object from the Blogger feed.
@@ -269,34 +300,10 @@ function _getYouTubeVideoId(post) {
  * @returns {{postHTML: string, showcaseHTML: string, carouselIndicator: string}} An object containing the HTML for the post and other related components.
  */
 function _createPostHtml(post, postID, config) {
-    // Special, simplified rendering path for Showcase thumbnails.
+    // For showcase blocks, all items in the main loop are rendered as thumbnails.
+    // The feature item is handled separately before the loop.
     if (config.blockType === BLOCK_SHOWCASE && postID > 0) {
-        const videoID = _getYouTubeVideoId(post);
-        let thumbnailUrl = post.thumbnailUrl || '';
-        let highResUrl = thumbnailUrl; // Start with the base thumbnail
-
-        // Upgrade URL to the highest available resolution
-        if (videoID !== 'noVideo' && highResUrl) {
-            highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); // Assumes a youtube-like URL structure
-        } else {
-            highResUrl = (highResUrl.includes('/s72-c') ? highResUrl.replace('/s72-c', '/s1600') : highResUrl);
-        }
-
-        const parts = {
-            postTitle: post.title,
-            postURL: post.url,
-            snippetText: (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...",
-            videoID: videoID,
-            videoThumbnailURL: thumbnailUrl,
-            highResImageURL: highResUrl
-        };
-
-        // Showcase thumbnails are just an image inside a data-rich article tag.
-        const imageClasses = `w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm m-blox-image-to-load`;
-        const imageTag = `<img class="${imageClasses}" style="object-fit:cover;height:100%!important;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${parts.highResImageURL}" alt="${parts.postTitle} image" loading="lazy" title="${parts.postTitle}" />`;
-        const articleClasses = _getArticleClasses(BLOCK_SHOWCASE, parts);
-        const postHTML = `<article class="${articleClasses}" role="article">${imageTag}</article>`;
-
+        const postHTML = _renderShowcaseThumbnail(post, config);
         return { postHTML, showcaseHTML: '', carouselIndicator: '' };
     }
 
@@ -1012,13 +1019,15 @@ function _applyDefaultConfig(config) {
     }
 
     // Set default column count if not specified.
-    if (config.columnCount === null) {
+    if (config.columnCount === null || typeof config.columnCount === 'undefined') {
         config.columnCount = DEFAULT_COLUMN_COUNTS[config.blockType] || 3;
+    } else {
+        // Ensure columnCount is always an integer.
+        config.columnCount = parseInt(config.columnCount, 10);
     }
 
     return config;
 }
-
 /**
  * Parses the data attributes of a block element to create a configuration object.
  * @param {HTMLElement} rawElement The block element to parse.
@@ -1072,6 +1081,7 @@ function _parseBlockConfig(rawElement) {
         showHeader, showImage, showSnippet, showAuthor, showDate,
         // Layout & Style
         columnCount: rawElement.getAttribute("data-cols"), // Will be parsed to int later
+        columnCount: parseInt(rawElement.getAttribute("data-cols"), 10) || null, // Parse to int immediately
         blockRows: parseInt(rawElement.getAttribute("data-rows") || "1", 10),
         isCarousel: (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true",
         sectionHeight: rawElement.getAttribute("data-iHeight"),
@@ -1138,8 +1148,6 @@ function _calculateLayout(config, postsInFeed) {
     // Use a mutable copy to avoid directly modifying the original object passed in.
     let newConfig = { ...config };
 
-    newConfig.columnCount = parseInt(newConfig.columnCount, 10);
-
     // Disable carousel for single-post blocks or list-style blocks
     if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) {
         newConfig.isCarousel = false;
@@ -1163,52 +1171,6 @@ function _calculateLayout(config, postsInFeed) {
 }
 
 /**
- * Builds the HTML for the smaller grid items in a showcase block.
- * @param {object} response The full response from the data feed.
- * @param {object} config The block's configuration object.
- * @param {HTMLElement} carouselIndicators The element for carousel indicators.
- * @returns {string} The HTML string for the showcase grid.
- */
-function _buildShowcaseGridBody(response, config, carouselIndicators) {
-    let blockBody = '';
-    const postsInFeed = response.posts.length;
-
-    for (let postID = 1; postID < postsInFeed; postID++) {
-        const post = response.posts[postID];
-        const { postHTML, carouselIndicator } = _createPostHtml(post, postID, config);
-        // Creates a new row/carousel-item wrapper when needed.
-        const isFirstItemInLoop = postID === 1;
-        const startNewRow = isFirstItemInLoop || (config.isCarousel && (postID -1) % (config.actualColumnCount * config.blockRows) === 0);
-
-        if (startNewRow) {
-            blockBody += `<div class="row g-${config.gutterSize} mx-0`;
-            if (config.isCarousel) { blockBody += ' carousel-item' + (postID === 1 ? ' active' : ''); }
-            if (config.blockType !== BLOCK_COVER) {
-                blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
-            }
-            blockBody += ` ${RESPONSIVE_GRID_CLASSES[config.columnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
-        }
-
-        // For showcase carousels, we only add an indicator if a new carousel item is being created.
-        // The slide index needs to be calculated based on the item's position within the showcase grid.
-        if (startNewRow && config.isCarousel && carouselIndicators) {
-            const slideIndex = Math.floor((postID - 1) / (config.actualColumnCount * config.blockRows));
-            const indicatorHTML = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${slideIndex === 0 ? ' active' : ''}" ${slideIndex === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${slideIndex + 1}"></button>`;
-            carouselIndicators.insertAdjacentHTML('beforeend', indicatorHTML);
-        }
-        blockBody += postHTML;
-
-        // Close the row/carousel-item div at the end of a slide or at the last post.
-        const isLastItemInSlide = config.isCarousel && ((postID-1) % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
-        const isLastPostOverall = postID === (postsInFeed - 1);
-        if (isLastPostOverall || isLastItemInSlide) {
-            blockBody += `</div>`; // close .row
-        }
-    }
-    return blockBody;
-}
-
-/**
  * Builds the HTML for all posts in the feed.
  * @param {object} response The full response from the data feed.
  * @param {object} config The block's configuration object.
@@ -1227,11 +1189,46 @@ function _buildBlockBody(response, config) {
         if (config.blockType !== BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
     }
 
-    // Handle the main showcase item separately, outside the loop.
+    // --- Showcase Block Specific Logic ---
     if (config.blockType === BLOCK_SHOWCASE && config.firstInstance && postsInFeed > 0) {
+        // Render the main feature item from the first post
         const { showcaseHTML: singleShowcaseHTML } = _createPostHtml(response.posts[0], 0, config);
-        showcaseHTML = singleShowcaseHTML; // The main feature image
-        blockBody = _buildShowcaseGridBody(response, config, carouselIndicators); // The grid of smaller items
+        showcaseHTML = singleShowcaseHTML;
+
+        // The rest of the posts form a grid of thumbnails.
+        const itemsPerSlide = config.actualColumnCount * config.blockRows;
+        let currentSlide = 0;
+
+        if (config.isCarousel) {
+            for (let i = 0; i < postsInFeed; i++) {
+                if (i % itemsPerSlide === 0) {
+                    if (i > 0) blockBody += `</div>`; // Close previous slide
+                    const activeClass = (i === 0) ? ' active' : '';
+                    blockBody += `<div class="carousel-item${activeClass}">`;
+                    blockBody += `<div class="row g-${config.gutterSize} mx-0 px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                    if (carouselIndicators) {
+                        const indicatorActiveClass = (currentSlide === 0) ? ' active' : '';
+                        const ariaCurrent = (currentSlide === 0) ? ' aria-current="true"' : '';
+                        carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${currentSlide}" class="bg-${config.inverseTheme}${indicatorActiveClass}" ${ariaCurrent} aria-label="Slide ${currentSlide + 1}"></button>`);
+                        currentSlide++;
+                    }
+                }
+                const { postHTML: thumbnailHTML } = _createPostHtml(response.posts[i], i + 1, config);
+                blockBody += thumbnailHTML;
+                if ((i + 1) % itemsPerSlide === 0 || i === postsInFeed - 1) {
+                    blockBody += `</div>`; // Close .row
+                }
+            }
+            blockBody += `</div>`; // Close final .carousel-item
+        } else {
+            // Non-carousel showcase grid
+            blockBody += `<div class="row g-${config.gutterSize} mx-0 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+            for (let postID = 0; postID < postsInFeed; postID++) {
+                const { postHTML: thumbnailHTML } = _createPostHtml(response.posts[postID], postID + 1, config);
+                blockBody += thumbnailHTML;
+            }
+            blockBody += `</div>`;
+        }
         return { blockBody, carouselIndicators, showcaseHTML };
     }
 
@@ -1252,13 +1249,17 @@ function _buildBlockBody(response, config) {
 
         // Creates a new row/carousel-item wrapper when needed.
         const isFirstItemInLoop = postID === 0;
-        const startNewRow = isFirstItemInLoop || (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || (config.blockType === BLOCK_LIST && postID === 1);
+        const startNewRow = isFirstItemInLoop || 
+                            (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) || 
+                            (config.blockType === BLOCK_LIST && postID === 1);
 
         if (startNewRow) {
             blockBody += `<div class="row g-${config.gutterSize} mx-0`;
             if (config.isCarousel) { blockBody += ' carousel-item' + (postID === 0 ? ' active' : ''); }
             if (isComplexLayout && config.blockType === BLOCK_LIST) { blockBody += ' col flex-grow-1'; }
-            if (config.blockType !== BLOCK_COVER) {
+            if (config.blockType === BLOCK_LIST) {
+                blockBody += ' px-0';
+            } else if (config.blockType !== BLOCK_COVER) {
                 blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
             }
             blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;

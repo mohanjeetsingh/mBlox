@@ -86,7 +86,7 @@ The script generates HTML strings and injects them into the DOM using jQuery's `
 
 ### 2.3. Item Wrapper
 The parent of the articles is a `div` with `row`, `g-{gutter}`, and responsive column classes (e.g., `row-cols-1 row-cols-md-2 row-cols-lg-3`). Each item is then rendered inside an `<article>` tag. A new row `div` is started at `postID=0`, or when a carousel slide wraps, or specifically for the second item (`postID=1`) in a `list` type block.
-
+The row `div` receives responsive horizontal padding (`px-2 px-sm-3 ...`) for most block types, but receives `px-0` for the `BLOCK_LIST` type to ensure list items are flush with the container edges.
 - **Structure**: `<article class="col d-inline-flex ..." role="article">...item...</article>`
 
 ### 2.4. Item Rendering (data-type)
@@ -101,7 +101,7 @@ The core rendering logic is a series of `switch` statements and string concatena
 - A `<div>` for text content is rendered inside the `<a>` tag with classes: `text-bg-{theme}`, `bg-opacity-75`, `p-4 p-sm-5`, `position-absolute`, `w-75`, `start-50`, `translate-middle`.
 - Text Alignment (`data-textVAlign`) adds classes to the text `div`:
     - `top`: `translate-middle-x mt-5`
-    - `middle`: `top-50`
+    - `middle`: `top-50` (default)
     - `bottom`: `translate-middle-x bottom-0 mb-5`
     - `overlay`: `top-50 h-100 w-100`
 
@@ -116,14 +116,13 @@ The core rendering logic is a series of `switch` statements and string concatena
 - A sibling `div` with class `col-8 h-100` contains a `card-body` div for the text.
 
 **Base Type `s` (Showcase) (`BLOCK_SHOWCASE`):**
-- This is a special case. The first post is rendered differently from the others.
-- **First Post (Feature)**: Rendered **only on initial load** before the main grid. It's a `div.feature-image` containing a `<figure>` for the image, a `div.sIframe` for YouTube videos, and an `a` tag wrapping a `div.sContent` for the text overlay.
-- **Other Posts (Thumbnails)**: Rendered as `<article>` tags with `data-*` attributes holding all post info (`data-title`, `data-link`, `data-vidid`, etc.). These are interactive; clicking one updates the main "Feature" post.
-- **Other Posts (Thumbnails)**: For `postID > 0` (all posts after the first):
-    - An `<article>` tag is rendered with the classes `col`, `d-inline-flex`, and `sPost`.
-    - The `<article>` is populated with `data-*` attributes to store the post's data: `data-title`, `data-link`, `data-summary`, `data-vidid`, and `data-img`.
-    - Inside the `<article>`, only an `<img>` tag is rendered. No text content (`h`, `s`, etc.) or `<a>` wrapper is included.
-    - The `<img>` tag receives the `w-100`, `img-fluid`, `shadow-sm`, and aspect ratio (e.g., `ratio-1x1`) classes.
+- This is a complex block with two simple blocks/parts: `feature` and `thumbnails` to create a "feature + thumbnails" layout
+- **Feature**: Shows first post by default. Rendered **only on initial load** before the main grid. It's a `div.feature-image` containing a `<figure>` for the image, a `div.sIframe` for YouTube videos, and an `a` tag wrapping a `div.sContent` for the text overlay.
+- **Thumbnails**: Rendered as `<article>` tags with `data-*` attributes holding all post info (`data-title`, `data-link`, `data-vidid`, etc.). These are interactive; clicking one updates the main "Feature" post.
+- **Container**: All thumbnail `<article>` elements are wrapped within a single `<div class="row ...">`. This `div` receives the appropriate gutter and responsive column classes.
+- **Carousel Behavior**: If `data-isCarousel` is true, this entire `div.row` of thumbnails is wrapped in a single `<div class="carousel-item active">`, making the entire grid a single slide.
+- **Item Structure**: Each thumbnail is an `<article>` tag with the classes `col`, `d-inline-flex`, and `sPost`. It is populated with `data-*` attributes to store the post's data.
+- **Item Content**: Inside the `<article>`, only an `<img>` tag is rendered. It receives the `w-100`, `img-fluid`, `shadow-sm`, aspect ratio, and the functional `m-blox-image-to-load` class. No text content or `<a>` wrapper is included.
 
 **Base Type `l` (List) (`BLOCK_LIST`):**
 - This is a special case. The first post is rendered as a full item.
