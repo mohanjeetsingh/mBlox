@@ -39,16 +39,20 @@ The script must normalize data from various feed sources into a consistent inter
 
 ### 1.6. Image (`image`)
 - **Source Priority (for Posts)**:
-    1.  **Media Thumbnail**: Use `post.media$thumbnail.url` (Blogger) or `post.thumbnailUrl` (WP/RSS) if available.
-    2.  **First Image in Content**: If no thumbnail is provided, parse the post's HTML content to find the `src` of the first `<img>` tag.
+    1.  **YouTube RSS Feed**: For YouTube feeds, the script directly uses the URL from the `<media:thumbnail>` tag within each `<entry>`. This is the most reliable source.
+    1.  **First Image in Content (Blogger)**: Parse the post's HTML content to find the `src` of the first `<img>` tag. The `media$thumbnail` property is intentionally ignored to favor the higher-quality, un-cropped image from the post body.
+    2.  **Thumbnail URL (WordPress/Generic RSS)**: Use `post.thumbnailUrl` if available (from `wp:featuredmedia` in WordPress or `<media:thumbnail>` in RSS). If not, parse the content for the first `<img>` tag.
     3.  **No Image Fallback**: If no image is found, a placeholder URL is used.
 - **Source (for Comments)**:
     - Use `post.authorImage` (from `entry.author[0].gd$image.src`). If the URL contains `blogblog.com`, it's considered a default avatar, and the script falls back to the `noImg` placeholder.
 - **Image URL Processing**:
-    The script generates multiple image URLs from a single source for optimal loading.
-    1.  **Blogger Images**: For standard Blogger image URLs, a high-resolution version (`highResImageURL`) is created by replacing size specifiers (e.g., `/s72-c`, `/w640-h424`) with `/s1600`. This serves as the base for dynamic sizing.
-    2.  **YouTube Thumbnails**: If a post is identified as a video (i.e., a `videoId` was found), the script attempts to create a high-resolution version of its thumbnail by replacing the filename (e.g., `/hqdefault.jpg`, `/mqdefault.jpg`) with `/maxresdefault.jpg`.
-    3.  **Dynamically-Sized (`finalUrl`)**: This is not a pre-calculated URL. Instead, the script renders a placeholder `<img>` or `<figure>`. At runtime, the `_loadOptimalImages` function measures the element's container and device pixel ratio, then requests an optimally-sized image from the server by replacing the high-resolution specifier (e.g., `/s1600`) with a calculated size (e.g., `/s${optimalSize}`). This is a more effective, just-in-time optimization.
+    The script uses a multi-step process to generate and load the most optimal image for the context.
+    1.  **Standard URL (`imageURL`)**: This is the default, lightweight URL, typically sourced from `post.thumbnailUrl` or a parsed image from the content. It's assigned to the `data-img-src` attribute for standard blocks to ensure a fast initial load.
+    2.  **High-Resolution URL (`highResImageURL`)**: This is a full-quality version of the URL.
+        - **For YouTube videos**: It replaces the thumbnail filename (e.g., `hqdefault.jpg`) with `maxresdefault.jpg`.
+        - **For Blogger images**: It replaces size specifiers (e.g., `/s72-c`) with `/s1600`.
+        - This URL is assigned to `data-bg-src` for fixed-background images and to `data-img-high` for Showcase thumbnails to ensure a crisp display when they become the main feature.
+    3.  **Runtime Sizing (`_loadOptimalImages`)**: An `IntersectionObserver` lazy-loads images. When an image enters the viewport, it calculates the required dimension based on the container size and device pixel ratio. If the URL is a resizable Blogger URL (containing `/s1600`), it requests a dynamically-sized version (e.g., `/s500`). Otherwise, it loads the high-resolution URL directly.
 
 ### 1.7. Image Blur (`config.blurImage`)
 - **Source**: `data-iBlur` attribute.
@@ -117,12 +121,12 @@ The core rendering logic is a series of `switch` statements and string concatena
 
 **Base Type `s` (Showcase) (`BLOCK_SHOWCASE`):**
 - This is a complex block with two simple blocks/parts: `feature` and `thumbnails` to create a "feature + thumbnails" layout
-- **Feature**: Shows first post by default. Rendered **only on initial load** before the main grid. It's a `div.feature-image` containing a `<figure>` for the image, a `div.sIframe` for YouTube videos, and an `a` tag wrapping a `div.sContent` for the text overlay.
-- **Thumbnails**: Rendered as `<article>` tags with `data-*` attributes holding all post info (`data-title`, `data-link`, `data-vidid`, etc.). These are interactive; clicking one updates the main "Feature" post.
-- **Container**: All thumbnail `<article>` elements are wrapped within a single `<div class="row ...">`. This `div` receives the appropriate gutter and responsive column classes.
-- **Carousel Behavior**: If `data-isCarousel` is true, this entire `div.row` of thumbnails is wrapped in a single `<div class="carousel-item active">`, making the entire grid a single slide.
-- **Item Structure**: Each thumbnail is an `<article>` tag with the classes `col`, `d-inline-flex`, and `sPost`. It is populated with `data-*` attributes to store the post's data.
-- **Item Content**: Inside the `<article>`, only an `<img>` tag is rendered. It receives the `w-100`, `img-fluid`, `shadow-sm`, aspect ratio, and the functional `m-blox-image-to-load` class. No text content or `<a>` wrapper is included.
+- **Feature**: A static element rendered from the first post's data (`posts[0]`). It's a `div.feature-image` containing a `<figure>` for the image, a `div.sIframe` for YouTube videos, and an `a` tag wrapping a `div.sContent` for the text overlay.
+- **Thumbnails**: An interactive grid of thumbnails is rendered for **all** posts in the feed, including the first one. Clicking a thumbnail updates the content of the static Feature element.
+- **Container**: All thumbnail `<article>` elements are wrapped within a `<div class="row ...">`. This `div` receives the appropriate gutter and responsive column classes.
+- **Carousel Behavior**: If `data-isCarousel` is true, the thumbnail grid is chunked into slides based on `data-cols` and `data-rows`. The static Feature element is not part of the carousel.
+- **Item Structure**: Each thumbnail is an `<article>` tag with the class `sPost`. It is populated with `data-*` attributes to store the post's data.
+- **Item Content**: Inside the `<article>`, a `<figure>` wraps an `<img>` tag. The `<figure>` receives the aspect ratio classes, and the `<img>` is styled to fill it. No text content or `<a>` wrapper is included.
 
 **Base Type `l` (List) (`BLOCK_LIST`):**
 - This is a special case. The first post is rendered as a full item.
@@ -136,7 +140,6 @@ Within each item's HTML string, the presence of elements is controlled by checki
     - For `BLOCK_QUOTE` type: Renders a `<svg>` quote icon and a `<blockquote class="blockquote ...">`.
     - For `BLOCK_COMMENT` type: Renders `<span class="d-block my-2">`.
     - For all other types: Renders `<h5 class="card-title fw-normal">`.
-- **`s` (Snippet)**: Renders `<summary class="list-unstyled...">`.
 - **`s` (Snippet)**: Renders `<summary class="list-unstyled {theme-class} {cover-class} {opacity-class}">`.
 - **`a` (Author)**: Renders `<figcaption>` for `BLOCK_QUOTE` type, `<span>` for `BLOCK_COMMENT` type.
 - **`d` (Date)**: Renders `<span class="small fw-lighter">`. If author is also present, it's prepended with `&#8226;`.
@@ -162,8 +165,10 @@ Within each item's HTML string, the presence of elements is controlled by checki
 
 ### 2.9. Fixed Image (`data-iFix="true"`)
 - If `data-iFix` is true, the standard `<img>` tag is replaced with a `<figure>` element.
-- This `<figure>` is given an inline `style` with `background:url(...) fixed center center;background-size:cover;`.
-- The `_loadOptimalImages` function will then apply the image as a `background-image` and add the CSS properties `background-attachment: fixed`, `background-position: center center`, and `background-size: cover` if the `data-is-fixed` attribute is true.
+- The `<figure>` is rendered with a `data-bg-src` attribute pointing to the `highResImageURL`. This ensures the highest quality image is used as the base.
+- At runtime, the `_loadOptimalImages` function detects the `data-is-fixed="true"` attribute. It then:
+    - Calculates the optimal image size based on the **viewport dimensions**, not the element's container.
+    - Applies the dynamically-sized image as a `background-image` and adds the necessary CSS properties: `background-attachment: fixed`, `background-position: center center`, and `background-size: cover`.
 
 ## 3. Carousel Logic
 If `data-isCarousel` is true, the generated item HTML strings are not placed directly into the main grid. Instead, they are grouped and wrapped in Bootstrap carousel markup.
@@ -199,33 +204,50 @@ If `data-isCarousel` is true, the generated item HTML strings are not placed dir
 - **Video Play**: A separate click handler is attached to the main feature image (`figure`).
     - **Action**: On click, it reads its own `data-vidid` attribute.
     - **DOM Update**: If the ID is not `"noVideo"`, it hides the `<figure>` and its `.sContent` overlay, then shows the `.sIframe` container. It populates the iframe with the YouTube embed URL, including the `?autoplay=1` parameter.
+
 ### 5.2. Pagination (`isNav` mode)
 - **Next Button**: A click handler is attached to `.nav-next`.
-    - **Action**: It hides the current content stage (`.st{N}`). It increments the `data-s` attribute on the root element.
+-    - **Action**: It fades out the current content (`div.st{N}`). It increments the `data-s` attribute on the root element.
     - **Logic**: It checks if the next stage (`.st{N+1}`) already exists in the DOM.
-        - If yes, it fades in the existing element.
-        - If no, it re-invokes the main `mBlocks()` function, which uses the new `data-s` value to fetch and render the next page of posts.
+-        - If yes, it fades out the current footer (`nav.st{N}`) and fades in the existing next stage content and footer (`div.st{N+1}` and `nav.st{N+1}`).
+-        - If no, it **removes** the current stage's footer (`nav.st{N}`) from the DOM and then re-invokes the main `mBlocks()` function to fetch and render the next page. This prevents duplicate footers.
 - **Previous Button**: A click handler is attached to `.nav-prev`.
-    - **Action**: It hides the current content stage (`.st{N}`). It decrements the `data-s` attribute.
-    - **Logic**: It fades in the (assumed to be existing) previous stage element (`.st{N-1}`).
+-    - **Action**: It fades out the current content and footer (`div.st{N}` and `nav.st{N}`). It decrements the `data-s` attribute.
+-    - **Logic**: It fades in the (assumed to be existing) previous stage's content and footer (`div.st{N-1}` and `nav.st{N-1}`).
 
-### 5.3. Image Rendering Logic
-- **Image Sizing (`optimalSize` variable)**: The script calculates an optimal image width (`optimalSize`) based on the element's measured width and the device pixel ratio. This value is used to construct the `finalUrl` by replacing `/s1600` with `/s${optimalSize}`.
-- **Base Image Classes**: `w-100`, `img-fluid`.
-- **Base Image Style**: `object-fit:cover;height:100%!important;`
-- **Type-Specific Image Logic**:
-    - `BLOCK_SHOWCASE`:
-        - **Feature Image (Post 0)**: A `<figure>` is always used with inline style for background image and height.
-        - **Grid Thumbnails**: `<img>` tags get `shadow-sm` and `{aspectRatio}` classes.
-    - `BLOCK_PANCAKE`: `<img>` tag gets `{aspectRatio}` classes.
-    - `BLOCK_COMMENT`:
-        - `<img>` tag gets `rounded-circle`, `m-2`.
-        - Inline style is overridden to `height: 3rem !important; width: 3rem;`.
-    - `BLOCK_QUOTE`:
-        - `<img>` tag gets `rounded-circle`, `mx-auto`, `mt-3`.
-        - Inline style is overridden to `height: 6rem !important; width: 6rem;`.
+### 5.4. Image Rendering Logic
+The script uses a multi-step process to determine the correct image URL for each context, optimizing for performance.
 
-### 5.4. Text Content Rendering Logic (`_renderPostContent`)
+#### 5.4.1. URL Generation (`_renderImage` & `_renderShowcaseThumbnail`)
+1.  **Standard URL (`imageURL`)**: This is the default, lightweight URL.
+    - It's sourced from `post.thumbnailUrl` (from the feed) if available.
+    - For comments, it falls back to the author's avatar, unless it's a default Blogger avatar (containing `blogblog.com`).
+    - If no URL is found, it falls back to a placeholder (`noImg`).
+2.  **High-Resolution URL (`highResImageURL`)**: This is a full-quality version of the URL.
+    - **For YouTube videos**: It replaces the thumbnail filename (e.g., `hqdefault.jpg`) with `maxresdefault.jpg`.
+    - **For Blogger images**: It replaces size specifiers (e.g., `/s72-c`) with `/s1600`.
+    - **For other images**: It remains the same as the standard URL.
+
+#### 5.4.2. HTML Attribute Assignment
+The script assigns different URLs to different `data-*` attributes to control what gets loaded.
+
+- **Standard Blocks (Card, Pancake, etc.)**:
+    - `data-img-src` is set to the standard `imageURL`. This ensures these blocks load lightweight thumbnails by default.
+    - The only exception is for fixed-background images (`data-iFix="true"`), where `data-bg-src` is set to the `highResImageURL` to ensure a crisp parallax effect.
+- **Showcase Block (`_renderShowcaseThumbnail`)**:
+    - `data-img-high` is set to the `highResImageURL`. This is used when the thumbnail is clicked to update the main feature view.
+    - `data-img-src` is set to the standard `thumbnailUrl`. This ensures the small grid items load a lightweight image by default. The `_loadOptimalImages` function will still apply dynamic sizing to Blogger images if needed.
+
+#### 5.4.3. Runtime Sizing (`_loadOptimalImages`)
+- This function uses an `IntersectionObserver` to lazy-load images.
+- When an image placeholder enters the viewport, it reads the `data-img-src` or `data-bg-src`.
+- It calculates the required image dimension based on the device pixel ratio and:
+    - The **viewport's larger dimension** (`Math.max(window.innerWidth, window.innerHeight)`) if the image has `data-is-fixed="true"`. This behavior applies to **all** feed types.
+    - The element's container width for all other images.
+- **If the URL is a resizable Blogger URL** (contains `/s1600`), it replaces `/s1600` with the optimal calculated size (e.g., `/s500`) and loads the new URL.
+- **If the URL is not a resizable Blogger URL** (e.g., YouTube's `maxresdefault.jpg`), the resizing logic is skipped, and the original high-resolution URL from the `data-` attribute is loaded. This is the correct and safe fallback behavior.
+
+### 5.5. Text Content Rendering Logic (`_renderPostContent`)
 - **Wrapper Divs**: The text content is wrapped in one or more `<div>`s whose classes depend on the block type.
     - `BLOCK_COMMENT`: `<div class="col p-2 ps-0">...</div>`
     - `BLOCK_STACK`: If an image is shown, content is wrapped in `<div class="col-8 h-100"><div class="card-body...">...</div></div>`. If no image, just `<div class="card-body...">...</div>`.
@@ -250,12 +272,14 @@ If `data-isCarousel` is true, the generated item HTML strings are not placed dir
     - For `BLOCK_PANCAKE` and `BLOCK_QUOTE` types, the CTA button is rendered *outside* and *after* the main `card-body` wrapper.
     - For all other types, it is rendered *inside* the main text wrapper.
 
-### 5.3. No Content Fallback
-- If the AJAX call returns successfully but the `feed.entry` array is empty, a fallback message is rendered.
-- The message depends on the `data-contentType` attribute:
-    - **`recent`**: "Sorry! No recent updates."
-    - **`comments`**: "No comments. <br/> Start the conversation!"
-    - **default (label)**: "Sorry! No content found for "{labelName}"!"
+### 5.7. No Content Fallback
+- If the data fetch returns no posts, a fallback message is rendered. The message is context-aware based on the data provider.
+    - **Blogger Feeds**:
+        - `data-contentType="recent"`: "Sorry! No recent updates."
+        - `data-contentType="comments"`: "No comments. <br/> Start the conversation!"
+        - `data-contentType="label"`: "Sorry! No content found for "{labelName}"!"
+    - **Non-Blogger Feeds (WordPress, RSS, etc.)**:
+        - A generic message is shown: "Sorry! No content found."
 
 ## 6. Default Attribute Values
 

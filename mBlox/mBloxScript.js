@@ -200,10 +200,10 @@ function _mapBloggerResponseToStandardFormat(bloggerResponse) {
 
     const standardPosts = bloggerResponse.feed.entry.map(post => {
         const content = ("content" in post) ? post.content.$t : (("summary" in post) ? post.summary.$t : "");
-        let thumbnailUrl = post.media$thumbnail ? post.media$thumbnail.url : '';
+        let thumbnailUrl = '';
 
-        // If no media$thumbnail, try to find the first image in the content as a fallback.
-        if (!thumbnailUrl && content) {
+        // Always try to find the first image in the content as the primary source for the thumbnail.
+        if (content) {
             const contentParser = new DOMParser().parseFromString(content, 'text/html');
             const firstImage = contentParser.querySelector("img");
             if (firstImage) thumbnailUrl = firstImage.src;
@@ -268,22 +268,23 @@ function _getYouTubeVideoId(post) {
  */
 function _renderShowcaseThumbnail(post, config) {
     const videoID = _getYouTubeVideoId(post);
-    let thumbnailUrl = post.thumbnailUrl || '';
+    let thumbnailUrl = post.thumbnailUrl || noImg;
     let highResUrl = thumbnailUrl;
 
-    if (videoID !== 'noVideo' && highResUrl) {
+    if (videoID !== 'noVideo' && highResUrl.includes('ytimg.com')) {
         highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
     } else {
         highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
     }
 
     const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...";
-    if (!highResUrl || highResUrl.includes('1.bp.blogspot.com/-_OR2rL6I9nU/Uq6H-t10-GI/AAAAAAAAA-E/61_1h5nKsoM/s1600/no-image.png')) {
-        highResUrl = noImg;
-    }
+    
+    // Ensure both URLs have a fallback if they are empty or point to the old placeholder.
+    if (!thumbnailUrl || thumbnailUrl.includes('no-image.png')) thumbnailUrl = noImg;
+    if (!highResUrl || highResUrl.includes('no-image.png')) highResUrl = noImg;
 
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${thumbnailUrl}" data-img-high="${highResUrl}" data-toggle="tooltip"`;
-    const imageTag = `<img class="w-100 h-100 m-blox-image-to-load" style="object-fit:cover;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    const imageTag = `<img class="w-100 h-100 m-blox-image-to-load" style="object-fit:cover;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${thumbnailUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
     
     // Wrap the image in a figure to correctly apply aspect ratio and other layout classes.
     const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
@@ -406,7 +407,9 @@ function _renderShowcaseFeature(config, parts) {
         : '';
     const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
 
-    return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
+    // If there's no CTA, the feature image can sit too close to the thumbnails below. Add a margin to compensate.
+    const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
+    return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
 }
 
 /**
@@ -520,11 +523,13 @@ function _renderImage(finalType, postID, config, data) {
     if (!videoThumbnailURL) videoThumbnailURL = imageURL;
 
     let highResImageURL = imageURL;
-    // If it's a video, attempt to upgrade the thumbnail to max resolution.
-    if (videoID !== 'noVideo' && highResImageURL) {
+    // If the feed is from Blogger, always apply its specific resizing rule.
+    if (config.isBloggerFeed) {
+        highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
+    }
+    // For non-Blogger feeds that contain a video, attempt to upgrade to YouTube's max resolution.
+    else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) {
         highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); // Replaces hqdefault.jpg etc.
-    } else {
-        highResImageURL = highResImageURL.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
     }
 
     let imageCoverStyle = "object-fit:cover;height:100%!important;",
@@ -558,11 +563,14 @@ function _renderImage(finalType, postID, config, data) {
 
     const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
     // For showcase, only the main feature image can be fixed. Thumbnails should never be fixed.
-    const canBeFixed = finalType === BLOCK_SHOWCASE ? postID === 0 && config.isImageFixed : config.isImageFixed;
-
+    // Similarly, for list view, only the first (main) item can be fixed.
+    const isComplexBlock = config.blockType === BLOCK_SHOWCASE || config.blockType === BLOCK_LIST;
+    const canBeFixed = isComplexBlock
+        ? postID === 0 && config.isImageFixed
+        : config.isImageFixed;
     const imageCode = canBeFixed
         ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-        : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
+        : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }
@@ -613,6 +621,7 @@ function _getLinkWrapperClasses(finalType, config) {
             classes.push('text-center', 'h-100');
             break;
         case BLOCK_STACK:
+                    classes.push('h-100');
         case BLOCK_COMMENT:
             classes.push('row', 'g-0');
             break;
@@ -622,6 +631,9 @@ function _getLinkWrapperClasses(finalType, config) {
         case BLOCK_CARD:
         case BLOCK_GALLERY:
             classes.push(config.aspectRatio.trim());
+        case BLOCK_PANCAKE:
+            // For Pancake, Card, and Gallery, h-100 ensures they stretch to fill the row height.
+            classes.push('h-100');
             break;
     }
 
@@ -820,8 +832,7 @@ function _bindShowcaseEvents(rawElement, config) {
             title: el.getAttribute('data-title'),
             summary: el.getAttribute('data-summary'),
             link: el.getAttribute('data-link'),
-            imgHigh: el.getAttribute('data-img-high'),
-            img: el.getAttribute('data-img') // Get the standard-res image for the background
+            imgHigh: el.getAttribute('data-img-high')
         };
     });
 
@@ -832,7 +843,10 @@ function _bindShowcaseEvents(rawElement, config) {
             // If it's a video, play it.
             if (videoId && videoId !== "noVideo") {
                 if (iFrameNode) {
-                    iFrameNode.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen="" style="${config.articleHeight}width:100%;" frameborder="0"></iframe>`;
+                    const src = `https://www.youtube.com/embed/${videoId}`;
+                    const style = `${config.articleHeight};width:100%;`;
+                    const allowPolicy = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+                    iFrameNode.innerHTML = `<iframe src="${src}" title="YouTube video player" frameborder="0" allow="${allowPolicy}" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="${style}"></iframe>`;
                     fadeIn(iFrameNode);
                     fadeOut(figureNode);
                     if (contentNode) fadeOut(contentNode);
@@ -871,7 +885,7 @@ function _bindShowcaseEvents(rawElement, config) {
                 figureNode.title = data.title;
             }
             figureNode.setAttribute('data-vidid', data.vidid);
-            figureNode.style.backgroundImage = `url(${data.img})`; // Use the standard-res image from data-img
+            figureNode.style.backgroundImage = `url(${data.imgHigh})`;
             figureNode.style.backgroundSize = 'cover';
         }
 
@@ -907,10 +921,14 @@ function _bindPaginationEvents(rawElement) {
     const prevButton = rawElement.querySelector(".nav-prev");
     if (prevButton) {
         const prevNav = function() {
-            const currentStage = rawElement.getAttribute("data-s");
-            rawElement.setAttribute("data-s", +currentStage - 1);
-            fadeOut(rawElement.querySelector(".st" + currentStage));
-            fadeIn(rawElement.querySelector(".st" + (+currentStage - 1)));
+            const currentStage = parseInt(rawElement.getAttribute("data-s"), 10);
+            if (currentStage <= 1) return;
+            const prevStage = currentStage - 1;
+            rawElement.setAttribute("data-s", prevStage);
+            fadeOut(rawElement.querySelector(`div.st${currentStage}`));
+            fadeOut(rawElement.querySelector(`nav.st${currentStage}`));
+            fadeIn(rawElement.querySelector(`div.st${prevStage}`));
+            fadeIn(rawElement.querySelector(`nav.st${prevStage}`));
         };
         prevButton.addEventListener('click', prevNav);
     }
@@ -918,14 +936,18 @@ function _bindPaginationEvents(rawElement) {
     const nextButton = rawElement.querySelector(".nav-next");
     if (nextButton) {
         const nextNav = function() {
-            const currentStage = rawElement.getAttribute("data-s");
-            rawElement.setAttribute("data-s", +currentStage + 1);
-            fadeOut(rawElement.querySelector(".st" + currentStage));
-            const nextStageEl = rawElement.querySelector(".st" + (+currentStage + 1));
+            const currentStage = parseInt(rawElement.getAttribute("data-s"), 10);
+            const nextStage = currentStage + 1;
+            rawElement.setAttribute("data-s", nextStage);
+            fadeOut(rawElement.querySelector(`div.st${currentStage}`));
+            const currentFooter = rawElement.querySelector(`nav.st${currentStage}`);
+            const nextStageEl = rawElement.querySelector(`div.st${nextStage}`);
             if (nextStageEl) {
+                if (currentFooter) fadeOut(currentFooter);
                 fadeIn(nextStageEl);
+                fadeIn(rawElement.querySelector(`nav.st${nextStage}`));
             } else {
-                // If the next stage doesn't exist in the DOM, fetch it.
+                if (currentFooter) currentFooter.remove();
                 mBlocks(rawElement);
             }
         };
@@ -953,15 +975,22 @@ function _loadOptimalImages(rawElement) {
             const highResUrl = isBg ? el.getAttribute('data-bg-src') : el.getAttribute('data-img-src');
             let finalUrl = highResUrl;
 
-            // A fixed image should ALWAYS use the highest resolution for a crisp parallax effect.
-            if (!isFixed && highResUrl && highResUrl.includes('/s1600')) {
-                const dpr = window.devicePixelRatio || 1;
-                const requiredWidth = el.getBoundingClientRect().width * dpr;
+            // Attempt to resize only if it's a known resizable URL (from Blogger).
+            // For other URLs, this will do nothing and the original highResUrl will be used.
+            const dpr = window.devicePixelRatio || 1;
+            let requiredDimension;
 
-                if (requiredWidth > 0) {
-                    const optimalSize = Math.min(1600, Math.max(100, Math.ceil(requiredWidth / 100) * 100));
-                    finalUrl = highResUrl.replace('/s1600', `/s${optimalSize}`);
-                }
+            if (isFixed) {
+                // For fixed backgrounds, the image size is relative to the viewport, not the element.
+                requiredDimension = Math.max(window.innerWidth, window.innerHeight) * dpr;
+            } else {
+                // For regular images, size is based on the element's container.
+                requiredDimension = el.getBoundingClientRect().width * dpr;
+            }
+
+            if (requiredDimension > 0) {
+                const optimalSize = Math.min(1600, Math.max(100, Math.ceil(requiredDimension / 100) * 100));
+                finalUrl = highResUrl.replace('/s1600', `/s${optimalSize}`);
             }
 
             if (isBg) {
@@ -1196,16 +1225,18 @@ function _buildBlockBody(response, config) {
         showcaseHTML = singleShowcaseHTML;
 
         // The rest of the posts form a grid of thumbnails.
-        const itemsPerSlide = config.actualColumnCount * config.blockRows;
+        const itemsPerSlide = Math.min(postsInFeed, config.actualColumnCount * config.blockRows);
         let currentSlide = 0;
 
         if (config.isCarousel) {
             for (let i = 0; i < postsInFeed; i++) {
                 if (i % itemsPerSlide === 0) {
-                    if (i > 0) blockBody += `</div>`; // Close previous slide
+                    if (i > 0) blockBody += `</div></div>`; // Close previous .row and .carousel-item
+                    
                     const activeClass = (i === 0) ? ' active' : '';
                     blockBody += `<div class="carousel-item${activeClass}">`;
                     blockBody += `<div class="row g-${config.gutterSize} mx-0 px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                    
                     if (carouselIndicators) {
                         const indicatorActiveClass = (currentSlide === 0) ? ' active' : '';
                         const ariaCurrent = (currentSlide === 0) ? ' aria-current="true"' : '';
@@ -1213,18 +1244,15 @@ function _buildBlockBody(response, config) {
                         currentSlide++;
                     }
                 }
-                const { postHTML: thumbnailHTML } = _createPostHtml(response.posts[i], i + 1, config);
+                const thumbnailHTML = _renderShowcaseThumbnail(response.posts[i], config);
                 blockBody += thumbnailHTML;
-                if ((i + 1) % itemsPerSlide === 0 || i === postsInFeed - 1) {
-                    blockBody += `</div>`; // Close .row
-                }
             }
-            blockBody += `</div>`; // Close final .carousel-item
+            blockBody += `</div></div>`; // Close final .row and .carousel-item
         } else {
             // Non-carousel showcase grid
             blockBody += `<div class="row g-${config.gutterSize} mx-0 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
             for (let postID = 0; postID < postsInFeed; postID++) {
-                const { postHTML: thumbnailHTML } = _createPostHtml(response.posts[postID], postID + 1, config);
+                const thumbnailHTML = _renderShowcaseThumbnail(response.posts[postID], config);
                 blockBody += thumbnailHTML;
             }
             blockBody += `</div>`;
@@ -1476,6 +1504,7 @@ const mBlocks = async function(blockItem) {
         try {
             const provider = _getProvider(blockConfig);
             const response = await provider.fetch();
+            blockConfig.isBloggerFeed = provider instanceof BloggerProvider;
 
             if (response.posts && response.posts.length > 0) {
                 const postsInFeed = response.posts.length;
@@ -1525,15 +1554,21 @@ const mBlocks = async function(blockItem) {
                 contentWrapper.insertAdjacentHTML('afterend', _createBlockFooter(blockConfig, response));
             } //if
             else { // If response.posts is empty or doesn't exist
-                switch (blockConfig.contentType) {
-                    case "recent":
-                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`);
-                        break;
-                    case "comments":
-                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`);
-                        break;
-                    default:
-                        rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found for "${blockConfig.dataLabel}"!</div>`);
+                const isBlogger = provider instanceof BloggerProvider;
+                if (isBlogger) {
+                    switch (blockConfig.contentType) {
+                        case "recent":
+                            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No recent updates.</div>`);
+                            break;
+                        case "comments":
+                            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">No comments. <br/> Start the conversation!</div>`);
+                            break;
+                        default: // label
+                            rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found for "${blockConfig.dataLabel}"!</div>`);
+                    }
+                } else {
+                    // Generic fallback for non-Blogger feeds (WordPress, RSS, etc.)
+                    rawElement.insertAdjacentHTML('beforeend', `<div class="text-center text-bg-${blockConfig.dataTheme} display-6 p-4 w-100">Sorry! No content found.</div>`);
                 }
             }
         } catch (error) {
