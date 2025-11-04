@@ -47,11 +47,11 @@ The script must normalize data from various feed sources into a consistent inter
     - Use `post.authorImage` (from `entry.author[0].gd$image.src`). If the URL contains `blogblog.com`, it's considered a default avatar, and the script falls back to the `noImg` placeholder.
 - **Image URL Processing**:
     The script uses a multi-step process to generate and load the most optimal image for the context.
-    1.  **Standard URL (`imageURL`)**: This is the default, lightweight URL, typically sourced from `post.thumbnailUrl` or a parsed image from the content. It's assigned to the `data-img-src` attribute for standard blocks to ensure a fast initial load.
+    1.  **Standard URL (`imageURL`)**: This is the default, lightweight URL, typically sourced from `post.thumbnailUrl` or a parsed image from the content. It's assigned to the `data-featuredImgSrc` attribute for standard blocks to ensure a fast initial load.
     2.  **High-Resolution URL (`highResImageURL`)**: This is a full-quality version of the URL.
         - **For YouTube videos**: It replaces the thumbnail filename (e.g., `hqdefault.jpg`) with `maxresdefault.jpg`.
         - **For Blogger images**: It replaces size specifiers (e.g., `/s72-c`) with `/s1600`.
-        - This URL is assigned to `data-bg-src` for fixed-background images and to `data-img-high` for Showcase thumbnails to ensure a crisp display when they become the main feature.
+        - This URL is assigned to `data-img-high` for fixed-background images and Showcase thumbnails to ensure a crisp display when they become the main feature.
     3.  **Runtime Sizing (`_loadOptimalImages`)**: An `IntersectionObserver` lazy-loads images. When an image enters the viewport, it calculates the required dimension based on the container size and device pixel ratio. If the URL is a resizable Blogger URL (containing `/s1600`), it requests a dynamically-sized version (e.g., `/s500`). Otherwise, it loads the high-resolution URL directly.
 
 ### 1.7. Image Blur (`config.blurImage`)
@@ -232,15 +232,16 @@ The script uses a multi-step process to determine the correct image URL for each
 The script assigns different URLs to different `data-*` attributes to control what gets loaded.
 
 - **Standard Blocks (Card, Pancake, etc.)**:
-    - `data-img-src` is set to the standard `imageURL`. This ensures these blocks load lightweight thumbnails by default.
-    - The only exception is for fixed-background images (`data-iFix="true"`), where `data-bg-src` is set to the `highResImageURL` to ensure a crisp parallax effect.
+    - The `src` attribute of the `<img>` tag is set directly to the standard `imageURL`. This ensures these blocks load lightweight images by default without relying on a placeholder.
+    - The only exception is for fixed-background images (`data-iFix="true"`), where `data-img-high` is set to the `highResImageURL` to ensure a crisp parallax effect.
 - **Showcase Block (`_renderShowcaseThumbnail`)**:
-    - `data-img-high` is set to the `highResImageURL`. This is used when the thumbnail is clicked to update the main feature view.
-    - `data-img-src` is set to the standard `thumbnailUrl`. This ensures the small grid items load a lightweight image by default. The `_loadOptimalImages` function will still apply dynamic sizing to Blogger images if needed.
+    - The `src` attribute of the `<img>` tag is populated directly with the standard `thumbnailUrl`. This ensures the small grid items load a lightweight image by default, leveraging the browser's native `loading="lazy"`.
+    - The `<img>` tag also receives the `m-blox-image-to-load` class, allowing the `_loadOptimalImages` function to apply dynamic resizing if it's a Blogger image.
+    - The `highResImageURL` is stored in the `data-img-high` attribute on the parent `<article>` element. The click event handler reads from this attribute to update the main featured image.
 
 #### 5.4.3. Runtime Sizing (`_loadOptimalImages`)
 - This function uses an `IntersectionObserver` to lazy-load images.
-- When an image placeholder enters the viewport, it reads the `data-img-src` or `data-bg-src`.
+- When an image placeholder enters the viewport, it reads the `src` (for standard images and showcase thumbnails) or `data-img-high` (for backgrounds).
 - It calculates the required image dimension based on the device pixel ratio and:
     - The **viewport's larger dimension** (`Math.max(window.innerWidth, window.innerHeight)`) if the image has `data-is-fixed="true"`. This behavior applies to **all** feed types.
     - The element's container width for all other images.

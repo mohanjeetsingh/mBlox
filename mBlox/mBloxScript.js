@@ -283,8 +283,9 @@ function _renderShowcaseThumbnail(post, config) {
     if (!thumbnailUrl || thumbnailUrl.includes('no-image.png')) thumbnailUrl = noImg;
     if (!highResUrl || highResUrl.includes('no-image.png')) highResUrl = noImg;
 
-    const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${thumbnailUrl}" data-img-high="${highResUrl}" data-toggle="tooltip"`;
-    const imageTag = `<img class="w-100 h-100 m-blox-image-to-load" style="object-fit:cover;" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-img-src="${thumbnailUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
+    const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-toggle="tooltip"`;
+    const imageTag = `<img class="w-100 h-100${lazyLoadClass}" style="object-fit:cover;" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
     
     // Wrap the image in a figure to correctly apply aspect ratio and other layout classes.
     const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
@@ -541,7 +542,7 @@ function _renderImage(finalType, postID, config, data) {
         case BLOCK_SHOWCASE:
             tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
             if (postID === 0) {
-                showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
+                showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
             }
             imageBSClass += `${config.aspectRatio} shadow-sm`;
             break;
@@ -568,9 +569,13 @@ function _renderImage(finalType, postID, config, data) {
     const canBeFixed = isComplexBlock
         ? postID === 0 && config.isImageFixed
         : config.isImageFixed;
+    // Only use the custom lazy loader for Blogger feeds, where we can dynamically resize images.
+    // For all other feeds, we rely on the browser's native `loading="lazy"` by setting the src directly.
+    const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
+    const imageSrc = config.isBloggerFeed ? placeholderSrc : imageURL;
     const imageCode = canBeFixed
-        ? `<figure class="m-0${imageBSClass} m-blox-image-to-load" data-bg-src="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-        : `<img class="${imageBSClass} m-blox-image-to-load" style="${imageCoverStyle}" src="${placeholderSrc}" data-img-src="${imageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
+        ? `<figure class="m-0${imageBSClass}${lazyLoadClass}" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
+        : `<img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }
@@ -832,7 +837,7 @@ function _bindShowcaseEvents(rawElement, config) {
             title: el.getAttribute('data-title'),
             summary: el.getAttribute('data-summary'),
             link: el.getAttribute('data-link'),
-            imgHigh: el.getAttribute('data-img-high')
+            imgHigh: el.querySelector('img')?.getAttribute('data-img-high') || ''
         };
     });
 
@@ -970,9 +975,9 @@ function _loadOptimalImages(rawElement) {
             if (!entry.isIntersecting) return;
 
             const el = entry.target;
-            const isBg = el.hasAttribute('data-bg-src');
+            const isBg = el.tagName === 'FIGURE'; // Figures are used for background images.
             const isFixed = el.getAttribute('data-is-fixed') === 'true';
-            const highResUrl = isBg ? el.getAttribute('data-bg-src') : el.getAttribute('data-img-src');
+            const highResUrl = el.getAttribute('data-img-high');
             let finalUrl = highResUrl;
 
             // Attempt to resize only if it's a known resizable URL (from Blogger).
@@ -983,7 +988,7 @@ function _loadOptimalImages(rawElement) {
             if (isFixed) {
                 // For fixed backgrounds, the image size is relative to the viewport, not the element.
                 requiredDimension = Math.max(window.innerWidth, window.innerHeight) * dpr;
-            } else {
+            } else { // Regular <img> tag
                 // For regular images, size is based on the element's container.
                 requiredDimension = el.getBoundingClientRect().width * dpr;
             }
@@ -1005,7 +1010,6 @@ function _loadOptimalImages(rawElement) {
             }
 
             observer.unobserve(el);
-            el.classList.remove('m-blox-image-to-load');
         });
     }, { rootMargin: "0px 0px 200px 0px" });
 
@@ -1095,7 +1099,9 @@ function _parseBlockConfig(rawElement) {
     const dataIFix = (rawElement.getAttribute("data-iFix") || "").toLowerCase();
     const widget = rawElement.closest(".widget");
     const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel); // Unique ID for the block, used for carousel targeting.
-
+    // Sanitize the ID to be valid for use in CSS selectors by removing spaces and other invalid characters.
+    const sanitizedMBlockID = mBlockID.replace(/[\s#.&?,[\]]/g, '-');
+    
     // Create the date formatter once, outside the loop, for efficiency.
     const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', {
         year: 'numeric',
@@ -1133,7 +1139,7 @@ function _parseBlockConfig(rawElement) {
         stageID,
         firstInstance,
         postsPerBlock,
-        mBlockID,
+        mBlockID: sanitizedMBlockID,
         dateFormatter,
         // Initial empty/default values
         containsNavigation: false,
