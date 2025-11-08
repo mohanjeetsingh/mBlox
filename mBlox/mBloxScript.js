@@ -848,10 +848,10 @@ function _bindShowcaseEvents(rawElement, config) {
             // If it's a video, play it.
             if (videoId && videoId !== "noVideo") {
                 if (iFrameNode) {
-                    const src = `https://www.youtube.com/embed/${videoId}`;
-                    const style = `${config.articleHeight};width:100%;`;
-                    const allowPolicy = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-                    iFrameNode.innerHTML = `<iframe src="${src}" title="YouTube video player" frameborder="0" allow="${allowPolicy}" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen style="${style}"></iframe>`;
+                    const src = `https://www.youtube-nocookie.com/embed/${videoId}`;
+                    const style = `${config.articleHeight}`;
+                    const allowPolicy = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;";
+                    iFrameNode.innerHTML = `<iframe src="${src}" title="YouTube video player" frameborder="0" allow="${allowPolicy}" width="100%" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" style="${style}"></iframe>`;
                     fadeIn(iFrameNode);
                     fadeOut(figureNode);
                     if (contentNode) fadeOut(contentNode);
