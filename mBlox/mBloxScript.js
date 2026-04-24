@@ -11,7 +11,7 @@
 if (typeof window.mBloxInitialized === 'undefined') {
     window.mBloxInitialized = true;
     (function () { // IIFE to encapsulate the entire script
-
+        _ensureStyles();
         const feedCache = new Map();
         const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -67,6 +67,26 @@ if (typeof window.mBloxInitialized === 'undefined') {
 
                 document.head.appendChild(script);
             });
+        }
+
+        /**
+         * Checks for a global CSS source path and injects the stylesheet if it hasn't been loaded.
+         */
+        function _ensureStyles() {
+            if (window.mBloxStylesLoaded) return;
+            
+            const cssPath = window.mBloxCssSrc;
+            if (cssPath) {
+                // Check if it's already in the DOM to prevent duplicates
+                if (!document.querySelector(`link[href*="${cssPath}"]`)) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.id = 'mblox-css-subset';
+                    link.href = cssPath;
+                    document.head.appendChild(link);
+                }
+                window.mBloxStylesLoaded = true;
+            }
         }
 
 

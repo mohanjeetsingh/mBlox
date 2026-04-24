@@ -16,17 +16,18 @@ let isFirstScriptLoad = !0;
  */
 function loadScripts(blockItem, isFirstLoad) {
     if (isFirstLoad) {
+        window.mBloxCssSrc = 'mBlox.css';
         const scriptElement = document.createElement('script');
         scriptElement.src = 'mBloxScript.js';
         document.head.append(scriptElement);
 
         scriptElement.onload = () => { mBlocks(blockItem); isFirstLoad = !1; }
-    } else { console.log(isFirstLoad,blockItem); mBlocks(blockItem); }
+    } else { console.log(isFirstLoad, blockItem); mBlocks(blockItem); }
 }
 
 //Intersection Observer for Lazy Loading
 window.addEventListener("load", (event) => {
-    document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock',isFirstScriptLoad));
+    document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock', isFirstScriptLoad));
 
     const options = { rootMargin: '500px', threshold: 0.0 },
         lazyLoadTargets = document.getElementsByClassName("mBlockL");
@@ -42,7 +43,7 @@ window.addEventListener("load", (event) => {
 const intersectionCallback = (entries, observer) => {
     entries.forEach((entry) => {
         if (entry.isIntersecting) {
-            (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target,isFirstScriptLoad));
+            (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target, isFirstScriptLoad));
             observer.unobserve(entry.target);
         }
     });
