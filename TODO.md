@@ -1,11 +1,7 @@
 This file tracks the next set of refactoring and feature implementation tasks for the mBlox project.
 
-## Stage 14: Bug Fixes and Spec Alignment
-
-*Goal: Address remaining bugs and align the implementation with the logic defined in `spec.md`.*
-
----
-
-## Stage 15: Original Implementation Alignment
-
-*Goal: Restore key behaviors from the original jQuery script that were lost or simplified during the modernization process.*
+1. Youtube Embed error
+2. List - smaller Stack items - last row height
+3. Showcase - thumbnails - when in nav mode (not carousel mode):
+    - padding not applied
+    - when right indicator is clicked: - to go to the next set of images the images don't have the correct aspect ratio/height; also the indicators seem to become inactive
