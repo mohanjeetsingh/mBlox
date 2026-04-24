@@ -2,8 +2,8 @@
  * mBlox for Blogger
  * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
- * @version 1.0.0
- * Copyright (c) 2022-2024, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
+ * @version 1.0.1
+ * Copyright (c) 2022-2026, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
 
@@ -74,7 +74,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
          */
         function _ensureStyles() {
             if (window.mBloxStylesLoaded) return;
-            
+
             const cssPath = window.mBloxCssSrc;
             if (cssPath) {
                 // Check if it's already in the DOM to prevent duplicates
