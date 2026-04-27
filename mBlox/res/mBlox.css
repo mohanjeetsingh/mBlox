@@ -3003,7 +3003,20 @@ summary {
 
 /* 2. Isolation Barrier */
 @scope (:is(.mBlock, .mBlockL)) {
-  :scope, * {
+  :scope,
+  .row,
+  .col,
+  [class*="col-"],
+  [class*="row-cols-"],
+  .ratio,
+  .ratio > *,
+  [class*="d-"],
+  .position-relative,
+  .position-absolute,
+  .w-100,
+  .h-100,
+  .overflow-hidden,
+  [class*="g-"] {
     all: revert-layer !important;
   }
 }
