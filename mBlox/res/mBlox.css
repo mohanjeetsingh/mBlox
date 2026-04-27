@@ -5,13 +5,14 @@
 @charset "UTF-8";
 
 @layer mblox {
+  @scope (:is(.mBlock, .mBlockL)) {
 
 /*!
  * Bootstrap  v5.3.8 (https://getbootstrap.com/)
  * Copyright 2011-2025 The Bootstrap Authors
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
  */
-:root {
+:scope {
   --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
 
   --bs-body-font-size: 1rem;
@@ -45,7 +46,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  :root {
+  :scope {
     scroll-behavior: smooth;
   }
 }
@@ -397,7 +398,7 @@ summary {
   }
 }
 
-:root {
+:scope {
   --bs-breakpoint-xs: 0;
   --bs-breakpoint-sm: 576px;
   --bs-breakpoint-md: 768px;
@@ -1780,7 +1781,7 @@ summary {
   --bs-btn-close-filter: invert(1) grayscale(100%) brightness(200%);
 }
 
-:root {
+:scope {
   --bs-btn-close-filter: ;
 }
 
@@ -2031,7 +2032,7 @@ summary {
   --bs-carousel-control-icon-filter: invert(1) grayscale(100);
 }
 
-:root {
+:scope {
   --bs-carousel-control-icon-filter: ;
 }
 
@@ -2997,4 +2998,12 @@ summary {
     padding: 3rem;
   }
 }
+}
+}
+
+/* 2. Isolation Barrier */
+@scope (:is(.mBlock, .mBlockL)) {
+  :scope, * {
+    all: revert-layer !important;
+  }
 }
