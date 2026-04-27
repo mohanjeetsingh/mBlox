@@ -305,7 +305,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
 
             const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
             const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-toggle="tooltip"`;
-            const imageTag = `<img class="w-100 h-100${lazyLoadClass}" style="object-fit:cover;" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+            const imageTag = `<img class="w-100 h-100${lazyLoadClass}" style="object-fit:cover !important;" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
 
             // Wrap the image in a figure to correctly apply aspect ratio and other layout classes.
             const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
@@ -424,13 +424,13 @@ if (typeof window.mBloxInitialized === 'undefined') {
         function _renderShowcaseFeature(config, parts) {
             const { postURL, postTitle, normalHeaderCode, snippetCode, ctaButtonCode, showcaseImageCode } = parts;
             const showcaseContent = config.showHeader
-                ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content;">${normalHeaderCode} ${snippetCode}</div>`
+                ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content !important;">${normalHeaderCode} ${snippetCode}</div>`
                 : '';
             const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
 
             // If there's no CTA, the feature image can sit too close to the thumbnails below. Add a margin to compensate.
             const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
-            return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe" style="display:none;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
+            return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe" style="display:none !important;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
         }
 
         /**
@@ -553,7 +553,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); // Replaces hqdefault.jpg etc.
             }
 
-            let imageCoverStyle = "object-fit:cover;height:100%!important;",
+            let imageCoverStyle = "object-fit:cover !important;height:100% !important;",
                 imageBSClass = ' w-100 img-fluid',
                 tooltipAttributes = ``;
             let showcaseImageCode = '';
@@ -699,12 +699,12 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
                 case BLOCK_PANCAKE: case BLOCK_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`;
                     break;
-                case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content;">Latest</div>`;
+                case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content !important;">Latest</div>`;
                 case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
                     switch (config.textVerticalAlign) {
                         case "top": textContentHTML += ' h-auto">'; break;
                         case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
-                        case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto;">'; break;
+                        case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto !important;">'; break;
                         case "overlay": textContentHTML += '">'; break;
                     }
                     break;
@@ -785,11 +785,11 @@ if (typeof window.mBloxInitialized === 'undefined') {
             const nextClass = `carousel-control-next link-secondary${config.containsNavigation ? " nav-next" : " pb-5"}`;
             const target = `#m${config.mBlockID}`;
 
-            const prev = `<button class="${prevClass}" type="button" title="Click for Previous" data-bs-target="${target}" data-bs-slide="prev" style="width:5%;">
+            const prev = `<button class="${prevClass}" type="button" title="Click for Previous" data-bs-target="${target}" data-bs-slide="prev" style="width:5% !important;">
                     <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg>
                     <span class="visually-hidden">Previous</span>
                   </button>`;
-            const next = `<button class="${nextClass}" title="Click for Next" type="button" data-bs-target="${target}" data-bs-slide="next" style="width:5%;">
+            const next = `<button class="${nextClass}" title="Click for Next" type="button" data-bs-target="${target}" data-bs-slide="next" style="width:5% !important;">
                     <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
                     <span class="visually-hidden">Next</span>
                   </button>`;
