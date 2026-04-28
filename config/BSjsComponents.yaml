@@ -1,0 +1,3 @@
+# Bootstrap JS components required for mBlox
+components:
+  - carousel

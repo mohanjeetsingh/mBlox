@@ -1,0 +1,220 @@
+# Bootstrap classes used in mBloxScript.js
+layout:
+  - row
+  - col
+  - d-flex
+  - d-inline-flex
+  - d-block
+  - flex-wrap
+  - flex-grow-1
+  - overflow-hidden
+  - position-absolute
+  - top-50
+  - start-50
+  - end-0
+  - bottom-0
+  - translate-middle
+  - translate-middle-x
+  - translate-middle-y
+  - float-start
+  - float-end
+  - position-relative
+
+grid:
+  - row-cols-1
+  - row-cols-sm-1
+  - row-cols-sm-2
+  - row-cols-sm-3
+  - row-cols-sm-4
+  - row-cols-md-2
+  - row-cols-md-3
+  - row-cols-md-4
+  - row-cols-lg-3
+  - row-cols-lg-4
+  - row-cols-lg-5
+  - row-cols-xl-4
+  - row-cols-xl-5
+  - row-cols-xl-6
+
+spacing:
+  - m-0
+  - m-2
+  - mt-auto
+  - mt-2
+  - mt-3
+  - mt-4
+  - mt-5
+  - mb-3
+  - mb-5
+  - mx-0
+  - mx-auto
+  - mx-md-5
+  - mx-lg-5
+  - my-2
+  - p-2
+  - p-3
+  - p-4
+  - p-5
+  - px-0
+  - px-2
+  - px-4
+  - px-sm-3
+  - px-md-4
+  - px-lg-5
+  - py-2
+  - py-3
+  - py-5
+  - pb-3
+  - pb-5
+  - ps-0
+  - ps-5
+  - pe-5
+
+components:
+  card:
+    - card
+    - card-body
+    - card-title
+    - card-img-overlay
+  button:
+    - btn
+    - btn-light
+    - btn-primary
+    - btn-secondary
+    - btn-dark
+    - btn-danger
+    - btn-outline-light
+    - btn-outline-dark
+    - btn-outline-primary
+    - btn-outline-secondary
+  pagination:
+    - pagination
+    - justify-content-end
+  carousel:
+    - carousel
+    - carousel-fade
+    - carousel-inner
+    - carousel-item
+    - carousel-indicators
+    - carousel-control-prev
+    - carousel-control-next
+
+typography:
+  - display-5
+  - display-6
+  - h3
+  - h4
+  - h5
+  - fw-bold
+  - fw-normal
+  - fw-lighter
+  - small
+  - blockquote
+  - text-start
+  - text-center
+  - text-end
+  - text-muted
+  - text-body-secondary
+  - text-black-50
+
+utilities:
+  sizing:
+    - w-100
+    - w-75
+    - w-auto
+    - h-100
+    - h-auto
+  border:
+    - border
+    - border-0
+    - border-3
+    - border-opacity-75
+  rounded:
+    - rounded
+    - rounded-0
+    - rounded-5
+    - rounded-top
+    - rounded-bottom
+    - rounded-circle
+  shadow:
+    - shadow-sm
+  ratio:
+    - ratio
+    - ratio-1x1
+    - ratio-4x3
+    - ratio-16x9
+    - ratio-21x9
+  opacity:
+    - opacity-50
+    - opacity-75
+  colors:
+    - bg-light
+    - bg-primary
+    - bg-secondary
+    - bg-dark
+    - bg-danger
+    - bg-body-secondary
+    - bg-body-tertiary
+    - bg-opacity-75
+    - link-light
+    - link-primary
+    - link-secondary
+    - link-dark
+    - text-bg-light
+    - text-bg-primary
+    - text-bg-secondary
+    - text-bg-dark
+    - text-bg-danger
+
+helpers:
+  - active
+  - visually-hidden
+  - list-unstyled
+  - img-fluid
+  - blur-5
+
+# Regex patterns for PurgeCSS safelisting
+# These are used for classes constructed dynamically in JS or those with many variants
+safelist:
+  standard:
+    - "html"
+    - "body"
+    - "^carousel-"
+    - "^ratio-"
+    - "^bg-"
+    - "^text-"
+    - "^link-"
+    - "^btn-"
+    - "^g-"
+    - "^p[tbesxy]?-"
+    - "^m[tbesxy]?-"
+    - "^rounded-"
+    - "^border-"
+    - "^col-"
+    - "^row-"
+    - "^d-"
+    - "^flex-"
+    - "^justify-"
+    - "^align-"
+    - "^position-"
+    - "^top-"
+    - "^bottom-"
+    - "^start-"
+    - "^end-"
+    - "^translate-"
+    - "^float-"
+    - "^w-"
+    - "^h-"
+    - "^opacity-"
+    - "^shadow-"
+    - "^display-"
+    - "^fw-"
+    - "^blur-"
+    - "^st"
+    - "^bi-"
+  deep:
+    - "carousel"
+    - "ratio"
+  greedy:
+    - "carousel"
+    - "ratio"

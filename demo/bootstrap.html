@@ -1,0 +1,80 @@
+<html>
+<!--
+ * mBlocks for Blogger (Bootstrap Test)
+ * CIA.RealHappinessCenter.com
+ * Copyright (c) 2022-2026, Mohanjeet Singh
+ * Released under the MIT license
+ -->
+
+<head>
+    <meta name="referrer" content="origin" />
+    <link href='../assets/vendor/bootstrap.min.css' rel='stylesheet' />
+    <script src='../assets/vendor/bootstrap.bundle.min.js'></script>
+    <script src='../mBloxCall.js'></script>
+    <script src='../assets/noImg.js'></script>
+</head>
+
+<body>
+    <script>
+        const blockConfigurations = [
+            { class: 'mBlockL', contenttype: 'recent', corner: "sharp", posts: "4", type: "s-ihs", title: "RSS", theme: "primary", feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWA1V8hi8TJm4DlBIfFfYyQ', ar: "16x9", isCarousel: "true", moreText: "Click for more" },
+            { class: 'mBlockL bg-dark', contenttype: 'Recent', label: "Recent", posts: "6", type: "t-hs", title: "wp", description: "descr", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", feed: 'https://www.ignouhelp.in/wp-json/' },
+            { class: 'mBlockL bg-dark', contenttype: 'Recent', label: "Recent", posts: "6", type: "s-i", title: "iShowcase", description: "descr", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", ar: "16x9", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'comments', label: "Art", posts: "6", cols: "4", rows: "2", isCarousel: "true", type: "m-ihad", title: "ihaComment", CTAText: "Reply", moreText: "More", theme: 'secondary', feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL px-lg-5 bg-dark', contenttype: 'recent', label: "Articles", posts: "10", type: "g-i", title: "igallery", moreText: "Click for more", feed: 'https://art.realhappinesscenter.com/', cols: "4", rows: "2", gutter: "3", iBorder: "true", corner: "sharp", ar: "16x9", theme: "dark", lowContrast: "true" },
+            { class: 'mBlockL', contenttype: 'recent', label: "Art", posts: "12", cols: "8", rows: "2", iBorder: "true", isCarousel: "true", type: "g-i", title: "igalleryC", iFix: "true", moreText: "Click for more", ar: "16x9", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "9", cols: "4", rows: "2", isCarousel: "true", type: "q-ha", title: "iaQuote", CTAText: "More", moreText: "Click for more", iFix: "true", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "9", cols: "4", rows: "2", isCarousel: "true", type: "t-ih", title: "ihStack", CTAText: "More", moreText: "Click for more", iFix: "true", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "6", rows: "2", isCarousel: "true", type: "t-ihs", title: "ihsStack", CTAText: "More", iFix: "true", moreText: "Click for more", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "5", cols: "4", isCarousel: "true", type: "t-h", title: "hStack", iFix: "true", moreText: "Click for more", CTAText: "More", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "3", iFix: "true", isCarousel: "true", type: "t-hs", title: "hsStack", CTAText: "More", moreText: "Click for more", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "9", theme: "dark", rows: "2", isCarousel: "true", type: "p-ih", title: "ihPanCake", CTAText: "More", moreText: "Click for more", feed: 'https://mohanjeet.blogspot.com/', iFix: "true" },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "6", rows: "2", isCarousel: "true", type: "p-ihs", title: "ihsPanCake", CTAText: "More", iFix: "true", moreText: "Click for more", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "5", cols: "4", isCarousel: "true", type: "p-h", title: "hPanCake", iFix: "true", moreText: "Click for more", CTAText: "More", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'labels', label: "Art", posts: "3", rows: "2", iFix: "true", isCarousel: "true", type: "p-hs", title: "hsPanCake", CTAText: "More", moreText: "Click for more", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL bg-dark', contenttype: 'Recent', label: "Recent", posts: "6", type: "s-i", title: "iShowcase", description: "descr", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", ar: "16x9", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL bg-dark', contenttype: 'label', label: "Articles", posts: "6", iFix: "true", type: "s-ih", title: "ihShowcase", moreText: "Click for more", corner: "sharp", theme: "primary", CTAText: "More", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL bg-dark', contenttype: 'label', label: "Art", posts: "10", type: "s-ihs", title: "ihsShowcase", iFix: "true", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'label', label: "Art", posts: "9", cols: "6", iFix: "true", type: "c-i", iBorder: "true", title: "icards", feed: 'https://mohanjeet.blogspot.com/', theme: "dark", CTAText: "More", corner: "sharp", moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "3", type: "c-ih", title: "ihcards", iBlur: "true", feed: 'https://mohanjeet.blogspot.com/', iFix: "true", theme: "dark" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "3", type: "c-ihs", title: "ihscards", iFix: "true", feed: 'https://mohanjeet.blogspot.com/', theme: "dark", CTAText: "More", moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", theme: "primary", iFix: "true", posts: "3", type: "c-h", title: "hCards", corner: "sharp", feed: 'https://mohanjeet.blogspot.com/' },
+            { class: 'mBlockL', contenttype: 'recent', label: "Articles", posts: "3", iFix: "true", cols: "3", type: "c-hs", title: "hscardCarousel", isCarousel: "true", CTAText: "More", feed: 'https://mohanjeet.blogspot.com/', moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'recent', label: "Articles", isCarousel: "true", posts: "5", type: "v-i", iFix: "true", title: "iCover", feed: 'https://mohanjeet.blogspot.com/', iHeight: '70vh', moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "1", theme: "dark", type: "v-ih", iFix: "true", title: "ihCover", CTAText: "More", feed: 'https://mohanjeet.blogspot.com/', iHeight: '70vh', isCarousel: "true", textVAlign: "top" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "3", theme: "primary", iFix: "true", type: "v-ihs", title: "ihsCover", feed: 'https://mohanjeet.blogspot.com/', isCarousel: "true", iHeight: '70vh', textVAlign: "bottom", moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "3", theme: "light", iFix: "true", CTAText: "More", type: "v-h", title: "hCover", feed: 'https://mohanjeet.blogspot.com/', isCarousel: "true", iHeight: '70vh', textVAlign: "middle" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "3", type: "v-hs", title: "hsCover", feed: 'https://mohanjeet.blogspot.com/', iFix: "true", iHeight: '70vh', isCarousel: "true", textVAlign: "overlay", moreText: "Click for more" },
+            { class: 'mBlockL', contenttype: 'recent', label: "Art", posts: "10", type: "l-i", title: "ilist", cols: "4", feed: 'https://art.realhappinesscenter.com/', moreText: "Click for more", theme: "dark", CTAText: "More" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "5", iFix: "true", type: "l-ih", title: "ihlist", feed: 'https://mohanjeet.blogspot.com/', CTAText: "More" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "5", iFix: "true", type: "l-ihs", title: "ihslist", feed: 'https://mohanjeet.blogspot.com/', cols: "3", corner: "sharp", moreText: "Click for more", theme: "primary", CTAText: "More" },
+            { class: 'mBlockL', contenttype: 'label', label: "Articles", posts: "5", iFix: "true", type: "l-h", title: "hlist", feed: 'https://mohanjeet.blogspot.com/', textVAlign: "middle", CTAText: "More" },
+            { class: 'mBlockL', contenttype: 'label', label: "Art", posts: "10", iFix: "true", cols: "4", type: "l-hs", title: "hslist", feed: 'https://mohanjeet.blogspot.com/', moreText: "Click for more", textVAlign: "middle", CTAText: "More" }
+        ];
+
+        function generateBlocks(configs) {
+            const fragment = document.createDocumentFragment();
+            configs.forEach(config => {
+                const section = document.createElement('section');
+                for (const key in config) {
+                    if (Object.hasOwnProperty.call(config, key)) {
+                        const value = config[key];
+                        if (key === 'class') {
+                            section.className = value;
+                        } else {
+                            section.setAttribute(`data-${key}`, value);
+                        }
+                    }
+                }
+                fragment.appendChild(section);
+            });
+            document.body.appendChild(fragment);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            generateBlocks(blockConfigurations);
+        });
+    </script>
+</body>
+
+</html>

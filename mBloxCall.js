@@ -1,8 +1,8 @@
 /*!
  * mBlocks for Blogger
  * CIA.RealHappinessCenter.com
- * @version 1.0.0
- * Copyright (c) 2022-2024, Mohanjeet Singh
+ * @version 2.0.0
+ * Copyright (c) 2022-2026, Mohanjeet Singh
  * Released under the MIT license
  */
 
@@ -16,13 +16,23 @@ let isFirstScriptLoad = !0;
  */
 function loadScripts(blockItem, isFirstLoad) {
     if (isFirstLoad) {
-        window.mBloxCssSrc = 'mBlox.css';
-        const scriptElement = document.createElement('script');
-        scriptElement.src = 'mBloxScript.js';
-        document.head.append(scriptElement);
+        window.mBloxCssSrc = '../dist/mBloxBS.css';
+        window.mBloxBsJsSrc = '../dist/mBloxBS.js';
 
-        scriptElement.onload = () => { mBlocks(blockItem); isFirstLoad = !1; }
-    } else { console.log(isFirstLoad, blockItem); mBlocks(blockItem); }
+        const scriptElement = document.createElement('script');
+        scriptElement.src = '../mBloxScript.js';
+        scriptElement.onload = () => {
+            if (typeof mBlocks === 'function') {
+                mBlocks(blockItem);
+            }
+            isFirstScriptLoad = !1;
+        };
+        document.head.append(scriptElement);
+    } else {
+        if (typeof mBlocks === 'function') {
+            mBlocks(blockItem);
+        }
+    }
 }
 
 //Intersection Observer for Lazy Loading

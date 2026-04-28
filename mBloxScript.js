@@ -2,7 +2,7 @@
  * mBlox for Blogger
  * Demo @ https://mBloxForBlogger.blogspot.com/
  * Agency @ https://CIA.RealHappinessCenter.com
- * @version 1.0.1
+ * @version 2.0.0
  * Copyright (c) 2022-2026, Mohanjeet Singh (https://Mohanjeet.blogspot.com/)
  * Released under the MIT license
  */
@@ -11,7 +11,7 @@
 if (typeof window.mBloxInitialized === 'undefined') {
     window.mBloxInitialized = true;
     (function () { // IIFE to encapsulate the entire script
-        _ensureStyles();
+        _ensureDependencies();
         const feedCache = new Map();
         const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -70,22 +70,42 @@ if (typeof window.mBloxInitialized === 'undefined') {
         }
 
         /**
-         * Checks for a global CSS source path and injects the stylesheet if it hasn't been loaded.
+         * Checks for global CSS/JS source paths and injects them if needed.
+         * JS dependencies are awaited to ensure Bootstrap is ready before initialization.
          */
-        function _ensureStyles() {
-            if (window.mBloxStylesLoaded) return;
-
-            const cssPath = window.mBloxCssSrc;
-            if (cssPath) {
-                // Check if it's already in the DOM to prevent duplicates
-                if (!document.querySelector(`link[href*="${cssPath}"]`)) {
+        async function _ensureDependencies() {
+            // 1. CSS Injection
+            if (!window.mBloxStylesLoaded && window.mBloxCssSrc) {
+                if (!document.querySelector(`link[href*="${window.mBloxCssSrc}"]`)) {
                     const link = document.createElement('link');
                     link.rel = 'stylesheet';
                     link.id = 'mblox-css-subset';
-                    link.href = cssPath;
+                    link.href = window.mBloxCssSrc;
                     document.head.appendChild(link);
                 }
                 window.mBloxStylesLoaded = true;
+            }
+
+            // 2. JS Injection (Bootstrap Bundle)
+            // Only load if a path is provided and Carousel isn't already available
+            if (window.mBloxBsJsSrc && (!window.bootstrap || !window.bootstrap.Carousel)) {
+                if (!window.mBloxBsJsLoading) {
+                    window.mBloxBsJsLoading = new Promise((resolve, reject) => {
+                        console.log('mBlox: Loading Bootstrap JS bundle...');
+                        const script = document.createElement('script');
+                        script.src = window.mBloxBsJsSrc;
+                        script.onload = () => {
+                            console.log('mBlox: Bootstrap JS ready.');
+                            resolve();
+                        };
+                        script.onerror = (e) => {
+                            console.error('mBlox: Failed to load Bootstrap JS bundle.');
+                            reject(e);
+                        };
+                        document.head.append(script);
+                    });
+                }
+                await window.mBloxBsJsLoading;
             }
         }
 
@@ -717,9 +737,10 @@ if (typeof window.mBloxInitialized === 'undefined') {
                     }
             }
 
-            textContentHTML += `${authorCode}${dateCode}`;
+            if (finalType !== BLOCK_QUOTE) textContentHTML += `${authorCode}${dateCode}`;
             if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === BLOCK_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
             textContentHTML += snippetCode;
+            if (finalType === BLOCK_QUOTE) textContentHTML += `${authorCode}${dateCode}`;
             if (finalType !== BLOCK_PANCAKE && finalType !== BLOCK_QUOTE) {
                 textContentHTML += ctaButtonCode; // CTA
             }
@@ -1135,15 +1156,14 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 // Component visibility
                 showHeader, showImage, showSnippet, showAuthor, showDate,
                 // Layout & Style
-                columnCount: rawElement.getAttribute("data-cols"), // Will be parsed to int later
-                columnCount: parseInt(rawElement.getAttribute("data-cols"), 10) || null, // Parse to int immediately
+                columnCount: parseInt(rawElement.getAttribute("data-cols"), 10) || null,
                 blockRows: parseInt(rawElement.getAttribute("data-rows") || "1", 10),
                 isCarousel: (rawElement.getAttribute("data-isCarousel") || "").toLowerCase() == "true",
                 sectionHeight: rawElement.getAttribute("data-iHeight"),
                 articleHeight: '', // Will be set in _applyDefaultConfig
                 blurImage: dataBlur === "true" ? true : (dataBlur === "false" ? false : null),
                 inverseTheme,
-                textVerticalAlign: (rawElement.getAttribute("data-textVAlign") || "").toLowerCase(),
+                textVerticalAlign: textVerticalAlign,
                 cornerStyle: ((rawElement.getAttribute("data-corner") || "").toLowerCase() == "sharp") ? " rounded-0" : " rounded",
                 aspectRatio: ` ratio ratio-${(rawElement.getAttribute("data-ar") || "1x1").toLowerCase()}`,
                 gutterSize: rawElement.getAttribute("data-gutter") || ((blockType == "v") ? 0 : 3),
@@ -1332,6 +1352,47 @@ if (typeof window.mBloxInitialized === 'undefined') {
         }
 
         /**
+         * Fetches a URL via a CORS proxy with a fallback mechanism.
+         * @param {string} apiUrl The raw API URL to fetch.
+         * @returns {Promise<{text: string, response: Response}>}
+         */
+        async function _fetchWithProxy(apiUrl) {
+            const proxies = [
+                { url: `https://api.codetabs.com/v1/proxy?quest=${apiUrl}`, type: 'raw' },
+                { url: `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`, type: 'raw' },
+                { url: `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`, type: 'json' }
+            ];
+
+            for (const proxy of proxies) {
+                try {
+                    // Use a short timeout for the initial proxies to avoid blocking
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+                    const response = await fetch(proxy.url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        let text;
+                        if (proxy.type === 'json') {
+                            const data = await response.json();
+                            text = data.contents;
+                        } else {
+                            text = await response.text();
+                        }
+                        
+                        if (text && text.length > 0) {
+                            return { text, response };
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`mBlox: Proxy attempt failed for ${apiUrl}: ${e.message}`);
+                }
+            }
+            throw new Error(`All CORS proxies failed for ${apiUrl}`);
+        }
+
+        /**
          * Data provider for WordPress REST API feeds.
          */
         class WordPressProvider {
@@ -1357,18 +1418,11 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 let apiUrl = `${baseUrl}?_embed&per_page=${this.config.postsPerBlock}&page=${this.config.stageID}`;
 
                 // In WordPress, 'label' is equivalent to 'category'.
-                // This requires an extra fetch to get the category ID from the slug (label name).
-                // For simplicity in this implementation, we'll assume the user provides a category ID in data-label.
                 if (this.config.contentType === 'label' && !isNaN(parseInt(this.config.dataLabel, 10))) {
                     apiUrl += `&categories=${this.config.dataLabel}`;
                 }
 
-                // Note: WordPress 'comments' are a separate endpoint (`/wp/v2/comments`) and would require
-                // different mapping. For now, we only support posts.
-
-                // Prepend a different CORS proxy to the API URL. Some servers block specific proxies,
-                // so switching can resolve DNS or 403 Forbidden errors.
-                return `https://api.codetabs.com/v1/proxy?quest=${apiUrl}`;
+                return apiUrl;
             }
 
             /**
@@ -1376,21 +1430,23 @@ if (typeof window.mBloxInitialized === 'undefined') {
              * @returns {Promise<object>} A promise that resolves with the standardized data object.
              */
             async fetch() {
-                const url = this._buildFeedUrl();
-                const cached = feedCache.get(url);
+                const apiUrl = this._buildFeedUrl();
+                const cached = feedCache.get(apiUrl);
                 if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
                     return cached.data;
                 }
 
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`WordPress API request failed: ${response.statusText}`);
+                const { text: responseText, response } = await _fetchWithProxy(apiUrl);
+                
+                try {
+                    const rawData = JSON.parse(responseText);
+                    const formattedData = _mapWordPressResponseToStandardFormat(rawData, response.headers);
+                    feedCache.set(apiUrl, { data: formattedData, timestamp: Date.now() });
+                    return formattedData;
+                } catch (e) {
+                    console.error("mBlox: Failed to parse WordPress JSON. Response snippet:", responseText.substring(0, 200));
+                    throw new Error("Invalid JSON response from WordPress feed. This often happens due to security blocks (Cloudflare) or CORS proxy errors.");
                 }
-                const rawData = await response.json();
-                const formattedData = _mapWordPressResponseToStandardFormat(rawData, response.headers);
-
-                feedCache.set(url, { data: formattedData, timestamp: Date.now() });
-                return formattedData;
             }
         }
 
@@ -1403,14 +1459,11 @@ if (typeof window.mBloxInitialized === 'undefined') {
             }
 
             /**
-             * Builds the feed URL, wrapping it in a CORS proxy.
-             * @returns {string} The final proxied feed URL.
+             * Builds the feed URL.
+             * @returns {string} The final feed URL.
              */
             _buildFeedUrl() {
-                // For RSS, the siteURL is the direct feed URL.
-                const feedUrl = this.config.siteURL;
-                // Wrap in a CORS proxy.
-                return `https://api.codetabs.com/v1/proxy?quest=${feedUrl}`;
+                return this.config.siteURL;
             }
 
             /**
@@ -1418,29 +1471,23 @@ if (typeof window.mBloxInitialized === 'undefined') {
              * @returns {Promise<object>} A promise that resolves with the standardized data object.
              */
             async fetch() {
-                const url = this._buildFeedUrl();
-                const cached = feedCache.get(url);
+                const apiUrl = this._buildFeedUrl();
+                const cached = feedCache.get(apiUrl);
                 if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
                     return cached.data;
                 }
 
-                const response = await fetch(url);
-
-                if (!response.ok) {
-                    throw new Error(`RSS feed request failed: ${response.statusText}`);
-                }
-
-                const xmlString = await response.text();
+                const { text: xmlString } = await _fetchWithProxy(apiUrl);
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
                 // Check for parsing errors
                 if (xmlDoc.getElementsByTagName("parsererror").length) {
-                    throw new Error("Failed to parse RSS feed.");
+                    throw new Error("Failed to parse RSS feed. The response might not be valid XML.");
                 }
                 const formattedData = _mapRssResponseToStandardFormat(xmlDoc);
 
-                feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+                feedCache.set(apiUrl, { data: formattedData, timestamp: Date.now() });
                 return formattedData;
             }
         }
@@ -1523,6 +1570,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
          * @param {string|HTMLElement} blockItem A CSS selector string for the block elements or a single HTMLElement.
          */
         const mBlocks = async function (blockItem) {
+            await _ensureDependencies();
             const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
             for (const rawElement of elements) {
