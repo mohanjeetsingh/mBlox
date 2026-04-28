@@ -93,10 +93,65 @@ async function run() {
         safelist: safelist
     });
 
-    // 4. Post-process with Autoprefixer
-    console.log('💅 Post-processing (Autoprefixer)...');
+    // 4. Post-process with Autoprefixer and Custom Hardening
+    console.log('💅 Post-processing (Autoprefixer & Hardening)...');
+    
+    /**
+     * PostCSS plugin to "harden" structural CSS items by adding !important
+     * and remove it from decorative elements like colors and fonts.
+     */
+    const mbloxHarden = {
+        postcssPlugin: 'mblox-harden',
+        Once(root) {
+            // Structural properties that MUST have !important for layout integrity
+            const STRUCTURAL = new Set([
+                'display', 'position', 'top', 'right', 'bottom', 'left', 'float', 'clear',
+                'flex', 'flex-basis', 'flex-direction', 'flex-grow', 'flex-shrink', 'flex-wrap',
+                'justify-content', 'align-items', 'align-content', 'align-self',
+                'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
+                'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+                'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+                'gap', 'row-gap', 'column-gap',
+                'grid', 'grid-template-columns', 'grid-template-rows', 'grid-area', 'grid-column', 'grid-row',
+                'box-sizing', 'overflow', 'overflow-x', 'overflow-y', 'visibility', 'z-index',
+                'aspect-ratio', 'object-fit', 'object-position', 'vertical-align',
+                'clip', 'clip-path', 'white-space', 'text-align'
+            ]);
+
+            // Decorative properties that should NOT have !important to allow host overrides
+            const DECORATIVE = new Set([
+                'color', 'background', 'background-color', 'background-image', 'border-color', 'outline-color',
+                'font', 'font-family', 'font-size', 'font-weight', 'font-style', 'line-height',
+                'text-decoration', 'text-transform', 'letter-spacing',
+                'box-shadow', 'opacity', 'filter', 'backdrop-filter'
+            ]);
+
+            root.walkDecls(decl => {
+                // Ignore CSS variables
+                if (decl.prop.startsWith('--')) return;
+
+                // Normalize property name (remove prefixes)
+                const prop = decl.prop.toLowerCase().replace(/^-(webkit|moz|ms|o)-/, '');
+
+                // Fix appearance compatibility: ensure standard property exists if prefixed is present
+                if (prop === 'appearance' && decl.prop !== 'appearance') {
+                    const rule = decl.parent;
+                    if (rule && !rule.some(i => i.prop === 'appearance')) {
+                        rule.insertAfter(decl, decl.clone({ prop: 'appearance' }));
+                    }
+                }
+
+                if (STRUCTURAL.has(prop)) {
+                    decl.important = true;
+                } else if (DECORATIVE.has(prop)) {
+                    decl.important = false;
+                }
+            });
+        }
+    };
+
     let finalCss = purged[0].css.replace(/@charset "UTF-8";/g, '').trim();
-    const processed = await postcss([autoprefixer]).process(finalCss, { from: undefined });
+    const processed = await postcss([autoprefixer, mbloxHarden]).process(finalCss, { from: undefined });
     finalCss = processed.css;
 
     // 5. Wrap in @layer mblox and add header
