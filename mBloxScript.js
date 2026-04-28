@@ -590,7 +590,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                     imageBSClass += ` ${config.aspectRatio.trim()}`;
                     break;
                 case BLOCK_COMMENT:
-                    imageCoverStyle += ' height:3rem!important;width:3rem;';
+                    imageCoverStyle += ' height:3rem!important;width:3rem!important;';
                     imageBSClass = ' rounded-circle m-2';
                     break;
                 case BLOCK_QUOTE:
@@ -1380,7 +1380,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                         } else {
                             text = await response.text();
                         }
-                        
+
                         if (text && text.length > 0) {
                             return { text, response };
                         }
@@ -1437,7 +1437,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 }
 
                 const { text: responseText, response } = await _fetchWithProxy(apiUrl);
-                
+
                 try {
                     const rawData = JSON.parse(responseText);
                     const formattedData = _mapWordPressResponseToStandardFormat(rawData, response.headers);
