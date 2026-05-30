@@ -15,3 +15,20 @@ yarn-error.log*
 # OS generated files
 .DS_Store
 Thumbs.db
+# Dependencies
+node_modules/
+.npm
+npm-debug.log*
+
+# Build artifacts
+*.temp.js
+
+# Environment
+.env
+.env.local
+
+# IDEs and System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
