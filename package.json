@@ -1,0 +1,35 @@
+{
+  "name": "mblox",
+  "version": "2.0.0",
+  "description": "mBlox is a lightweight, dependency-free JavaScript library that enables dynamic, Elementor/Gutentor-like content blocks. It can fetch and display content from various sources like **Blogger**, **WordPress**, and any **RSS feed** (including YouTube) in a variety of customizable layouts.",
+  "main": "mBloxScript.js",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "node scripts/build-css.js",
+    "build:js": "node scripts/build-js.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohanjeetsingh/mBlox.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/mohanjeetsingh/mBlox/issues"
+  },
+  "homepage": "https://github.com/mohanjeetsingh/mBlox#readme",
+  "dependencies": {
+    "autoprefixer": "^10.5.0",
+    "bootstrap": "^5.3.8",
+    "js-yaml": "^4.1.1",
+    "postcss": "^8.5.12",
+    "purgecss": "^8.0.0",
+    "sass": "^1.99.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
+}
