@@ -9,9 +9,9 @@ import { renderCarousel, initCarousel } from '../components/carousel.js';
 import { 
     BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
-    RESPONSIVE_GRID_CLASSES_M3E,
-    fadeIn, fadeOut 
+    RESPONSIVE_GRID_CLASSES_M3E
 } from '../core/config.js';
+import { fadeIn, fadeOut } from '../utils/dom.js';
 import { getVideoIframe } from '../components/video.js';
 
 const BLOCK_NAME_MAP = {
