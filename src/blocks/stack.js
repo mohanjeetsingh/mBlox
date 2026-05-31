@@ -25,37 +25,25 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    let textContentHTML = '';
-    if (config.showHeader) {
-        if (config.showImage) {
-            textContentHTML += '<div class="w-2/3 h-full flex flex-col">';
-        }
-        
-        const isDarkTheme = config.dataTheme !== "surface";
-        // Stack block's internal layout uses padding instead of card-body
-        const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
-        textContentHTML += `<div class="p-4 flex-grow flex flex-col justify-center${bodyClass}">`;
-        textContentHTML += `${authorCode}${dateCode}`;
-        textContentHTML += titleCode;
-        textContentHTML += snippetCode;
-        textContentHTML += ctaButtonCode;
-        textContentHTML += `</div>`;
-        
-        if (config.showImage) {
-            textContentHTML += `</div>`;
-        }
-    }
+    const isDarkTheme = config.dataTheme !== "surface";
+    const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+    
+    const innerContent = `
+        <div class="p-4 flex-grow flex flex-col justify-center${bodyClass}">
+            ${authorCode}${dateCode}
+            ${titleCode}
+            ${snippetCode}
+            ${ctaButtonCode}
+        </div>
+    `;
+
+    const textContentHTML = config.showHeader ? 
+        (config.showImage ? `<div class="w-2/3 h-full flex flex-col">${innerContent}</div>` : innerContent)
+        : '';
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold', 'flex', 'flex-row', 'bg-surface'];
-    classes.push(config.cornerStyle);
-
-    classes.push('h-full');
-    
-    const linkClasses = classes.join(' ');
-    const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
-    const linkWrapperEnd = `</a>`;
+    const linkClasses = ['flex', 'flex-row', 'bg-surface', config.cornerStyle, 'h-full'].filter(Boolean).join(' ');
     
     const articleClasses = 'col-span-1 inline-flex w-full';
-    return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
+    return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
 }

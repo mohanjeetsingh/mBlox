@@ -23,6 +23,6 @@ export function renderCTA(finalType, config, postTitle) {
                     break;
             }
             ctaClasses += ` ${config.theme.bg} ${config.theme.text}`;
-            return `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
+            return `<span class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</span>`;
     }
 }

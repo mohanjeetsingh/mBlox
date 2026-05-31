@@ -7,33 +7,33 @@ import { RESPONSIVE_CAROUSEL_CLASSES_M3E } from '../core/config.js';
 export function renderCarousel(blockBody, carouselIndicators, config, response, controls) {
     let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
 
-    if (config.isCarousel || config.containsNavigation) {
+    if (config.isCarousel) {
         // Native CSS scroll snap container
         const autoColsClass = RESPONSIVE_CAROUSEL_CLASSES_M3E[config.columnCount] || RESPONSIVE_CAROUSEL_CLASSES_M3E[6];
-        html += `<div class="grid grid-flow-col grid-rows-[${config.blockRows}] ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
-        if (config.isCarousel && carouselIndicators) {
+        const rowClassMap = { 1: 'grid-rows-1', 2: 'grid-rows-2', 3: 'grid-rows-3', 4: 'grid-rows-4' };
+        const rowClass = rowClassMap[config.blockRows] || 'grid-rows-1';
+        html += `<div class="grid grid-flow-col ${rowClass} ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
+        if (carouselIndicators) {
             html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
         }
 
-        if (config.isCarousel) {
-            const numItems = response && response.posts ? response.posts.length : 0;
-            const numCols = Math.ceil(numItems / (config.blockRows || 1));
-            if (numCols > 1) {
-                html += `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute bottom-3 left-0 right-0 z-10 pointer-events-none">`;
-                for(let i = 0; i < numCols; i++) {
-                    html += `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i+1}"></button>`;
-                }
-                html += `</div>`;
+        const numItems = response && response.posts ? response.posts.length : 0;
+        const numCols = Math.ceil(numItems / (config.blockRows || 1));
+        if (numCols > 1) {
+            html += `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute bottom-3 left-0 right-0 z-10 pointer-events-none">`;
+            for (let i = 0; i < numCols; i++) {
+                html += `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i + 1}"></button>`;
             }
-            html += `${controls.prev}${controls.next}`;
+            html += `</div>`;
         }
+        html += `${controls.prev}${controls.next}`;
 
-
-        if (config.containsNavigation) {
-            const totalStages = Math.ceil(response.totalResults / config.postsPerBlock);
-            if (config.stageID > 1) html += controls.prev;
-            if (config.stageID < totalStages) html += controls.next;
-        }
+    } else if (config.containsNavigation) {
+        // Standard paginated grid block (inner grid already created by ui-m3e.js)
+        html += blockBody;
+        const totalStages = Math.ceil(response.totalResults / config.postsPerBlock);
+        if (config.stageID > 1) html += controls.prev;
+        if (config.stageID < totalStages) html += controls.next;
     } else {
         html += blockBody;
         html += renderPaginationButtons(config, response);
@@ -67,7 +67,7 @@ export function initCarousel(rawElement, config) {
     const dots = rawElement.querySelectorAll('.carousel-dot');
     if (dots.length > 0 && container) {
         if (dots[0]) dots[0].setAttribute('aria-current', 'true');
-        
+
         const updateDots = () => {
             const scrollLeft = container.scrollLeft;
             const itemWidth = container.scrollWidth / dots.length;
@@ -80,8 +80,8 @@ export function initCarousel(rawElement, config) {
                 }
             });
         };
-        
-        container.addEventListener('scroll', updateDots, {passive: true});
+
+        container.addEventListener('scroll', updateDots, { passive: true });
 
         dots.forEach(dot => {
             dot.addEventListener('click', () => {

@@ -13,15 +13,8 @@ export function render(post, postID, config) {
     });
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold', 'block', 'relative'];
-    classes.push(config.cornerStyle);
-
-    classes.push(config.aspectRatio.trim());
-    
-    const linkClasses = classes.join(' ');
-    const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
-    const linkWrapperEnd = `</a>`;
+    const linkClasses = ['block', 'relative', config.cornerStyle, config.aspectRatio.trim()].filter(Boolean).join(' ');
     
     const articleClasses = 'col-span-1 inline-flex w-full';
-    return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${linkWrapperEnd}</article>`;
+    return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}</a></article>`;
 }

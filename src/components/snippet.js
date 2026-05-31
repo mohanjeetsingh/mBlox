@@ -9,5 +9,5 @@ export function renderSnippet(finalType, config, postContent) {
         snippetText = snippetText.substring(0, config.snippetSize) + "...";
     }
 
-    return `<summary class="list-none text-body-md text-on-surface-variant ${(finalType === BLOCK_COVER) ? 'py-6 block mx-0 md:mx-10' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
+    return `<div class="list-none text-body-md text-on-surface-variant ${(finalType === BLOCK_COVER) ? 'py-6 block mx-0 md:mx-10' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</div>`;
 }

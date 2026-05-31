@@ -24,6 +24,7 @@ export function renderImage(finalType, postID, config, data) {
 
     let imageCoverStyle = "object-fit:cover !important;height:100% !important;", imageBSClass = ' w-full h-auto', tooltipAttributes = ``;
     let showcaseImageCode = '';
+    let figureClass = 'w-full h-full flex';
 
     switch (finalType) {
         case BLOCK_SHOWCASE:
@@ -33,7 +34,7 @@ export function renderImage(finalType, postID, config, data) {
             imageBSClass += `${config.aspectRatio}`;
             break;
         case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
-        case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-full m-2'; break;
+        case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-full m-2'; figureClass = 'shrink-0 flex items-center justify-center'; break;
         case BLOCK_QUOTE: imageCoverStyle += ' height:6rem!important;width:6rem;'; imageBSClass = ' rounded-full mx-auto mt-6'; break;
         case BLOCK_STACK: imageBSClass = " w-1/3 shrink-0 object-cover h-full"; break;
         case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
@@ -49,7 +50,7 @@ export function renderImage(finalType, postID, config, data) {
 
     const imageCode = canBeFixed
         ? `<figure class="m-0${imageBSClass}${lazyLoadClass} relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${youtubeIcon}</figure>`
-        : `<figure class="m-0 relative w-full h-full flex"><img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
+        : `<figure class="m-0 relative ${figureClass}"><img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }

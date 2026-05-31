@@ -5,7 +5,7 @@ export function renderAuthor(finalType, config, authorName, authorUri) {
     let authorCode = '';
     const authorURL = (authorName === "Anonymous" || authorName === "Unknown" || !authorUri) ? '' : authorUri;
     const authorNameHTML = `<span class="text-label-md font-light" rel="author">${authorName}</span>`;
-    const authorLinkHTML = `<a href="${authorURL}" class="text-label-md font-light hover:underline" rel="author">${authorName}</a>`;
+    const authorLinkHTML = `<span class="text-label-md font-light hover:underline z-20 relative cursor-pointer" rel="author" data-href="${authorURL}">${authorName}</span>`;
 
     switch (finalType) {
         case BLOCK_QUOTE: 

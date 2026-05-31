@@ -1,17 +1,23 @@
 import { 
     BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
-    DEFAULT_COLUMN_COUNTS, M3E_THEMES, LAYOUT_CLASSES, ASPECT_RATIO_CLASSES
+    DEFAULT_COLUMN_COUNTS, M3E_THEMES, LAYOUT_CLASSES, ASPECT_RATIO_CLASSES,
+    RESPONSIVE_COLUMN_MAP, getBreakpointIndex
 } from '../core/config.js';
 
 export function calculateLayout(config, postsInFeed) {
     let newConfig = { ...config };
     if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) newConfig.isCarousel = false;
     if (newConfig.isCarousel) {
-        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.columnCount)) {
-            newConfig.blockRows = Math.ceil(postsInFeed / newConfig.columnCount);
+        const baseCols = Math.max(1, Math.min(6, newConfig.columnCount)); // Clamp between 1 and 6
+        const breakpointIndex = getBreakpointIndex(window.innerWidth);
+        const columnMap = RESPONSIVE_COLUMN_MAP[baseCols] || RESPONSIVE_COLUMN_MAP[6];
+        newConfig.actualColumnCount = columnMap[breakpointIndex];
+
+        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.actualColumnCount)) {
+            newConfig.blockRows = Math.ceil(postsInFeed / newConfig.actualColumnCount);
         }
-        if (postsInFeed <= (newConfig.columnCount * newConfig.blockRows)) {
+        if (postsInFeed <= (newConfig.actualColumnCount * newConfig.blockRows)) {
             newConfig.isCarousel = false;
             newConfig.containsNavigation = true;
         }

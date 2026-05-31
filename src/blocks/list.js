@@ -25,43 +25,23 @@ export function render(post, postID, config) {
     });
 
     // Content container (renders a Latest header bar, then falls through to card content overlay)
-    let textContentHTML = '';
-    if (config.showHeader) {
-        // "Latest" header bar specific to list type
-        textContentHTML += `<div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-xl rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>`;
-
-        // Falling through to Card content style
-        const alignClassMap = {
-            top: 'justify-start',
-            middle: 'justify-center',
-            bottom: 'justify-end',
-            overlay: ''
-        };
-        const justifyClass = alignClassMap[config.textVerticalAlign] || '';
-        const innerHeightClass = (config.textVerticalAlign === 'overlay' || !justifyClass) ? 'h-full ' : '';
-
-        textContentHTML += `
-            <div class="absolute inset-0 flex flex-col p-0 z-10 ${justifyClass}">
-                <div class="${innerHeightClass}${config.theme.glass} backdrop-blur-xl ${config.theme.text} rounded-none p-8 pt-20">
-                    ${authorCode}${dateCode}
-                    ${titleCode}
-                    ${snippetCode}
-                    ${ctaButtonCode}
-                </div>
-            </div>`;
-    }
+    const textContentHTML = config.showHeader ? `
+        <div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-xl rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>
+        <div class="absolute inset-0 flex flex-col p-0 z-10 ${
+            { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
+        }">
+            <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${config.theme.glass} backdrop-blur-xl ${config.theme.text} rounded-none p-8 pt-20">
+                ${authorCode}${dateCode}
+                ${titleCode}
+                ${snippetCode}
+                ${ctaButtonCode}
+            </div>
+        </div>
+    ` : '';
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold', 'relative', 'block'];
-    classes.push(config.cornerStyle);
-
-    classes.push(config.aspectRatio.trim());
-    classes.push(config.layout.mt);
-
-    const linkClasses = classes.join(' ');
-    const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
-    const linkWrapperEnd = `</a>`;
-
-    const articleClasses = 'col-span-1 inline-flex w-full';
-    return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
+    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), config.layout.mt, 'w-full'].filter(Boolean).join(' ');
+    
+    const articleClasses = `col-span-1 inline-flex w-full ${config.layout.mb}`;
+    return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
 }

@@ -25,39 +25,22 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    let textContentHTML = '';
-    if (config.showHeader) {
-        const alignClassMap = {
-            top: 'justify-start',
-            middle: 'justify-center',
-            bottom: 'justify-end',
-            overlay: ''
-        };
-        const justifyClass = alignClassMap[config.textVerticalAlign] || '';
-        const innerHeightClass = (config.textVerticalAlign === 'overlay' || !justifyClass) ? 'h-full ' : '';
-
-        textContentHTML = `
-            <div class="absolute inset-0 flex flex-col p-0 border-0 ${justifyClass}">
-                <div class="${innerHeightClass}${config.theme.glass} backdrop-blur-xl ${config.theme.text} rounded-none p-8">
-                    ${authorCode}${dateCode}
-                    ${titleCode}
-                    ${snippetCode}
-                    ${ctaButtonCode}
-                </div>
-            </div>`;
-    }
+    const textContentHTML = config.showHeader ? `
+        <div class="absolute inset-0 flex flex-col p-0 border-0 ${
+            { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
+        }">
+            <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${config.theme.glass} backdrop-blur-xl ${config.theme.text} rounded-none p-8">
+                ${authorCode}${dateCode}
+                ${titleCode}
+                ${snippetCode}
+                ${ctaButtonCode}
+            </div>
+        </div>
+    ` : '';
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold', 'relative', 'block'];
-    classes.push(config.cornerStyle);
-
-    classes.push(config.aspectRatio.trim());
-    classes.push('h-full');
-
-    const linkClasses = classes.join(' ');
-    const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
-    const linkWrapperEnd = `</a>`;
+    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'h-full'].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full';
-    return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
+    return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
 }

@@ -28,6 +28,25 @@ export const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_SHOWCASE]: 6
 };
 
+export const BREAKPOINTS = { sm: 600, md: 840, lg: 1200, xl: 1600 };
+
+export const RESPONSIVE_COLUMN_MAP = {
+    1: [1, 1, 1, 1, 1],
+    2: [1, 1, 2, 2, 2],
+    3: [1, 1, 2, 3, 3],
+    4: [1, 2, 3, 4, 4],
+    5: [2, 3, 4, 4, 5],
+    6: [3, 4, 4, 5, 6]
+};
+
+export function getBreakpointIndex(width) {
+    if (width < BREAKPOINTS.sm) return 0;
+    if (width < BREAKPOINTS.md) return 1;
+    if (width < BREAKPOINTS.lg) return 2;
+    if (width < BREAKPOINTS.xl) return 3;
+    return 4;
+}
+
 export const RESPONSIVE_CAROUSEL_CLASSES_M3E = {
     1: 'auto-cols-[100%]',
     2: 'auto-cols-[100%] @md:auto-cols-[50%]',
@@ -47,11 +66,11 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
 };
 
 export const M3E_THEMES = {
-    'surface': { bg: 'bg-surface', text: 'text-on-surface', textMuted: 'text-on-surface-variant' },
-    'surface-variant': { bg: 'bg-surface-variant', text: 'text-on-surface-variant', textMuted: 'text-outline' },
-    'primary': { bg: 'bg-primary', text: 'text-on-primary', textMuted: 'text-primary-container' },
-    'secondary': { bg: 'bg-secondary', text: 'text-on-secondary', textMuted: 'text-secondary-container' },
-    'tertiary': { bg: 'bg-tertiary', text: 'text-on-tertiary', textMuted: 'text-tertiary-container' },
+    'surface': { bg: 'bg-surface', text: 'text-on-surface' },
+    'surface-variant': { bg: 'bg-surface-variant', text: 'text-on-surface-variant' },
+    'primary': { bg: 'bg-primary', text: 'text-on-primary' },
+    'secondary': { bg: 'bg-secondary', text: 'text-on-secondary' },
+    'tertiary': { bg: 'bg-tertiary', text: 'text-on-tertiary' },
     'error': { bg: 'bg-error', text: 'text-on-error' }
 };
 

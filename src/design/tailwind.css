@@ -171,10 +171,9 @@
   }
 
   a {
-    @apply transition-all duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary;
+    @apply transition-all duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary overflow-hidden w-full no-underline font-bold;
   }
-
-
+}
 
   /* ─── Dark Mode Overrides ───────────────────────────────────────────
      Remaps all M3E color tokens for dark mode. */
@@ -287,4 +286,3 @@
       --color-scrim: #000000;
     }
   }
-}
