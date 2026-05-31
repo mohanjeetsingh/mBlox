@@ -9,7 +9,7 @@ export function renderSnippet(finalType, config, postContent) {
         snippetText = snippetText.substring(0, config.snippetSize) + "...";
     }
 
-    const paddingClass = (finalType === BLOCK_COVER) ? 'py-3 d-block mx-lg-5' : '';
+    const paddingClass = (finalType === BLOCK_COVER) ? 'py-6 d-block mx-lg-5' : '';
     const textMutedClass = (config.dataTheme === 'light') ? 'text-muted' : 'opacity-75';
     const contrastClass = config.lowContrast ? 'opacity-75' : '';
 

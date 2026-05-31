@@ -28,12 +28,12 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         const cornerClass = (config.cornerStyle === " rounded" && config.textVerticalAlign !== "overlay") ? ' rounded-5' : config.cornerStyle;
-        textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${cornerClass} start-50 translate-middle`;
+        textContentHTML += `<div class="bg-${config.dataTheme} text-on-${config.dataTheme} opacity-75 p-6 p-sm-5 position-absolute w-75 ${cornerClass} start-50 translate-middle`;
         switch (config.textVerticalAlign) {
-            case "top": textContentHTML += '-x mt-5">'; break;
+            case "top": textContentHTML += '-x mt-8">'; break;
             case "middle": textContentHTML += ' top-50">'; break;
-            case "bottom": textContentHTML += '-x bottom-0 mb-5">'; break;
-            case "overlay": textContentHTML += ' top-50 h-100 w-100">'; break;
+            case "bottom": textContentHTML += '-x bottom-0 mb-8">'; break;
+            case "overlay": textContentHTML += ' top-50 h-full w-full">'; break;
             default: textContentHTML += ' top-50">'; break;
         }
         textContentHTML += `${authorCode}${dateCode}`;
@@ -44,12 +44,12 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-100', 'shadow-sm', 'text-decoration-none', 'fw-bold'];
-    classes.push('rounded-0');
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    classes.push('rounded-none');
     classes.push('card');
     classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
     classes.push('text-center');
-    classes.push('h-100');
+    classes.push('h-full');
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;

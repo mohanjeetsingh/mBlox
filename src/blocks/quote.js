@@ -28,7 +28,7 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         const isDarkTheme = config.dataTheme !== "light";
-        const bodyClass = isDarkTheme ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`;
+        const bodyClass = isDarkTheme ? ` h-full opacity-75 bg-${config.dataTheme} text-on-${config.dataTheme}` : ` text-${config.inverseTheme}`;
         textContentHTML += `<div class="card-body${bodyClass}">`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -38,12 +38,12 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-100', 'shadow-sm', 'text-decoration-none', 'fw-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
     classes.push(config.cornerStyle);
     classes.push('card');
     classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
     classes.push('text-center');
-    classes.push('h-100');
+    classes.push('h-full');
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;

@@ -50,11 +50,11 @@ export function render(post, postID, config) {
     if (postID === 0 && config.firstInstance) {
         // Large feature block
         const showcaseContent = config.showHeader
-            ? `<div class="card-img-overlay d-flex flex-column justify-content-end p-0 border-0"><div class="sContent rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme}">${titleCode} ${snippetCode}</div></div>`
+            ? `<div class="card-img-overlay flex flex-col justify-end p-0 border-0"><div class="sContent rounded-none ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-6 px-lg-5 bg-${config.dataTheme}">${titleCode} ${snippetCode}</div></div>`
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
         const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe d-none"></div>${showcaseImageCode}<a class="link-${config.inverseTheme} text-decoration-none fw-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
+        return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="link-${config.inverseTheme} no-underline font-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
     }
 
     // Showcase grid post
@@ -84,8 +84,8 @@ export function renderThumbnail(post, config) {
     const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-toggle="tooltip"`;
-    const imageTag = `<img class="w-100 h-100 object-fit-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
-    const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
+    const imageTag = `<img class="w-full h-full object-fit-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    const figureTag = `<figure class="m-0 w-full img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
 
     return `<article class="col d-inline-flex sPost" ${articleDataAttributes} role="article">${figureTag}</article>`;
 }

@@ -5,7 +5,7 @@
   "main": "mBloxScript.js",
   "scripts": {
     "build": "npm run build:css && npm run build:js",
-    "build:css": "node scripts/build-css.js",
+    "build:css": "npx @tailwindcss/cli -i ./src/design/tailwind.css -o ./dist/mBloxM3E.css --minify",
     "build:js": "node scripts/build-js.js",
     "dev": "npx -y serve .",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,15 +22,11 @@
     "url": "https://github.com/mohanjeetsingh/mBlox/issues"
   },
   "homepage": "https://github.com/mohanjeetsingh/mBlox#readme",
-  "dependencies": {
-    "autoprefixer": "^10.5.0",
-    "bootstrap": "^5.3.8",
-    "js-yaml": "^4.1.1",
-    "postcss": "^8.5.12",
-    "purgecss": "^8.0.0",
-    "sass": "^1.99.0"
-  },
   "devDependencies": {
     "esbuild": "^0.28.0"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.0",
+    "tailwindcss": "^4.3.0"
   }
 }

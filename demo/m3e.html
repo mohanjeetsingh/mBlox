@@ -8,34 +8,20 @@
 
 <head>
     <meta name="referrer" content="origin" />
-    <!-- Tailwind Play CDN for styling m3e utility grid/flex classes -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Configure Tailwind with custom colors to support mBlox themes
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#002233',
-                        secondary: '#cc7000',
-                        light: '#f8f9fa',
-                        dark: '#212529',
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="../dist/mBloxM3E.css">
     <style>
         /* Fallbacks/helpers for Bootstrap Carousel components utilized by m3e renderer */
         .carousel {
             position: relative;
         }
+
         .carousel-inner {
             position: relative;
             width: 100%;
             overflow: hidden;
             display: flex;
         }
+
         .carousel-item {
             position: relative;
             display: none;
@@ -45,13 +31,16 @@
             backface-visibility: hidden;
             transition: transform .6s ease-in-out;
         }
+
         .carousel-item.active {
             display: block;
         }
+
         /* Custom transitions and helper styles */
         .blur-5 {
             filter: blur(5px);
         }
+
         .rounded-5 {
             border-radius: 2rem;
         }
@@ -59,7 +48,7 @@
     <script>
         window.mBloxConfig = {
             designSystem: 'm3e',
-            cssSrc: '../src/design/mCustom.css' // custom overrides
+            cssSrc: '../dist/mBloxM3E.css' // custom overrides
         };
     </script>
     <script type="module" src='../mBloxCall.js'></script>

@@ -36,8 +36,8 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-100', 'shadow-sm', 'text-decoration-none', 'fw-bold'];
-    classes.push('rounded-0');
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    classes.push('rounded-none');
     classes.push(`text-bg-${config.inverseTheme}`);
     classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
     classes.push('row', 'g-0');

@@ -1,61 +1,56 @@
 /**
- * mBlox Bootstrap 5 Renderer
+ * mBlox Bootstrap 5 Renderer - Modular
  */
 
-const BLOCK_COVER = 'v', BLOCK_SHOWCASE = 's', BLOCK_LIST = 'l', BLOCK_CARD = 'c', BLOCK_GALLERY = 'g', BLOCK_PANCAKE = 'p', BLOCK_STACK = 't', BLOCK_QUOTE = 'q', BLOCK_COMMENT = 'm';
-const noImg = window.noImg || "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+import { renderBlockHeader } from '../sections/header.js';
+import { renderBlockFooter } from '../sections/footer.js';
+import { renderCarouselControls } from '../components/navigation.js';
+import { renderCarousel, initCarousel } from '../components/carousel.js';
+import { 
+    BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
+    BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
+    fadeIn, fadeOut 
+} from '../core/config.js';
 
 const RESPONSIVE_GRID_CLASSES = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',
-    5: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
-    6: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
+    1: 'grid grid-cols-1',
+    2: 'grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2',
+    3: 'grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    4: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',
+    5: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
+    6: 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
 };
 
-function _getYouTubeVideoId(post) {
-    if (post.videoId) return post.videoId;
-    if (post.thumbnailUrl && (post.thumbnailUrl.includes("ytimg.com/vi/") || post.thumbnailUrl.includes("youtube.com/vi/"))) {
-        const idStartIndex = post.thumbnailUrl.indexOf("/vi/") + 4;
-        const nextSlashIndex = post.thumbnailUrl.indexOf('/', idStartIndex);
-        if (nextSlashIndex !== -1) return post.thumbnailUrl.substring(idStartIndex, nextSlashIndex);
-    }
-    if (post.content && post.content.includes('youtube.com/embed/')) {
-        const match = post.content.match(/youtube\.com\/embed\/([^?"]+)/);
-        return (match && match[1]) ? match[1] : "noVideo";
-    }
-    return "noVideo";
-}
+const BLOCK_NAME_MAP = {
+    [BLOCK_COVER]: 'cover',
+    [BLOCK_SHOWCASE]: 'showcase',
+    [BLOCK_LIST]: 'list',
+    [BLOCK_CARD]: 'card',
+    [BLOCK_GALLERY]: 'gallery',
+    [BLOCK_PANCAKE]: 'pancake',
+    [BLOCK_STACK]: 'stack',
+    [BLOCK_QUOTE]: 'quote',
+    [BLOCK_COMMENT]: 'comment'
+};
 
-function fadeIn(el) {
-    if (!el) return;
-    el.style.opacity = 0;
-    el.style.display = '';
-    (function fade() {
-        let val = parseFloat(el.style.opacity);
-        if (!((val += .1) > 1)) {
-            el.style.opacity = val;
-            requestAnimationFrame(fade);
-        }
-    })();
-}
-
-function fadeOut(el) {
-    if (!el) return;
-    el.style.opacity = 1;
-    (function fade() {
-        if ((el.style.opacity -= .1) < 0) {
-            el.style.display = "none";
-        } else {
-            requestAnimationFrame(fade);
-        }
-    })();
+function getBlockScriptUrl(blockName) {
+    let baseUrl = import.meta.url;
+    baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
+    
+    // In dev: engine/renderer is in src/core or src/design, blocks are in src/blocks
+    if (baseUrl.includes('/src/core') || baseUrl.includes('/src/design')) {
+        const base = baseUrl.includes('/src/core') ? baseUrl.replace('/src/core', '') : baseUrl.replace('/src/design', '');
+        return `${base}/src/blocks/${blockName}.js`;
+    } else {
+        // Prod: assets in /dist
+        const capitalizedBlockName = blockName.charAt(0).toUpperCase() + blockName.slice(1);
+        return `${baseUrl}/mBlox${capitalizedBlockName}.js`;
+    }
 }
 
 export class M3ERenderer {
     
-    buildBlockBody(response, config) {
+    async buildBlockBody(response, config) {
         let blockBody = '';
         let showcaseHTML = '';
         let carouselIndicators = null;
@@ -68,9 +63,28 @@ export class M3ERenderer {
             if (config.blockType !== BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
         }
 
-        if (config.blockType === BLOCK_SHOWCASE && config.firstInstance && postsInFeed > 0) {
-            const { showcaseHTML: singleShowcaseHTML } = this._createPostHtml(response.posts[0], 0, config);
-            showcaseHTML = singleShowcaseHTML;
+        // Determine all block types needed
+        const neededTypes = new Set([config.blockType]);
+        if (config.blockType === BLOCK_LIST) {
+            neededTypes.add(config.showHeader ? BLOCK_STACK : BLOCK_CARD);
+        }
+
+        // Dynamically import all needed block renderers
+        const renderers = {};
+        await Promise.all(Array.from(neededTypes).map(async (type) => {
+            const blockName = BLOCK_NAME_MAP[type];
+            if (blockName) {
+                const url = getBlockScriptUrl(blockName);
+                const module = await import(url);
+                renderers[type] = module;
+            }
+        }));
+
+        if (config.blockType === BLOCK_SHOWCASE && postsInFeed > 0) {
+            if (config.firstInstance) {
+                // First post is feature post (renders big feature block)
+                showcaseHTML = renderers[BLOCK_SHOWCASE].render(response.posts[0], 0, config);
+            }
 
             const itemsPerSlide = Math.min(postsInFeed, config.actualColumnCount * config.blockRows);
             let currentSlide = 0;
@@ -81,22 +95,22 @@ export class M3ERenderer {
                         if (i > 0) blockBody += `</div></div>`; 
                         const activeClass = (i === 0) ? ' active' : '';
                         blockBody += `<div class="carousel-item${activeClass}">`;
-                        blockBody += `<div class="grid gap-${config.gutterSize} mx-0 px-2 sm:px-3 md:px-4 lg:px-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                        blockBody += `<div class="gap-${config.gutterSize * 2} px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
 
                         if (carouselIndicators) {
                             const indicatorActiveClass = (currentSlide === 0) ? ' active' : '';
                             const ariaCurrent = (currentSlide === 0) ? ' aria-current="true"' : '';
-                            carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${currentSlide}" class="bg-${config.inverseTheme}${indicatorActiveClass}" ${ariaCurrent} aria-label="Slide ${currentSlide + 1}"></button>`);
+                            carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#carousel-${config.mBlockID}-st${config.stageID}" data-bs-slide-to="${currentSlide}" class="bg-${config.inverseTheme}${indicatorActiveClass}" ${ariaCurrent} aria-label="Slide ${currentSlide + 1}"></button>`);
                             currentSlide++;
                         }
                     }
-                    blockBody += this._renderShowcaseThumbnail(response.posts[i], config);
+                    blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
                 }
                 blockBody += `</div></div>`; 
             } else {
-                blockBody += `<div class="grid gap-${config.gutterSize} mx-0 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                blockBody += `<div class="gap-${config.gutterSize * 2} ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
                 for (let postID = 0; postID < postsInFeed; postID++) {
-                    blockBody += this._renderShowcaseThumbnail(response.posts[postID], config);
+                    blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[postID], config);
                 }
                 blockBody += `</div>`;
             }
@@ -106,9 +120,22 @@ export class M3ERenderer {
         for (let postID = 0; postID < postsInFeed; postID++) {
             const post = response.posts[postID];
             let currentColumnCount = config.columnCount;
-            if (config.blockType === BLOCK_LIST && postID === 1 && config.showHeader) currentColumnCount--;
+            
+            let finalType = config.blockType; 
+            if (config.blockType === BLOCK_LIST && postID > 0) {
+                finalType = config.showHeader ? BLOCK_STACK : BLOCK_CARD;
+                if (postID === 1 && config.showHeader) currentColumnCount--;
+            }
 
-            const { postHTML, carouselIndicator } = this._createPostHtml(post, postID, config);
+            const postHTML = renderers[finalType].render(post, postID, config);
+
+            let carouselIndicator = '';
+            if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
+                const slideIndex = postID / (config.actualColumnCount * config.blockRows);
+                const activeClass = postID === 0 ? ' active' : '';
+                const ariaCurrent = postID === 0 ? 'aria-current="true"' : '';
+                 carouselIndicator = `<button type="button" data-bs-target="#carousel-${config.mBlockID}-st${config.stageID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${activeClass}" ${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
+            }
 
             if (carouselIndicator && config.isCarousel) {
                 carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
@@ -123,11 +150,11 @@ export class M3ERenderer {
                 if (postID > 0) {
                     const prevPostID = postID - 1;
                     const wasPrevLastItemInSlide = config.isCarousel && (prevPostID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
-                    if (!wasPrevLastItemInSlide) {
+                    if (!wasPrevLastItemInSlide && !(config.blockType === BLOCK_LIST && postID === 1)) {
                         blockBody += `</div>`;
                     }
                 }
-                blockBody += `<div class="grid gap-${config.gutterSize} mx-0`;
+                blockBody += `<div class="gap-${config.gutterSize * 2}`;
                 if (config.isCarousel) blockBody += ' carousel-item' + (postID === 0 ? ' active' : '');
                 if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
                 if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
@@ -138,356 +165,36 @@ export class M3ERenderer {
             blockBody += postHTML;
             const isLastItemInSlide = config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
             const isLastPostOverall = postID === (postsInFeed - 1);
-            if (isLastPostOverall || isLastItemInSlide) blockBody += `</div>`;
+            if (isLastPostOverall || isLastItemInSlide) {
+                blockBody += `</div>`;
+                if (config.blockType === BLOCK_LIST) blockBody += `</div>`;
+            }
         }
 
         return { blockBody, carouselIndicators, showcaseHTML };
     }
 
-    _createPostHtml(post, postID, config) {
-        if (config.blockType === BLOCK_SHOWCASE && postID > 0) {
-            const postHTML = this._renderShowcaseThumbnail(post, config);
-            return { postHTML, showcaseHTML: '', carouselIndicator: '' };
-        }
-
-        let finalType = config.blockType; 
-        if (config.blockType === BLOCK_LIST && postID > 0) {
-            finalType = config.showHeader ? BLOCK_STACK : BLOCK_CARD;
-        }
-
-        const videoID = _getYouTubeVideoId(post);
-        const postTitle = post.title;
-        const postSnippet = (config.showSnippet || config.showImage) && post.content;
-
-        const parts = {
-            postURL: post.url,
-            videoID,
-            postTitle,
-            authorCode: this._renderAuthor(finalType, config, post.authorName, post.authorUri),
-            dateCode: this._renderDate(config, post.publishedDate),
-            ...this._renderPostHeader(finalType, config, postTitle),
-            ...this._renderSnippet(finalType, config, postSnippet),
-            ctaButtonCode: this._renderCTA(finalType, config, postTitle),
-            ...this._renderImage(finalType, postID, config, {
-                postSnippet, videoID, postTitle,
-                thumbnailUrl: post.thumbnailUrl,
-                authorImage: post.authorImage
-            })
-        };
-
-        const { postHTML, showcaseHTML } = this._renderPostByType(finalType, postID, config, parts);
-
-        let carouselIndicator = '';
-        if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
-            const slideIndex = postID / (config.actualColumnCount * config.blockRows);
-            const activeClass = postID === 0 ? ' active' : '';
-            const ariaCurrent = postID === 0 ? 'aria-current="true"' : '';
-            carouselIndicator = `<button type="button" data-bs-target="#m${config.mBlockID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${activeClass}" ${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
-        }
-
-        return { postHTML, showcaseHTML, carouselIndicator };
-    }
-
-    _renderShowcaseThumbnail(post, config) {
-        const videoID = _getYouTubeVideoId(post);
-        let thumbnailUrl = post.thumbnailUrl || noImg;
-        let highResUrl = thumbnailUrl;
-
-        if (videoID !== 'noVideo' && highResUrl.includes('ytimg.com')) {
-            highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
-        } else {
-            highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
-        }
-
-        const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...";
-        if (!thumbnailUrl || thumbnailUrl.includes('no-image.png')) thumbnailUrl = noImg;
-        if (!highResUrl || highResUrl.includes('no-image.png')) highResUrl = noImg;
-
-        const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
-        const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}" data-vidid="${videoID}" data-toggle="tooltip"`;
-        const imageTag = `<img class="w-100 h-100${lazyLoadClass}" style="object-fit:cover !important;" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
-        const figureTag = `<figure class="m-0 w-100 img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
-
-        return `<article class="col d-inline-flex sPost" ${articleDataAttributes} role="article">${figureTag}</article>`;
-    }
-
-    _renderPostByType(finalType, postID, config, parts) {
-        const { postURL, postTitle, imageCode, ...contentParts } = parts;
-        const textContentHTML = this._renderPostContent(finalType, config, contentParts);
-
-        if (finalType === BLOCK_SHOWCASE) {
-            if (postID === 0 && config.firstInstance) {
-                return { postHTML: '', showcaseHTML: this._renderShowcaseFeature(config, parts) };
-            }
-            return { postHTML: this._renderShowcaseGridPost(config, parts), showcaseHTML: '' };
-        }
-
-        const linkClasses = this._getLinkWrapperClasses(finalType, config);
-        const linkWrapperStart = `<a class="${linkClasses}" href="${postURL}" title="${postTitle}">`;
-        const linkWrapperEnd = `</a>`;
-        const articleClasses = this._getArticleClasses(finalType, parts);
-        const articleStyle = finalType === BLOCK_COVER ? ` style="${config.articleHeight}"` : '';
-
-        const postHTML = `<article class="${articleClasses}"${articleStyle} role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
-        return { postHTML, showcaseHTML: '' };
-    }
-
-    _renderShowcaseGridPost(config, parts) {
-        const { imageCode, postTitle } = parts;
-        const articleClasses = this._getArticleClasses(BLOCK_SHOWCASE, parts);
-        return `<article class="${articleClasses}" role="article" title="${postTitle}">${config.showImage ? imageCode : ''}</article>`;
-    }
-
-    _renderShowcaseFeature(config, parts) {
-        const { postURL, postTitle, normalHeaderCode, snippetCode, ctaButtonCode, showcaseImageCode } = parts;
-        const showcaseContent = config.showHeader
-            ? `<div class="sContent card-img-overlay rounded-0 ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-3 px-lg-5 bg-${config.dataTheme} mt-auto" style="height:fit-content !important;">${normalHeaderCode} ${snippetCode}</div>`
-            : '';
-        const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
-        const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe" style="display:none !important;"></div>${showcaseImageCode}<a class="link-${config.inverseTheme}" href="${postURL}" title="${postTitle}">${showcaseContent}${cta}</a></div>`;
-    }
-
-    _renderAuthor(finalType, config, authorName, authorUri) {
-        if (!config.showAuthor) return '';
-        let authorCode = '';
-        const authorURL = (authorName === "Anonymous" || authorName === "Unknown" || !authorUri) ? '' : authorUri;
-        const authorNameHTML = `<span class="small fw-lighter" rel="author">${authorName}</span>`;
-        const authorLinkHTML = `<a href="${authorURL}" class="small fw-lighter" rel="author">${authorName}</a>`;
-
-        switch (finalType) {
-            case BLOCK_QUOTE: authorCode = `<figcaption class="small fw-lighter">- ${authorName}</figcaption>`; break;
-            case BLOCK_COMMENT: authorCode = `<span class="small text-${config.dataTheme}" rel="author">${authorName}</span>`; break;
-            default: authorCode = authorURL ? authorLinkHTML : authorNameHTML; break;
-        }
-        return authorCode;
-    }
-
-    _renderDate(config, publishedDate) {
-        if (!config.showDate) return '';
-        const formattedDate = config.dateFormatter.format(new Date(publishedDate));
-        return `<span class="small fw-lighter">${config.showAuthor ? ' &#8226; ' : ''} ${formattedDate}</span>`;
-    }
-
-    _renderPostHeader(finalType, config, postTitle) {
-        let displayHeaderCode = "", normalHeaderCode = "", commentHeaderCode = "";
-        if (finalType === BLOCK_QUOTE) {
-            normalHeaderCode = `<svg class="float-start link-primary" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-quote" viewBox="0 0 16 16"><path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/></svg><blockquote class="blockquote link-primary text-start mt-2 ms-4">${postTitle}</blockquote>`;
-        } else if (config.showHeader) {
-            displayHeaderCode = `<h3 class="display-5 mx-lg-5 ${config.lowContrast ? "opacity-50" : "opacity-75"}">${postTitle}</h3>`;
-            normalHeaderCode = `<h5 class="card-title fw-normal">${postTitle}</h5>`;
-            commentHeaderCode = `<span class="d-block my-2">"${postTitle}"</span>`;
-        }
-        return { displayHeaderCode, normalHeaderCode, commentHeaderCode };
-    }
-
-    _renderSnippet(finalType, config, postSnippet) {
-        if (!config.showSnippet || !postSnippet) return { snippetText: '', snippetCode: '' };
-        const doc = new DOMParser().parseFromString(postSnippet, 'text/html');
-        let snippetText = doc.body.textContent || "";
-        if (snippetText.length > config.snippetSize) snippetText = snippetText.substring(0, config.snippetSize) + "...";
-        const snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == BLOCK_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
-        return { snippetText, snippetCode };
-    }
-
-    _renderImage(finalType, postID, config, data) {
-        if (!config.showImage) return { imageCode: '', showcaseImageCode: '', videoThumbnailURL: '', highResImageURL: '' };
-        const { postSnippet, videoID, postTitle, thumbnailUrl, authorImage } = data;
-        let videoThumbnailURL = thumbnailUrl || "";
-        let imageURL = videoThumbnailURL;
-
-        if (!imageURL) {
-            if (config.contentType == 'comments') {
-                if (authorImage && !authorImage.includes('blogblog.com')) imageURL = authorImage;
-                else imageURL = noImg;
-            } else {
-                const contentParser = new DOMParser().parseFromString(postSnippet || "", 'text/html');
-                const firstImage = contentParser.querySelector("img");
-                imageURL = firstImage ? firstImage.getAttribute("src") : noImg;
-            }
-        }
-        if (!videoThumbnailURL) videoThumbnailURL = imageURL;
-        let highResImageURL = imageURL;
-        if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
-        else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); 
-
-        let imageCoverStyle = "object-fit:cover !important;height:100% !important;", imageBSClass = ' w-100 img-fluid', tooltipAttributes = ``;
-        let showcaseImageCode = '';
-
-        switch (finalType) {
-            case BLOCK_SHOWCASE:
-                tooltipAttributes = `" data-toggle="tooltip" data-vidid="${videoID}"`;
-                if (postID === 0) showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-5 rounded-bottom' : config.cornerStyle} m-blox-image-to-load" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image"${tooltipAttributes}></figure>`;
-                imageBSClass += `${config.aspectRatio} shadow-sm`;
-                break;
-            case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
-            case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-circle m-2'; break;
-            case BLOCK_QUOTE: imageCoverStyle += ' height:6rem!important;width:6rem;'; imageBSClass = ' rounded-circle mx-auto mt-3'; break;
-            case BLOCK_STACK: imageBSClass = " col-4 h-100"; break;
-            case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
-        }
-        if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';
-
-        const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-        const isComplexBlock = config.blockType === BLOCK_SHOWCASE || config.blockType === BLOCK_LIST;
-        const canBeFixed = isComplexBlock ? postID === 0 && config.isImageFixed : config.isImageFixed;
-        const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
-        const imageSrc = config.isBloggerFeed ? placeholderSrc : imageURL;
-        const imageCode = canBeFixed
-            ? `<figure class="m-0${imageBSClass}${lazyLoadClass}" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-            : `<img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
-
-        return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
-    }
-
-    _renderCTA(finalType, config, postTitle) {
-        if (config.callToAction === "") return '';
-        switch (finalType) {
-            case BLOCK_GALLERY: return '';
-            case BLOCK_COMMENT: return `<span class="link-${config.dataTheme} small">${config.callToAction}</span>`;
-            default:
-                let ctaClasses = `btn ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-0' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
-                switch (finalType) {
-                    case BLOCK_SHOWCASE: ctaClasses += " p-3 px-lg-5 float-end"; break;
-                    case BLOCK_COVER: ctaClasses += ' p-2 px-4 mx-lg-5 mt-4'; break;
-                    case BLOCK_PANCAKE: case BLOCK_QUOTE: ctaClasses += ` py-2 px-3 w-100 text-end link-${config.inverseTheme}`; break;
-                    case BLOCK_STACK: ctaClasses += ' mt-3'; break;
-                    case BLOCK_CARD: case BLOCK_LIST: ctaClasses += ' bottom-0 end-0 me-3 mb-3 d-block position-absolute w-auto'; break;
-                }
-                ctaClasses += ` border-0 btn-${config.dataTheme}`;
-                return `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
-        }
-    }
-
-    _getLinkWrapperClasses(finalType, config) {
-        const classes = ['overflow-hidden', 'w-100', 'shadow-sm'];
-        classes.push(finalType !== BLOCK_COVER ? config.cornerStyle : 'rounded-0');
-        classes.push(finalType !== BLOCK_COMMENT ? 'card' : `text-bg-${config.inverseTheme}`);
-        classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
-
-        switch (finalType) {
-            case BLOCK_QUOTE: case BLOCK_COVER: classes.push('text-center', 'h-100'); break;
-            case BLOCK_STACK: classes.push('h-100');
-            case BLOCK_COMMENT: classes.push('row', 'g-0'); break;
-            case BLOCK_LIST: classes.push(config.aspectRatio.trim(), `mt-${config.gutterSize}`); break;
-            case BLOCK_CARD: case BLOCK_GALLERY: classes.push(config.aspectRatio.trim());
-            case BLOCK_PANCAKE: classes.push('h-100'); break;
-        }
-        return classes.join(' ');
-    }
-
-    _getArticleClasses(finalType, postData) {
-        if (finalType === BLOCK_SHOWCASE && postData.videoID) {
-            const { postTitle, postURL, snippetText, videoID, videoThumbnailURL, highResImageURL } = postData;
-            return `col d-inline-flex sPost" data-title="${postTitle}" data-link="${postURL}" data-summary="${snippetText}" data-vidid="${videoID}" data-img="${videoThumbnailURL}" data-img-high="${highResImageURL}" data-toggle="tooltip"`;
-        }
-        return 'col d-inline-flex';
-    }
-
-    _renderPostContent(finalType, config, contentParts) {
-        if (!config.showHeader || finalType === BLOCK_GALLERY) return '';
-        const { authorCode, dateCode, displayHeaderCode, commentHeaderCode, normalHeaderCode, snippetCode, ctaButtonCode } = contentParts;
-        let textContentHTML = '';
-
-        switch (finalType) {
-            case BLOCK_COMMENT: textContentHTML += `<div class="col p-2 ps-0">`; break;
-            case BLOCK_STACK: config.showImage && (textContentHTML += '<div class="col-8 h-100">');
-            case BLOCK_PANCAKE: case BLOCK_QUOTE: textContentHTML += `<div class="card-body${(config.dataTheme != "light" && (finalType == BLOCK_PANCAKE || (config.blockType == BLOCK_LIST && finalType == BLOCK_STACK)) ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`)}">`; break;
-            case BLOCK_LIST: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 ps-5 py-3" style="height:fit-content !important;">Latest</div>`;
-            case BLOCK_CARD: textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 rounded-0 p-5`;
-                switch (config.textVerticalAlign) {
-                    case "top": textContentHTML += ' h-auto">'; break;
-                    case "middle": textContentHTML += ' h-auto top-50 translate-middle-y">'; break;
-                    case "bottom": textContentHTML += ' h-auto bottom-0" style="top:auto !important;">'; break;
-                    case "overlay": textContentHTML += '">'; break;
-                } break;
-            case BLOCK_COVER: finalType == BLOCK_COVER && (textContentHTML += `<div class="text-bg-${config.dataTheme} bg-opacity-75 p-4 p-sm-5 position-absolute w-75 ${((config.cornerStyle == " rounded" && config.textVerticalAlign != "overlay") ? ' rounded-5' : config.cornerStyle)} start-50 translate-middle`);
-                switch (config.textVerticalAlign) {
-                    case "top": textContentHTML += '-x mt-5">'; break;
-                    case "middle": textContentHTML += ' top-50">'; break;
-                    case "bottom": textContentHTML += '-x  bottom-0 mb-5">'; break;
-                    case "overlay": textContentHTML += ' top-50 h-100 w-100">'; break;
-                } break;
-        }
-
-        if (finalType !== BLOCK_QUOTE) textContentHTML += `${authorCode}${dateCode}`;
-        if (finalType === BLOCK_COVER) textContentHTML += displayHeaderCode; else if (finalType === BLOCK_COMMENT) textContentHTML += commentHeaderCode; else textContentHTML += normalHeaderCode;
-        textContentHTML += snippetCode;
-        if (finalType === BLOCK_QUOTE) textContentHTML += `${authorCode}${dateCode}`;
-        if (finalType !== BLOCK_PANCAKE && finalType !== BLOCK_QUOTE) textContentHTML += ctaButtonCode;
-        textContentHTML += `</div>`;
-        if (finalType === BLOCK_STACK && config.showImage) textContentHTML += `</div>`;
-        if (finalType === BLOCK_PANCAKE || finalType === BLOCK_QUOTE) textContentHTML += ctaButtonCode; 
-        return textContentHTML;
-    }
-
     createBlockHeader(config) {
-        if (!config.dataTitle) return '';
-        const descriptionHTML = config.dataDescription ? `<span class="pb-3 text-black-50">${config.dataDescription}</span>` : '';
-        const titleClasses = `display-5 fw-bold text-${config.inverseTheme} py-3 m-0 ${config.lowContrast ? "opacity-50" : ""}`;
-        return `<div class="text-center m-0 bg-${config.dataTheme} py-5"><h4 class="${titleClasses}">${config.dataTitle}</h4>${descriptionHTML}</div>`;
+        return renderBlockHeader(config);
     }
 
     createBlockFooter(config, response) {
-        if (config.moreText === "" && config.blockType === BLOCK_COVER) return '';
-        let moreLinkHTML = '';
-        if (config.moreText !== "") {
-            if (response.feedUrl) {
-                const linkClasses = `text-bg-${config.dataTheme} border-0 ${config.lowContrast ? "opacity-50" : "opacity-75"}`;
-                moreLinkHTML = `<a class="${linkClasses}" href="${response.feedUrl}?&max-results=12" title="Click for More">
-                                ${config.moreText} <svg class="bi bi-caret-right-fill" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg></a>`;
-            }
-        }
-        return `<nav aria-label="Page navigation" class="st${config.stageID} w-100 pe-5 py-5 pagination justify-content-end bg-${config.dataTheme}">${this._createPaginationButtons(config)}${moreLinkHTML}</nav>`;
-    }
-
-    _createPaginationButtons(config) {
-        if (config.containsNavigation || config.isCarousel) return '';
-        const prevClass = `nav-prev link-${config.inverseTheme} page-link bg-${config.dataTheme} border-0`;
-        const nextClass = `nav-next link-${config.inverseTheme} page-link bg-${config.dataTheme} border-0`;
-        return `<ul class="pagination mb-0" style="z-index:9;">
-            <li class="page-item">
-                <button class="${prevClass}" type="button" title="Previous">
-                    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg>
-                </button>
-            </li>
-            <li class="page-item">
-                <button class="${nextClass}" type="button" title="Next">
-                    <svg width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
-                </button>
-            </li>
-        </ul>`;
+        return renderBlockFooter(config, response);
     }
 
     createCarouselControls(config) {
-        const prevClass = `carousel-control-prev link-secondary${config.containsNavigation ? " nav-prev" : " pb-5"}`;
-        const nextClass = `carousel-control-next link-secondary${config.containsNavigation ? " nav-next" : " pb-5"}`;
-        const target = `#m${config.mBlockID}`;
-        const prev = `<button class="${prevClass}" type="button" title="Click for Previous" data-bs-target="${target}" data-bs-slide="prev" style="width:5% !important;">
-                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-left-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.86 8.753l5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"></path></svg>
-                <span class="visually-hidden">Previous</span>
-              </button>`;
-        const next = `<button class="${nextClass}" title="Click for Next" type="button" data-bs-target="${target}" data-bs-slide="next" style="width:5% !important;">
-                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-caret-right-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12.14 8.753l-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/></svg>
-                <span class="visually-hidden">Next</span>
-              </button>`;
-        return { prev, next };
+        return renderCarouselControls(config);
+    }
+
+    createCarouselWrapper(blockBody, carouselIndicators, config, response) {
+        const controls = this.createCarouselControls(config);
+        return renderCarousel(blockBody, carouselIndicators, config, response, controls);
     }
 
     bindEvents(rawElement, config) {
         this._bindShowcaseEvents(rawElement, config);
         this._bindPaginationEvents(rawElement, config);
-        if (config.isCarousel && window.bootstrap && window.bootstrap.Carousel) {
-            const carouselEl = rawElement.querySelector('.carousel');
-            if (carouselEl) {
-                const carousel = window.bootstrap.Carousel.getOrCreateInstance(carouselEl, {
-                    interval: 5000,
-                    ride: 'carousel',
-                    wrap: config.wrap !== false
-                });
-                carousel.cycle();
-            }
-        }
+        initCarousel(rawElement, config);
     }
 
     _bindShowcaseEvents(rawElement, config) {
@@ -506,7 +213,7 @@ export class M3ERenderer {
                 title: el.getAttribute('data-title'),
                 summary: el.getAttribute('data-summary'),
                 link: el.getAttribute('data-link'),
-                imgHigh: el.querySelector('img')?.getAttribute('data-img-high') || ''
+                imgHigh: el.getAttribute('data-img-high') || el.querySelector('img')?.getAttribute('data-img-high') || ''
             };
         });
 
@@ -546,7 +253,7 @@ export class M3ERenderer {
                     fadeOut(playIcon);
                     figureNode.title = data.title;
                 }
-                figureNode.setAttribute('data-vidid', data.vidid);
+                figureNode.setAttribute('data-vidid', data.vidid || 'noVideo');
                 figureNode.style.backgroundImage = `url(${data.imgHigh})`;
                 figureNode.style.backgroundSize = 'cover';
             }
@@ -571,8 +278,8 @@ export class M3ERenderer {
     _bindPaginationEvents(rawElement, config) {
         if (!config) return;
         const stage = config.stageID;
-        const prevButtons = rawElement.querySelectorAll(`.st${stage} .nav-prev, nav.st${stage} .nav-prev`);
-        const nextButtons = rawElement.querySelectorAll(`.st${stage} .nav-next, nav.st${stage} .nav-next`);
+        const prevButtons = rawElement.querySelectorAll(`.st${stage} .nav-prev`);
+        const nextButtons = rawElement.querySelectorAll(`.st${stage} .nav-next`);
 
         prevButtons.forEach(prevButton => {
             if (prevButton.dataset.bound) return;
@@ -582,10 +289,10 @@ export class M3ERenderer {
                 if (currentStage <= 1) return;
                 const prevStage = currentStage - 1;
                 rawElement.setAttribute("data-s", prevStage);
-                fadeOut(rawElement.querySelector(`div.st${currentStage}`));
-                fadeOut(rawElement.querySelector(`nav.st${currentStage}`));
-                fadeIn(rawElement.querySelector(`div.st${prevStage}`));
-                fadeIn(rawElement.querySelector(`nav.st${prevStage}`));
+                fadeOut(rawElement.querySelector(`div#m${config.mBlockID}-st${currentStage}`));
+                fadeOut(rawElement.querySelector(`div.mblox-footer.st${currentStage}`));
+                fadeIn(rawElement.querySelector(`div#m${config.mBlockID}-st${prevStage}`));
+                fadeIn(rawElement.querySelector(`div.mblox-footer.st${prevStage}`));
             });
         });
 
@@ -596,16 +303,15 @@ export class M3ERenderer {
                 const currentStage = parseInt(rawElement.getAttribute("data-s"), 10);
                 const nextStage = currentStage + 1;
                 rawElement.setAttribute("data-s", nextStage);
-                fadeOut(rawElement.querySelector(`div.st${currentStage}`));
-                const currentFooter = rawElement.querySelector(`nav.st${currentStage}`);
-                const nextStageEl = rawElement.querySelector(`div.st${nextStage}`);
+                fadeOut(rawElement.querySelector(`div#m${config.mBlockID}-st${currentStage}`));
+                const currentFooter = rawElement.querySelector(`div.mblox-footer.st${currentStage}`);
+                const nextStageEl = rawElement.querySelector(`div#m${config.mBlockID}-st${nextStage}`);
                 if (nextStageEl) {
                     if (currentFooter) fadeOut(currentFooter);
                     fadeIn(nextStageEl);
-                    fadeIn(rawElement.querySelector(`nav.st${nextStage}`));
+                    fadeIn(rawElement.querySelector(`div.mblox-footer.st${nextStage}`));
                 } else {
                     if (currentFooter) fadeOut(currentFooter);
-                    // Needs engine.js to reload data if nextStageEl is not found
                     const customEvent = new CustomEvent('mblox:loadNextPage', { detail: { element: rawElement } });
                     rawElement.dispatchEvent(customEvent);
                 }

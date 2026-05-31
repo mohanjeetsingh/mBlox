@@ -21,7 +21,7 @@ export function renderImage(finalType, postID, config, data) {
     if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
     else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); 
 
-    let imageCoverStyle = "object-fit:cover !important;height:100% !important;", imageBSClass = ' w-100 img-fluid', tooltipAttributes = ``;
+    let imageCoverStyle = "object-fit:cover !important;height:100% !important;", imageBSClass = ' w-full img-fluid', tooltipAttributes = ``;
     let showcaseImageCode = '';
 
     switch (finalType) {
@@ -32,8 +32,8 @@ export function renderImage(finalType, postID, config, data) {
             break;
         case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
         case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-circle m-2'; break;
-        case BLOCK_QUOTE: imageCoverStyle += ' height:6rem!important;width:6rem;'; imageBSClass = ' rounded-circle mx-auto mt-3'; break;
-        case BLOCK_STACK: imageBSClass = " col-4 h-100"; break;
+        case BLOCK_QUOTE: imageCoverStyle += ' height:6rem!important;width:6rem;'; imageBSClass = ' rounded-circle mx-auto mt-6'; break;
+        case BLOCK_STACK: imageBSClass = " col-4 h-full"; break;
         case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
     }
     if (config.blurImage && config.contentType !== "comments") imageBSClass += ' blur-5';

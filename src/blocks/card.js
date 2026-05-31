@@ -27,15 +27,17 @@ export function render(post, postID, config) {
     // Content container
     let textContentHTML = '';
     if (config.showHeader) {
-        textContentHTML += `<div class="card-img-overlay d-flex flex-column p-0 border-0`;
+        textContentHTML += `<div class="absolute inset-0 flex flex-col p-0 border-0`;
         switch (config.textVerticalAlign) {
-            case "top": textContentHTML += ' justify-content-start"><div class="text-bg-'; break;
-            case "middle": textContentHTML += ' justify-content-center"><div class="text-bg-'; break;
-            case "bottom": textContentHTML += ' justify-content-end"><div class="text-bg-'; break;
-            case "overlay": textContentHTML += '"><div class="h-100 text-bg-'; break;
-            default: textContentHTML += '"><div class="h-100 text-bg-'; break;
+            case "top": textContentHTML += ' justify-start"><div class="'; break;
+            case "middle": textContentHTML += ' justify-center"><div class="'; break;
+            case "bottom": textContentHTML += ' justify-end"><div class="'; break;
+            case "overlay": textContentHTML += '"><div class="h-full '; break;
+            default: textContentHTML += '"><div class="h-full '; break;
         }
-        textContentHTML += `${config.dataTheme} bg-opacity-75 rounded-0 p-5">`;
+        
+        let themeClass = config.dataTheme === 'dark' ? 'surface-variant' : (config.dataTheme === 'light' ? 'surface' : config.dataTheme);
+        textContentHTML += `bg-${themeClass}/75 text-on-${themeClass} rounded-none p-8">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -44,17 +46,17 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-100', 'shadow-sm', 'text-decoration-none', 'fw-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'relative', 'block'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+    let borderThemeClass = config.dataTheme === 'dark' ? 'surface-variant' : (config.dataTheme === 'light' ? 'surface' : config.dataTheme);
+    classes.push(config.hasRoundedBorder ? `border-4 border-${borderThemeClass}/75` : 'border-0');
     classes.push(config.aspectRatio.trim());
-    classes.push('h-100');
+    classes.push('h-full');
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

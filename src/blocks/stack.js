@@ -28,12 +28,12 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         if (config.showImage) {
-            textContentHTML += '<div class="col-8 h-100">';
+            textContentHTML += '<div class="col-8 h-full">';
         }
         
         const isDarkTheme = config.dataTheme !== "light";
         // Stack block's internal layout uses card-body
-        const bodyClass = isDarkTheme ? ` h-100 bg-opacity-75 text-bg-${config.dataTheme}` : ` text-${config.inverseTheme}`;
+        const bodyClass = isDarkTheme ? ` h-full opacity-75 bg-${config.dataTheme} text-on-${config.dataTheme}` : ` text-${config.inverseTheme}`;
         textContentHTML += `<div class="card-body${bodyClass}">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
@@ -47,11 +47,11 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-100', 'shadow-sm', 'text-decoration-none', 'fw-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
     classes.push(config.cornerStyle);
     classes.push('card');
     classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
-    classes.push('h-100');
+    classes.push('h-full');
     classes.push('row', 'g-0');
     
     const linkClasses = classes.join(' ');

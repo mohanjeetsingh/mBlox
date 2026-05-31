@@ -39,7 +39,7 @@ async function run() {
     const entryPoints = {
         mBloxCall: path.join(PROJECT_ROOT, 'mBloxCall.js'),
         mBloxEngine: path.join(SRC_DIR, 'core', 'engine.js'),
-        uiBootstrap: path.join(SRC_DIR, 'design', 'ui-bootstrap.js'),
+        uiM3e: path.join(SRC_DIR, 'design', 'ui-m3e.js'),
         mBloxCard: path.join(SRC_DIR, 'blocks', 'card.js'),
         mBloxList: path.join(SRC_DIR, 'blocks', 'list.js'),
         mBloxCover: path.join(SRC_DIR, 'blocks', 'cover.js'),
