@@ -4,9 +4,12 @@
 
 import { getProvider, BloggerProvider } from '../services/providers.js';
 import { parseBlockConfig, calculateLayout } from '../utils/config-parser.js';
-import { BLOCK_SHOWCASE } from '../core/config.js';
+import { BLOCK_SHOWCASE, BLOCK_LIST } from '../core/config.js';
 import { loadOptimalImages } from '../utils/image-loader.js';
 import { injectSvgSprite } from '../components/icons.js';
+import { renderGrid } from '../layouts/grid.js';
+import { renderCarouselGrid } from '../layouts/carousel.js';
+import { renderListGrid } from '../layouts/list.js';
 
 // Global renderer instance
 let rendererInstance = null;
@@ -61,7 +64,7 @@ export async function mBlocks(blockItem) {
 
                 blockConfig = calculateLayout(blockConfig, postsInFeed);
 
-                const { blockBody, carouselIndicators, showcaseHTML } = await renderer.buildBlockBody(response, blockConfig);
+                const { renderedBlocks, carouselIndicators, showcaseHTML } = await renderer.buildBlockBody(response, blockConfig);
 
                 const isCurrentStage = blockConfig.stageID === parseInt(rawElement.getAttribute("data-s") || "1", 10);
                 const displayClass = isCurrentStage ? '' : ' d-none';
@@ -71,6 +74,15 @@ export async function mBlocks(blockItem) {
                     renderOutput += showcaseHTML;
                 }
                 
+                let blockBody = '';
+                if (blockConfig.isCarousel) {
+                    blockBody = renderCarouselGrid(renderedBlocks, blockConfig);
+                } else if (blockConfig.blockType === BLOCK_LIST) {
+                    blockBody = renderListGrid(renderedBlocks, blockConfig);
+                } else {
+                    blockBody = renderGrid(renderedBlocks, blockConfig);
+                }
+
                 renderOutput += renderer.createCarouselWrapper(blockBody, carouselIndicators, blockConfig, response);
                 renderOutput += renderer.createBlockFooter(blockConfig, response);
                 renderOutput += `</div>`;

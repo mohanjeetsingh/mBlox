@@ -77,22 +77,18 @@ export class M3ERenderer {
                 showcaseHTML = renderers[BLOCK_SHOWCASE].render(response.posts[0], 0, config);
             }
 
-            if (config.isCarousel) {
-                for (let i = 0; i < postsInFeed; i++) {
-                    let thumbHTML = renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
+            const renderedBlocks = [];
+            for (let postID = 0; postID < postsInFeed; postID++) {
+                let thumbHTML = renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[postID], config);
+                if (config.isCarousel) {
                     thumbHTML = thumbHTML.replace('<article class="', '<article class="snap-start ');
-                    blockBody += thumbHTML;
                 }
-            } else {
-                blockBody += `<div class="${config.layout.gap} grid ${RESPONSIVE_GRID_CLASSES_M3E[config.columnCount] || ''}">`;
-                for (let postID = 0; postID < postsInFeed; postID++) {
-                    blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[postID], config);
-                }
-                blockBody += `</div>`;
+                renderedBlocks.push(thumbHTML);
             }
-            return { blockBody, carouselIndicators, showcaseHTML };
+            return { renderedBlocks, carouselIndicators, showcaseHTML };
         }
 
+        const renderedBlocks = [];
         for (let postID = 0; postID < postsInFeed; postID++) {
             const post = response.posts[postID];
             let currentColumnCount = config.columnCount;
@@ -108,31 +104,10 @@ export class M3ERenderer {
                 postHTML = postHTML.replace('<article class="', '<article class="snap-start ');
             }
 
-            const isFirstItemInLoop = postID === 0;
-            const startNewRow = isFirstItemInLoop || (config.blockType === BLOCK_LIST && postID === 1);
-
-            if (!config.isCarousel) {
-                if (startNewRow) {
-                    blockBody += `<div class="${config.layout.gap}`;
-                    if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
-                    if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
-                    else if (config.blockType !== BLOCK_COVER) blockBody += ' px-2 sm:px-3 md:px-4 lg:px-5';
-                    blockBody += ` grid ${RESPONSIVE_GRID_CLASSES_M3E[currentColumnCount] || RESPONSIVE_GRID_CLASSES_M3E[6]}">`;
-                }
-            }
-
-            blockBody += postHTML;
-
-            const isLastPostOverall = postID === (postsInFeed - 1);
-            if (isLastPostOverall) {
-                if (!config.isCarousel) {
-                    blockBody += `</div>`;
-                    if (config.blockType === BLOCK_LIST) blockBody += `</div>`;
-                }
-            }
+            renderedBlocks.push(postHTML);
         }
 
-        return { blockBody, carouselIndicators, showcaseHTML };
+        return { renderedBlocks, carouselIndicators, showcaseHTML };
     }
 
     createBlockHeader(config) {

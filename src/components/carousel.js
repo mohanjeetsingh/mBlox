@@ -8,11 +8,6 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
     let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
 
     if (config.isCarousel) {
-        // Native CSS scroll snap container
-        const autoColsClass = RESPONSIVE_CAROUSEL_CLASSES_M3E[config.columnCount] || RESPONSIVE_CAROUSEL_CLASSES_M3E[6];
-        const rowClassMap = { 1: 'grid-rows-1', 2: 'grid-rows-2', 3: 'grid-rows-3', 4: 'grid-rows-4' };
-        const rowClass = rowClassMap[config.blockRows] || 'grid-rows-1';
-        html += `<div class="grid grid-flow-col ${rowClass} ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
         if (carouselIndicators) {
             html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
         }
@@ -26,10 +21,10 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
             }
             html += `</div>`;
         }
+        html += blockBody;
         html += `${controls.prev}${controls.next}`;
 
     } else if (config.containsNavigation) {
-        // Standard paginated grid block (inner grid already created by ui-m3e.js)
         html += blockBody;
         const totalStages = Math.ceil(response.totalResults / config.postsPerBlock);
         if (config.stageID > 1) html += controls.prev;
