@@ -28,19 +28,22 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         const cornerClass = (config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl';
-        textContentHTML += `<div class="${config.theme.glass} backdrop-blur-sm ${config.theme.text} p-6 md:p-12 absolute z-10 flex flex-col justify-center items-center`;
-        switch (config.textVerticalAlign) {
-            case "top": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-8 ${cornerClass}">`; break;
-            case "middle": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${cornerClass}">`; break;
-            case "bottom": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 bottom-8 ${cornerClass}">`; break;
-            case "overlay": textContentHTML += ` w-full h-full inset-0 rounded-none">`; break;
-            default: textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${cornerClass}">`; break;
-        }
-        textContentHTML += `${authorCode}${dateCode}`;
-        textContentHTML += titleCode;
-        textContentHTML += snippetCode;
-        textContentHTML += ctaButtonCode;
-        textContentHTML += `</div>`;
+        
+        const alignClassMap = {
+            top: `w-3/4 left-1/2 -translate-x-1/2 top-8 ${cornerClass}`,
+            middle: `w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${cornerClass}`,
+            bottom: `w-3/4 left-1/2 -translate-x-1/2 bottom-8 ${cornerClass}`,
+            overlay: `w-full h-full inset-0 rounded-none`
+        };
+        const alignClass = alignClassMap[config.textVerticalAlign] || alignClassMap.middle;
+
+        textContentHTML = `
+            <div class="${config.theme.glass} backdrop-blur-sm ${config.theme.text} p-6 md:p-12 absolute z-10 flex flex-col justify-center items-center ${alignClass}">
+                ${authorCode}${dateCode}
+                ${titleCode}
+                ${snippetCode}
+                ${ctaButtonCode}
+            </div>`;
     }
 
     // Link wrapper classes

@@ -39,7 +39,7 @@ export function render(post, postID, config) {
         // Large feature block
         const cornerClass = config.cornerStyle === " rounded-none" ? "rounded-none" : "rounded-t-3xl";
         const showcaseContent = config.showHeader
-            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-md ${config.theme.text} pointer-events-auto">${titleCode} ${snippetCode}</div></div>`
+            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-xl ${config.theme.text} pointer-events-auto">${titleCode} ${snippetCode}</div></div>`
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
         const pbClass = config.callToAction === "" ? ' pb-3' : '';
