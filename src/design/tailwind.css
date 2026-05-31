@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+/* Tell Tailwind v4 where to scan for classes */
+
+@theme {
+  /* ─── M3E BREAKPOINTS ────────────────────────────────────────────────────────
+     Mapping default Tailwind breakpoints to Material 3 Window Size Classes. */
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 840px;
+  --breakpoint-lg: 1200px;
+  --breakpoint-xl: 1600px;
+
+  /* ─── PURGE DEFAULT TOKENS ───────────────────────────────────────────────────
+     Disable all default Tailwind colors, fonts, and shadows to strictly enforce M3E. */
+  --color-*: initial;
+  --text-*: initial;
+  --shadow-*: initial;
+  --ring-*: initial;
+
+  /* ─── ESSENTIAL COLORS ───────────────────────────────────────────────────────
+     Restore native CSS colors stripped by the purge above. */
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-black: #000;
+  --color-white: #fff;
+
+  /* ─── PRIMARY ──────────────────────────────────────────────────────────────── */
+  --color-primary: #006699;
+  --color-on-primary: #DDD;
+  --color-primary-container: #CCDDFF;
+  --color-on-primary-container: #002233;
+  --color-inverse-primary: #A4CBEB;
+
+  /* ─── SECONDARY ────────────────────────────────────────────────────────────── */
+  --color-secondary: #5C5C5C;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #E6E6E6;
+  --color-on-secondary-container: #333333;
+
+  /* ─── TERTIARY ─────────────────────────────────────────────────────────────── */
+  --color-tertiary: #CC7000;
+  --color-on-tertiary: #FFFFFF;
+  --color-tertiary-container: #EECC99;
+  --color-on-tertiary-container: #332200;
+
+  /* ─── ERROR ────────────────────────────────────────────────────────────────── */
+  --color-error: #CC3333;
+  --color-on-error: #FFFFFF;
+  --color-error-container: #FFEDEB;
+  --color-on-error-container: #CC1111;
+
+  /* ─── BACKGROUND & SURFACE ─────────────────────────────────────────────────── */
+  --color-background: #F9F9FB;
+  --color-on-background: #1A1C1E;
+  --color-surface: #FCF8F8;
+  --color-on-surface: #1C1B1B;
+  --color-surface-variant: #E0E3E3;
+  --color-on-surface-variant: #444748;
+  --color-surface-tint: #3B627E;
+  --color-inverse-surface: #313030;
+  --color-inverse-on-surface: #F4F0EF;
+  --color-surface-dim: #DDD9D9;
+  --color-surface-bright: #FCF8F8;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F7F3F2;
+  --color-surface-container: #F1EDEC;
+  --color-surface-container-high: #EBE7E7;
+  --color-surface-container-highest: #E5E2E1;
+
+  /* ─── FIXED ────────────────────────────────────────────────────────────────── */
+
+  --color-primary-fixed: #006699;
+  --color-on-primary-fixed: #ddd;
+  --color-primary-container-fixed: #00334D;
+  --color-on-primary-container-fixed: #ddd;
+  --color-primary-fixed-dim: #A4CBEB;
+  --color-on-primary-fixed-variant: #214A66;
+  --color-secondary-fixed: #E3E2E2;
+  --color-on-secondary-fixed: #1B1C1C;
+  --color-secondary-fixed-dim: #C7C6C6;
+  --color-on-secondary-fixed-variant: #464747;
+  --color-tertiary-fixed: #FFDCC2;
+  --color-on-tertiary-fixed: #2E1500;
+  --color-tertiary-fixed-dim: #FFB77C;
+  --color-on-tertiary-fixed-variant: #6D3900;
+
+  /* ─── OUTLINE & SCRIM ──────────────────────────────────────────────────────── */
+  --color-outline: #747878;
+  --color-outline-variant: #C4C7C7;
+  --color-scrim: #000000;
+  --color-shadow: #000000;
+
+  /* ─── STATUS / SEMANTIC ──────────────────────────────────────────────────────
+     Non-M3E extras kept for notification/alert UIs (info banners, toasts). */
+  --color-info: #00aaff;
+  --color-success: #009485;
+  --color-warning: #b36200;
+
+  /* ─── FONTS ──────────────────────────────────────────────────────────────────*/
+  --font-system: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --font-primary: var(--font-system);
+  --font-secondary: var(--font-system);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --font-sans: var(--font-primary);
+  --font-serif: var(--font-secondary);
+
+  /* ─── MATERIAL DESIGN 3 TYPE SCALE ───────────────────────────────────────────*/
+  --text-display-lg: 3.57rem;
+  --text-display-lg--line-height: 4rem;
+  --text-display-md: 2.85rem;
+  --text-display-md--line-height: 3.25rem;
+  --text-display-sm: 2.28rem;
+  --text-display-sm--line-height: 2.75rem;
+
+  --text-headline-lg: 2rem;
+  --text-headline-lg--line-height: 2.5rem;
+  --text-headline-md: 1.71rem;
+  --text-headline-md--line-height: 2.25rem;
+  --text-headline-sm: 1.42rem;
+  --text-headline-sm--line-height: 2rem;
+
+  --text-title-lg: 1.28rem;
+  --text-title-lg--line-height: 1.75rem;
+  --text-title-md: 1rem;
+  --text-title-md--line-height: 1.5rem;
+  --text-title-md--font-weight: 500;
+  --text-title-sm: 0.85rem;
+  --text-title-sm--line-height: 1.25rem;
+  --text-title-sm--font-weight: 500;
+
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5rem;
+  --text-body-md: 0.85rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-body-sm: 0.71rem;
+  --text-body-sm--line-height: 1rem;
+
+  --text-label-lg: 0.85rem;
+  --text-label-lg--line-height: 1.25rem;
+  --text-label-lg--font-weight: 500;
+  --text-label-md: 0.71rem;
+  --text-label-md--line-height: 1rem;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 0.64rem;
+  --text-label-sm--line-height: 1rem;
+  --text-label-sm--font-weight: 500;
+
+  /* ─── MATERIAL DESIGN 3 ELEVATIONS ───────────────────────────────────────────
+  --shadow-m3e-1: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --shadow-m3e-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15);
+  --shadow-m3e-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);*/
+
+  /* ─── MATERIAL 3 EXPRESSIVE RADII ───────────────────────────────────────────
+  --radius-m3e-sm: 8px;
+  --radius-m3e-md: 12px;
+  --radius-m3e-lg: 16px;
+  --radius-m3e-xl: 24px;
+  --radius-m3e-2xl: 32px;*/
+
+  /* ─── MATERIAL 3 EASING ───────────────────────────────────────────────────*/
+  --ease-m3-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-primary);
+    @apply text-on-surface bg-surface;
+  }
+
+  a {
+    @apply transition-all duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary;
+  }
+
+
+
+  /* ─── Dark Mode Overrides ───────────────────────────────────────────
+     Remaps all M3E color tokens for dark mode. */
+  [data-scheme="dark"] {
+    --color-surface-tint: #A4CBEB;
+    --color-inverse-primary: #3B627E;
+
+    --color-secondary: #C7C6C6;
+    --color-on-secondary: #303031;
+    --color-secondary-container: #222222;
+    --color-on-secondary-container: #E6e6e6;
+
+    --color-tertiary: #FFB77C;
+    --color-on-tertiary: #4D2700;
+    --color-tertiary-container: #664400;
+    --color-on-tertiary-container: #DDCC99;
+
+    --color-error: #FFB3AD;
+    --color-on-error: #680009;
+    --color-error-container: #CC3333;
+    --color-on-error-container: #FFEDEB;
+
+    --color-background: #121415;
+    --color-on-background: #E2E2E5;
+    --color-surface: #141313;
+    --color-on-surface: #E5E2E1;
+    --color-surface-variant: #444748;
+    --color-on-surface-variant: #C4C7C7;
+    --color-surface-dim: #141313;
+    --color-surface-bright: #3A3939;
+    --color-surface-container-lowest: #0E0E0E;
+    --color-surface-container-low: #1C1B1B;
+    --color-surface-container: #201F1F;
+    --color-surface-container-high: #2A2A2A;
+    --color-surface-container-highest: #353434;
+    --color-inverse-surface: #E5E2E1;
+    --color-inverse-on-surface: #313030;
+
+    --color-primary-fixed: #CAE6FF;
+    --color-on-primary-fixed: #001E2F;
+    --color-primary-fixed-dim: #A4CBEB;
+    --color-on-primary-fixed-variant: #214A66;
+    --color-secondary-fixed: #E3E2E2;
+    --color-on-secondary-fixed: #1B1C1C;
+    --color-secondary-fixed-dim: #C7C6C6;
+    --color-on-secondary-fixed-variant: #464747;
+    --color-tertiary-fixed: #FFDCC2;
+    --color-on-tertiary-fixed: #2E1500;
+    --color-tertiary-fixed-dim: #FFB77C;
+    --color-on-tertiary-fixed-variant: #6D3900;
+
+    --color-outline: #8E9192;
+    --color-outline-variant: #444748;
+    --color-shadow: #000000;
+    --color-scrim: #000000;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-scheme="light"]) {
+      --color-surface-tint: #A4CBEB;
+      --color-inverse-primary: #3B627E;
+
+      --color-secondary: #C7C6C6;
+      --color-on-secondary: #303031;
+      --color-secondary-container: #222222;
+      --color-on-secondary-container: #E6e6e6;
+
+      --color-tertiary: #FFB77C;
+      --color-on-tertiary: #4D2700;
+      --color-tertiary-container: #664400;
+      --color-on-tertiary-container: #DDCC99;
+
+      --color-error: #FFB3AD;
+      --color-on-error: #680009;
+      --color-error-container: #CC3333;
+      --color-on-error-container: #FFEDEB;
+
+      --color-background: #121415;
+      --color-on-background: #E2E2E5;
+      --color-surface: #141313;
+      --color-on-surface: #E5E2E1;
+      --color-surface-variant: #444748;
+      --color-on-surface-variant: #C4C7C7;
+      --color-surface-dim: #141313;
+      --color-surface-bright: #3A3939;
+      --color-surface-container-lowest: #0E0E0E;
+      --color-surface-container-low: #1C1B1B;
+      --color-surface-container: #201F1F;
+      --color-surface-container-high: #2A2A2A;
+      --color-surface-container-highest: #353434;
+      --color-inverse-surface: #E5E2E1;
+      --color-inverse-on-surface: #313030;
+
+      --color-primary-fixed: #CAE6FF;
+      --color-on-primary-fixed: #001E2F;
+      --color-primary-fixed-dim: #A4CBEB;
+      --color-on-primary-fixed-variant: #214A66;
+      --color-secondary-fixed: #E3E2E2;
+      --color-on-secondary-fixed: #1B1C1C;
+      --color-secondary-fixed-dim: #C7C6C6;
+      --color-on-secondary-fixed-variant: #464747;
+      --color-tertiary-fixed: #FFDCC2;
+      --color-on-tertiary-fixed: #2E1500;
+      --color-tertiary-fixed-dim: #FFB77C;
+      --color-on-tertiary-fixed-variant: #6D3900;
+
+      --color-outline: #8E9192;
+      --color-outline-variant: #444748;
+      --color-shadow: #000000;
+      --color-scrim: #000000;
+    }
+  }
+}
