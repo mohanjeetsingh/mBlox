@@ -27,13 +27,28 @@ export function loadOptimalImages(rawElement) {
             }
 
             if (isBg) {
-                el.style.backgroundImage = `url(${finalUrl})`;
-                if (isFixed) {
-                    el.style.backgroundAttachment = 'fixed';
-                    el.style.backgroundPosition = 'center center';
-                    el.style.backgroundSize = 'cover';
-                }
+                const img = new Image();
+                img.onload = () => {
+                    el.style.backgroundImage = `url(${finalUrl})`;
+                    if (isFixed) {
+                        el.style.backgroundAttachment = 'fixed';
+                        el.style.backgroundPosition = 'center center';
+                        el.style.backgroundSize = 'cover';
+                    }
+                };
+                img.onerror = () => {
+                    import('../core/config.js').then(({ noImg }) => {
+                        el.style.backgroundImage = `url(${noImg})`;
+                    });
+                };
+                img.src = finalUrl;
             } else {
+                el.onerror = () => {
+                    import('../core/config.js').then(({ noImg }) => {
+                        el.src = noImg;
+                        el.onerror = null;
+                    });
+                };
                 el.src = finalUrl;
             }
 
