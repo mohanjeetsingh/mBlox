@@ -27,7 +27,7 @@ export function render(post, postID, config) {
     // Content container
     let textContentHTML = '';
     if (config.showHeader) {
-        textContentHTML += `<div class="col p-2 ps-0">`;
+        textContentHTML += `<div class="flex-1 p-2 pl-0">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -36,7 +36,7 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold'];
     classes.push('rounded-none');
     classes.push(config.theme.bg);
 

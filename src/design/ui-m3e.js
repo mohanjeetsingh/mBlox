@@ -93,7 +93,7 @@ export class M3ERenderer {
                     if (i % itemsPerSlide === 0) {
                         if (i > 0) blockBody += `</div></div>`; 
                         blockBody += `<div class="snap-start shrink-0 min-w-full">`;
-                        blockBody += `<div class="${config.layout.gap} px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                        blockBody += `<div class="${config.layout.gap} px-2 sm:px-3 md:px-4 lg:px-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
                     }
                     blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
                 }

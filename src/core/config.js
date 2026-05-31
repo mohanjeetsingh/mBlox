@@ -39,15 +39,6 @@ export const RESPONSIVE_COLUMN_MAP = {
     6: [3, 4, 4, 5, 6]
 };
 
-export const RESPONSIVE_GRID_CLASSES_BS = {
-    1: 'row-cols-1',
-    2: 'row-cols-1 row-cols-sm-1 row-cols-md-2',
-    3: 'row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3',
-    4: 'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4',
-    5: 'row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 row-cols-xl-5',
-    6: 'row-cols-3 row-cols-sm-4 row-cols-md-4 row-cols-lg-5 row-cols-xl-6'
-};
-
 export const RESPONSIVE_GRID_CLASSES_M3E = {
     1: 'grid-cols-1',
     2: 'grid-cols-1 sm:grid-cols-1 md:grid-cols-2',

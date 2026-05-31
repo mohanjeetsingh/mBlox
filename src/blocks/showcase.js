@@ -42,8 +42,8 @@ export function render(post, postID, config) {
             ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-md ${config.theme.text} pointer-events-auto">${titleCode} ${snippetCode}</div></div>`
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
-        const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image relative flex flex-col text-center ${config.theme.bg} overflow-hidden rounded-none shadow-sm${featureMarginClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary no-underline font-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
+        const pbClass = config.callToAction === "" ? ' pb-3' : '';
+        return `<div class="feature-image relative flex flex-col text-center ${config.theme.bg} overflow-hidden rounded-none${pbClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary no-underline font-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
     }
 
     // Showcase grid post
@@ -75,7 +75,7 @@ export function renderThumbnail(post, config) {
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-toggle="tooltip"`;
     const imageTag = `<img class="w-full h-full object-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
     const youtubeIcon = getVideoIcon(videoID);
-    const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} shadow-sm overflow-hidden ${config.cornerStyle} relative">${imageTag}${youtubeIcon}</figure>`;
+    const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} overflow-hidden ${config.cornerStyle} relative">${imageTag}${youtubeIcon}</figure>`;
 
     return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative" ${articleDataAttributes} role="article">${figureTag}</article>`;
 }

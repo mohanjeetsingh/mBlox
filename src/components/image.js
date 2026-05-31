@@ -30,7 +30,7 @@ export function renderImage(finalType, postID, config, data) {
             tooltipAttributes = `data-toggle="tooltip" data-vidid="${videoID}"`;
             const showcaseYoutubeIcon = getShowcaseVideoIcon(videoID);
             if (postID === 0) showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-t-3xl' : config.cornerStyle} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
-            imageBSClass += `${config.aspectRatio} shadow-sm`;
+            imageBSClass += `${config.aspectRatio}`;
             break;
         case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
         case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-full m-2'; break;

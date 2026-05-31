@@ -47,7 +47,7 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'flex', 'flex-row', 'bg-surface'];
+    const classes = ['overflow-hidden', 'w-full', 'no-underline', 'font-bold', 'flex', 'flex-row', 'bg-surface'];
     classes.push(config.cornerStyle);
 
     classes.push('h-full');
