@@ -10,14 +10,24 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
     if (config.isCarousel || config.containsNavigation) {
         // Native CSS scroll snap container
         const autoColsClass = RESPONSIVE_CAROUSEL_CLASSES_M3E[config.columnCount] || RESPONSIVE_CAROUSEL_CLASSES_M3E[6];
-        html += `<div class="grid grid-flow-col grid-rows-[${config.blockRows}] ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
+        html += `<div class="grid grid-flow-col grid-rows-[${config.blockRows}] ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
         if (config.isCarousel && carouselIndicators) {
             html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
         }
 
         if (config.isCarousel) {
+            const numItems = response && response.posts ? response.posts.length : 0;
+            const numCols = Math.ceil(numItems / (config.blockRows || 1));
+            if (numCols > 1) {
+                html += `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute bottom-3 left-0 right-0 z-10 pointer-events-none">`;
+                for(let i = 0; i < numCols; i++) {
+                    html += `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i+1}"></button>`;
+                }
+                html += `</div>`;
+            }
             html += `${controls.prev}${controls.next}`;
         }
+
 
         if (config.containsNavigation) {
             const totalStages = Math.ceil(response.totalResults / config.postsPerBlock);
@@ -26,7 +36,7 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
         }
     } else {
         html += blockBody;
-        html += renderPaginationButtons(config);
+        html += renderPaginationButtons(config, response);
     }
 
     html += `</div>`;
@@ -51,6 +61,34 @@ export function initCarousel(rawElement, config) {
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+        });
+    }
+
+    const dots = rawElement.querySelectorAll('.carousel-dot');
+    if (dots.length > 0 && container) {
+        if (dots[0]) dots[0].setAttribute('aria-current', 'true');
+        
+        const updateDots = () => {
+            const scrollLeft = container.scrollLeft;
+            const itemWidth = container.scrollWidth / dots.length;
+            const activeIndex = Math.min(dots.length - 1, Math.round(scrollLeft / itemWidth));
+            dots.forEach((dot, index) => {
+                if (index === activeIndex) {
+                    dot.setAttribute('aria-current', 'true');
+                } else {
+                    dot.removeAttribute('aria-current');
+                }
+            });
+        };
+        
+        container.addEventListener('scroll', updateDots, {passive: true});
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const index = parseInt(dot.getAttribute('data-index'), 10);
+                const itemWidth = container.scrollWidth / dots.length;
+                container.scrollTo({ left: index * itemWidth, behavior: 'smooth' });
+            });
         });
     }
 

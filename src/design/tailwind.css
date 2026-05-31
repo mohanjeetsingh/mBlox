@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 /* Tell Tailwind v4 where to scan for classes */
+@source "../**/*.js";
+@source "../../demo/**/*.html";
 
 @theme {
   /* ─── M3E BREAKPOINTS ────────────────────────────────────────────────────────
