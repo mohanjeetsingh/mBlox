@@ -1,65 +1,88 @@
 import fs from 'fs';
 import path from 'path';
 import * as esbuild from 'esbuild';
-import yaml from 'js-yaml';
 
 const PROJECT_ROOT = process.cwd();
 const DIST_DIR = path.join(PROJECT_ROOT, 'dist');
-const CONFIG_DIR = path.join(PROJECT_ROOT, 'config');
-const JS_YAML = path.join(CONFIG_DIR, 'BSjsComponents.yaml');
-const OUTPUT_FILE = path.join(DIST_DIR, 'mBloxBS.js');
-const TEMP_ENTRY = path.join(CONFIG_DIR, 'bootstrap-entry.temp.js');
+const SRC_DIR = path.join(PROJECT_ROOT, 'src');
 
 async function run() {
-    console.log('🚀 Generating mBloxBS.js...');
+    console.log('🚀 Cleaning JS assets and generating modular mBlox builds...');
 
-    if (!fs.existsSync(DIST_DIR)) {
-        fs.mkdirSync(DIST_DIR, { recursive: true });
+    try {
+        // Clean JS files only, keeping mBloxBS.css compiled by build-css.js
+        if (fs.existsSync(DIST_DIR)) {
+            const files = fs.readdirSync(DIST_DIR);
+            for (const file of files) {
+                if (file.endsWith('.js') || file.startsWith('chunk-') || file === 'src') {
+                    fs.rmSync(path.join(DIST_DIR, file), { recursive: true, force: true });
+                }
+            }
+            console.log('🧹 Cleaned JS files in dist/.');
+        } else {
+            fs.mkdirSync(DIST_DIR, { recursive: true });
+        }
+    } catch (err) {
+        console.warn('⚠️ Warning: Failed to clean dist/ directory:', err.message);
     }
 
-    // 1. Load components from YAML
-    if (!fs.existsSync(JS_YAML)) {
-        console.error(`❌ BSjsComponents.yaml not found: ${JS_YAML}`);
+    // Copy Bootstrap JS bundle to dist/mBloxBS.js
+    const bootstrapJsSrc = path.join(PROJECT_ROOT, 'node_modules', 'bootstrap', 'dist', 'js', 'bootstrap.bundle.min.js');
+    const bootstrapJsDest = path.join(DIST_DIR, 'mBloxBS.js');
+    if (fs.existsSync(bootstrapJsSrc)) {
+        fs.copyFileSync(bootstrapJsSrc, bootstrapJsDest);
+        console.log('📦 Copied Bootstrap JS bundle to dist/mBloxBS.js');
+    } else {
+        console.warn('⚠️ Warning: Bootstrap JS bundle not found in node_modules.');
+    }
+
+    const entryPoints = {
+        mBloxCall: path.join(PROJECT_ROOT, 'mBloxCall.js'),
+        mBloxEngine: path.join(SRC_DIR, 'core', 'engine.js'),
+        uiBootstrap: path.join(SRC_DIR, 'renderers', 'ui-bootstrap.js'),
+        mBloxCard: path.join(SRC_DIR, 'blocks', 'card.js'),
+        mBloxList: path.join(SRC_DIR, 'blocks', 'list.js'),
+        mBloxCover: path.join(SRC_DIR, 'blocks', 'cover.js'),
+        mBloxPancake: path.join(SRC_DIR, 'blocks', 'pancake.js'),
+        mBloxStack: path.join(SRC_DIR, 'blocks', 'stack.js'),
+        mBloxQuote: path.join(SRC_DIR, 'blocks', 'quote.js'),
+        mBloxComment: path.join(SRC_DIR, 'blocks', 'comment.js'),
+        mBloxShowcase: path.join(SRC_DIR, 'blocks', 'showcase.js'),
+        mBloxGallery: path.join(SRC_DIR, 'blocks', 'gallery.js')
+    };
+
+    // Filter to only compile files that actually exist
+    const validEntryPoints = {};
+    for (const [key, val] of Object.entries(entryPoints)) {
+        if (fs.existsSync(val)) {
+            validEntryPoints[key] = val;
+        } else {
+            console.warn(`⚠️ Warning: Entry point file does not exist: ${val}`);
+        }
+    }
+
+    if (Object.keys(validEntryPoints).length === 0) {
+        console.log('No valid entry point files found. Skipping JS build.');
         return;
     }
-    const config = yaml.load(fs.readFileSync(JS_YAML, 'utf8'));
-    const components = config.components || [];
 
-    // 2. Generate temporary entry point
-    console.log(`📦 Bundling components: ${components.join(', ')}...`);
-    let entryContent = `// Auto-generated entry point\nwindow.bootstrap = window.bootstrap || {};\n`;
-    
-    components.forEach(comp => {
-        const capitalized = comp.charAt(0).toUpperCase() + comp.slice(1);
-        entryContent += `import ${capitalized} from 'bootstrap/js/dist/${comp}';\n`;
-        entryContent += `window.bootstrap.${capitalized} = ${capitalized};\n`;
-    });
-
-    fs.writeFileSync(TEMP_ENTRY, entryContent);
-
-    // 3. Build with esbuild
     try {
         await esbuild.build({
-            entryPoints: [TEMP_ENTRY],
+            entryPoints: validEntryPoints,
             bundle: true,
             minify: true,
-            format: 'iife',
-            target: ['es2015'],
-            outfile: OUTPUT_FILE,
+            splitting: false, // Turn off splitting to prevent chunk-XXXX.js generation
+            format: 'esm',
+            target: ['es2020'],
+            outdir: DIST_DIR,
             banner: {
-                js: `/*! mBloxBS.js - Custom Bootstrap JS Bundle | Generated: ${new Date().toISOString()} */`,
+                js: `/*! mBlox Modular JS | Generated: ${new Date().toISOString()} */`,
             },
         });
 
-        const stats = fs.statSync(OUTPUT_FILE);
-        console.log(`✅ Build complete! Final size: ${(stats.size / 1024).toFixed(2)} KB`);
+        console.log(`✅ Build complete! Files generated in /dist`);
     } catch (err) {
         console.error('❌ Build failed:', err);
-    } finally {
-        // Cleanup temp file
-        if (fs.existsSync(TEMP_ENTRY)) {
-            fs.unlinkSync(TEMP_ENTRY);
-        }
     }
 }
 

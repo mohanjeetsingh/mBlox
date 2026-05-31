@@ -1,6 +1,6 @@
 <html>
 <!--
- * mBlocks for Blogger (Bootstrap Test)
+ * mBlocks for Blogger (Legacy Test)
  * CIA.RealHappinessCenter.com
  * Copyright (c) 2022-2026, Mohanjeet Singh
  * Released under the MIT license
@@ -8,9 +8,11 @@
 
 <head>
     <meta name="referrer" content="origin" />
-    <link href='../assets/vendor/bootstrap.min.css' rel='stylesheet' />
-    <script src='../assets/vendor/bootstrap.bundle.min.js'></script>
-    <script type="module" src='../mBloxCall.js'></script>
+    <script>
+        window.mBloxCssSrc = '../dist/mBloxBS.css';
+        window.mBloxBsJsSrc = '../dist/mBloxBS.js';
+    </script>
+    <script src='../legacy/mBloxScript.js'></script>
     <script src='../assets/noImg.js'></script>
 </head>
 
@@ -73,21 +75,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             generateBlocks(blockConfigurations);
+            if (typeof mBlocks === 'function') {
+                mBlocks('.mBlockL');
+            }
         });
     </script>
-    <section class="mBlockL">
-        <script type="application/json">
-            {
-                "contentType": "recent",
-                "label": "Art",
-                "posts": 3,
-                "type": "c-ihs",
-                "title": "JSON Configured Cards",
-                "feed": "https://mohanjeet.blogspot.com/",
-                "theme": "primary"
-            }
-        </script>
-    </section>
 </body>
 
 </html>

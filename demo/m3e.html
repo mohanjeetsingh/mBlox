@@ -1,6 +1,6 @@
 <html>
 <!--
- * mBlocks for Blogger
+ * mBlocks for Blogger (Material 3 / m3e Test)
  * CIA.RealHappinessCenter.com
  * Copyright (c) 2022-2026, Mohanjeet Singh
  * Released under the MIT license
@@ -8,11 +8,65 @@
 
 <head>
     <meta name="referrer" content="origin" />
-    <script src='../mBloxCall.js'></script>
+    <!-- Tailwind Play CDN for styling m3e utility grid/flex classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind with custom colors to support mBlox themes
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#002233',
+                        secondary: '#cc7000',
+                        light: '#f8f9fa',
+                        dark: '#212529',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Fallbacks/helpers for Bootstrap Carousel components utilized by m3e renderer */
+        .carousel {
+            position: relative;
+        }
+        .carousel-inner {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+        }
+        .carousel-item {
+            position: relative;
+            display: none;
+            float: left;
+            width: 100%;
+            margin-right: -100%;
+            backface-visibility: hidden;
+            transition: transform .6s ease-in-out;
+        }
+        .carousel-item.active {
+            display: block;
+        }
+        /* Custom transitions and helper styles */
+        .blur-5 {
+            filter: blur(5px);
+        }
+        .rounded-5 {
+            border-radius: 2rem;
+        }
+    </style>
+    <script>
+        window.mBloxConfig = {
+            designSystem: 'm3e',
+            cssSrc: '../assets/mCustom.css' // custom overrides
+        };
+    </script>
+    <script type="module" src='../mBloxCall.js'></script>
     <script src='../assets/noImg.js'></script>
 </head>
 
-<body>
+<body class="bg-gray-100 min-h-screen p-4">
     <script>
         const blockConfigurations = [
             { class: 'mBlockL', contenttype: 'recent', corner: "sharp", posts: "4", type: "s-ihs", title: "RSS", theme: "primary", feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWA1V8hi8TJm4DlBIfFfYyQ', ar: "16x9", isCarousel: "true", moreText: "Click for more" },

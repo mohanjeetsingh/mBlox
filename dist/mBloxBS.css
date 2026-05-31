@@ -1,6 +1,6 @@
 /*!
  * mBloxBS.css - Custom Bootstrap Extraction for mBlox
- * Generated on: 2026-04-28T16:36:59.437Z
+ * Generated on: 2026-05-31T09:03:04.079Z
  */
 @charset "UTF-8";
 
@@ -1696,6 +1696,54 @@ tbody {
   list-style: none;
 }
 
+.page-link {
+  position: relative !important;
+  display: block !important;
+  padding: var(--bs-pagination-padding-y) var(--bs-pagination-padding-x) !important;
+  font-size: var(--bs-pagination-font-size);
+  color: var(--bs-pagination-color);
+  text-decoration: none;
+  background-color: var(--bs-pagination-bg);
+  border: var(--bs-pagination-border-width) solid var(--bs-pagination-border-color);
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-link {
+    transition: none;
+  }
+}
+.page-link:hover {
+  z-index: 2 !important;
+  color: var(--bs-pagination-hover-color);
+  background-color: var(--bs-pagination-hover-bg);
+  border-color: var(--bs-pagination-hover-border-color);
+}
+.page-link:focus {
+  z-index: 3 !important;
+  color: var(--bs-pagination-focus-color);
+  background-color: var(--bs-pagination-focus-bg);
+  outline: 0;
+  box-shadow: var(--bs-pagination-focus-box-shadow);
+}
+.page-link.active, .active > .page-link {
+  z-index: 3 !important;
+  color: var(--bs-pagination-active-color);
+  background-color: var(--bs-pagination-active-bg);
+  border-color: var(--bs-pagination-active-border-color);
+}
+
+.page-item:not(:first-child) .page-link {
+  margin-left: calc(-1 * var(--bs-border-width)) !important;
+}
+.page-item:first-child .page-link {
+  border-top-left-radius: var(--bs-pagination-border-radius);
+  border-bottom-left-radius: var(--bs-pagination-border-radius);
+}
+.page-item:last-child .page-link {
+  border-top-right-radius: var(--bs-pagination-border-radius);
+  border-bottom-right-radius: var(--bs-pagination-border-radius);
+}
+
 @keyframes progress-bar-stripes {
   0% {
     background-position-x: var(--bs-progress-height);
@@ -2305,6 +2353,11 @@ tbody {
 
 .float-none {
   float: none !important;
+}
+
+.object-fit-cover {
+  -o-object-fit: cover !important;
+     object-fit: cover !important;
 }
 
 .opacity-0 {

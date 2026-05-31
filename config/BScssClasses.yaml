@@ -19,6 +19,11 @@ layout:
   - float-start
   - float-end
   - position-relative
+  - flex-column
+  - d-none
+  - top-0
+  - start-0
+  - object-fit-cover
 
 grid:
   - row-cols-1
@@ -90,6 +95,10 @@ components:
   pagination:
     - pagination
     - justify-content-end
+    - justify-content-start
+    - justify-content-center
+    - page-item
+    - page-link
   carousel:
     - carousel
     - carousel-fade

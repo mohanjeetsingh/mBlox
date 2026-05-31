@@ -1,60 +1,78 @@
 /*!
- * mBlocks for Blogger
+ * mBlocks for Blogger - Modular Entry Point
  * CIA.RealHappinessCenter.com
  * @version 2.0.0
- * Copyright (c) 2022-2026, Mohanjeet Singh
- * Released under the MIT license
  */
 
-let isFirstScriptLoad = !0;
+import { mBlocks } from './src/core/engine.js';
+
+let isFirstScriptLoad = true;
 
 /**
- * Loads the main mBloxScript.js file if it's the first call, then initializes the blocks.
- * Subsequent calls directly initialize blocks without reloading the script.
- * @param {string|HTMLElement} blockItem The selector or element to pass to mBlocks.
- * @param {boolean} isFirstLoad A flag indicating if this is the first time scripts are being loaded.
+ * Loads the core engine and initializes blocks.
+ * Uses window.mBloxConfig to determine the design system.
  */
 function loadScripts(blockItem, isFirstLoad) {
     if (isFirstLoad) {
-        window.mBloxCssSrc = '../dist/mBloxBS.css';
-        window.mBloxBsJsSrc = '../dist/mBloxBS.js';
+        const config = window.mBloxConfig || { designSystem: 'bs' };
+        const isM3E = config.designSystem === 'm3e';
 
-        const scriptElement = document.createElement('script');
-        scriptElement.src = '../mBloxScript.js';
-        scriptElement.onload = () => {
-            if (typeof mBlocks === 'function') {
-                mBlocks(blockItem);
-            }
-            isFirstScriptLoad = !1;
-        };
-        document.head.append(scriptElement);
-    } else {
-        if (typeof mBlocks === 'function') {
-            mBlocks(blockItem);
+        // 1. Inject CSS for the chosen design system
+        const cssUrl = isM3E ? (config.cssSrc || '../dist/mBloxM3E.css') : (config.cssSrc || '../dist/mBloxBS.css');
+        if (!document.querySelector(`link[href*="${cssUrl}"]`)) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = cssUrl;
+            document.head.appendChild(link);
         }
+
+        // 2. Inject Bootstrap JS if needed (M3E doesn't need Bootstrap JS)
+        if (!isM3E && (!window.bootstrap || !window.bootstrap.Carousel)) {
+            const bsJsUrl = config.bsJsSrc || '../dist/mBloxBS.js';
+            const script = document.createElement('script');
+            script.src = bsJsUrl;
+            script.onload = () => {
+                mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+            };
+            document.head.appendChild(script);
+        } else {
+            mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+        }
+    } else {
+        mBlocks(blockItem);
     }
 }
 
-//Intersection Observer for Lazy Loading
+// Intersection Observer for Lazy Loading
 window.addEventListener("load", (event) => {
-    document.getElementsByClassName("mBlock").length && (loadScripts('.mBlock', isFirstScriptLoad));
+    if (document.getElementsByClassName("mBlock").length) {
+        loadScripts('.mBlock', isFirstScriptLoad);
+    }
 
-    const options = { rootMargin: '500px', threshold: 0.0 },
-        lazyLoadTargets = document.getElementsByClassName("mBlockL");
+    const config = window.mBloxConfig || {};
+    const threshold = config.lazyLoadThreshold !== undefined ? config.lazyLoadThreshold : 0.0;
+    const rootMargin = config.lazyLoadRootMargin || '500px';
+
+    const options = { rootMargin: rootMargin, threshold: threshold };
+    const lazyLoadTargets = document.getElementsByClassName("mBlockL");
+    
     let observer = new IntersectionObserver(intersectionCallback, options);
-    Array.prototype.forEach.call(lazyLoadTargets, function (observedElement) { observer.observe(observedElement) });
+    Array.prototype.forEach.call(lazyLoadTargets, function (observedElement) { 
+        observer.observe(observedElement);
+    });
 }, false);
 
-/**
- * Callback function for the IntersectionObserver.
- * @param {IntersectionObserverEntry[]} entries An array of entries, each representing a target element.
- * @param {IntersectionObserver} observer The observer instance.
- */
 const intersectionCallback = (entries, observer) => {
     entries.forEach((entry) => {
         if (entry.isIntersecting) {
-            (entry.target).classList.contains("mBlockL") && (loadScripts(entry.target, isFirstScriptLoad));
+            if ((entry.target).classList.contains("mBlockL")) {
+                loadScripts(entry.target, isFirstScriptLoad);
+            }
             observer.unobserve(entry.target);
         }
     });
 };
+
+// Expose globally for manual calls
+window.mBlocks = mBlocks;
+window.loadScripts = loadScripts;

@@ -1,6 +1,6 @@
 .vscode/
 node_modules/
-assets/
+scratch/
 
 # Logs
 logs
@@ -15,6 +15,7 @@ yarn-error.log*
 # OS generated files
 .DS_Store
 Thumbs.db
+
 # Dependencies
 node_modules/
 .npm
