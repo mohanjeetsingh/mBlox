@@ -36,9 +36,9 @@ export function renderImage(finalType, postID, config, data) {
         case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
         case BLOCK_COMMENT: imageCoverStyle += ' height:3rem!important;width:3rem!important;'; imageBSClass = ' rounded-full m-2'; figureClass = 'shrink-0 flex items-center justify-center'; break;
         case BLOCK_QUOTE: imageCoverStyle += ' height:6rem!important;width:6rem;'; imageBSClass = ' rounded-full mx-auto mt-6'; break;
-        case BLOCK_STACK: 
-            imageBSClass = " w-full h-full object-cover"; 
-            figureClass = 'w-1/3 shrink-0 h-full flex items-center justify-center'; 
+        case BLOCK_STACK:
+            imageBSClass = " h-full object-cover";
+            figureClass = `w-1/3 shrink-0 h-full flex items-center justify-center`;
             break;
         case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
     }
@@ -51,9 +51,12 @@ export function renderImage(finalType, postID, config, data) {
     const imageSrc = config.isBloggerFeed ? placeholderSrc : imageURL;
     const youtubeIcon = getVideoIcon(videoID);
 
+    const imgTagClasses = `w-full ${imageBSClass}${lazyLoadClass}`.replace(/\s+/g, ' ');
+    const fixedFigureClass = `m-0 relative ${figureClass} ${imageBSClass} ${lazyLoadClass}`.replace(/\s+/g, ' ');
+
     const imageCode = canBeFixed
-        ? `<figure class="m-0${imageBSClass}${lazyLoadClass} relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${youtubeIcon}</figure>`
-        : `<figure class="m-0 relative ${figureClass}"><img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
+        ? `<figure class="${fixedFigureClass}" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${youtubeIcon}</figure>`
+        : `<figure class="m-0 relative ${figureClass}"><img class="${imgTagClasses}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }

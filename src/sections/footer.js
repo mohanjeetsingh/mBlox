@@ -4,9 +4,9 @@ export function renderBlockFooter(config, response) {
     let moreLinkHTML = '';
     if (config.moreText !== "") {
         if (response.feedUrl) {
-            moreLinkHTML = `<a class="border-0 font-bold no-underline" href="${config.siteURL}search?max-results=9" title="View all">
-                            ${config.moreText} <svg class="inline-block" fill="currentColor" height="1em" viewBox="0 0 16 16" width="1em" xmlns="http://www.w3.org/2000/svg"><use href="#icon-caret-right"></use></svg></a>`;
+            moreLinkHTML = `<a class="inline-block border-0 font-bold no-underline" href="${config.siteURL}search?max-results=9" title="View all">
+                            ${config.moreText} <svg class="inline-block align-text-bottom" fill="currentColor" height="1.2em" viewBox="0 0 16 16" width="1.2em" xmlns="http://www.w3.org/2000/svg"><use href="#icon-caret-right"></use></svg></a>`;
         }
     }
-    return `<div class="st${config.stageID} mblox-footer w-full pr-5 py-8 flex justify-end ${config.theme.bg}">${moreLinkHTML}</div>`;
+    return `<div class="st${config.stageID} mblox-footer w-full pr-5 py-8 text-right ${config.theme.bg}">${moreLinkHTML}</div>`;
 }
