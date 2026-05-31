@@ -46,3 +46,31 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
     6: 'grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6'
 };
 
+export const M3E_THEMES = {
+    'surface': { bg: 'bg-surface', text: 'text-on-surface', textMuted: 'text-on-surface-variant' },
+    'surface-variant': { bg: 'bg-surface-variant', text: 'text-on-surface-variant', textMuted: 'text-outline' },
+    'primary': { bg: 'bg-primary', text: 'text-on-primary', textMuted: 'text-primary-container' },
+    'secondary': { bg: 'bg-secondary', text: 'text-on-secondary', textMuted: 'text-secondary-container' },
+    'tertiary': { bg: 'bg-tertiary', text: 'text-on-tertiary', textMuted: 'text-tertiary-container' },
+    'error': { bg: 'bg-error', text: 'text-on-error' }
+};
+
+export const LAYOUT_CLASSES = {
+    0: { gap: 'gap-0', mt: 'mt-0', px: 'px-0' },
+    2: { gap: 'gap-2', mt: 'mt-2', px: 'px-2' },
+    4: { gap: 'gap-4', mt: 'mt-4', px: 'px-4' },
+    6: { gap: 'gap-6', mt: 'mt-6', px: 'px-6' },
+    8: { gap: 'gap-8', mt: 'mt-8', px: 'px-8' },
+    10: { gap: 'gap-10', mt: 'mt-10', px: 'px-10' },
+    12: { gap: 'gap-12', mt: 'mt-12', px: 'px-12' }
+};
+
+export const ASPECT_RATIO_CLASSES = {
+    '1/1': 'aspect-square',
+    '16/9': 'aspect-video',
+    '4/3': 'aspect-[4/3]',
+    '3/4': 'aspect-[3/4]',
+    '9/16': 'aspect-[9/16]',
+    '9/21': 'aspect-[9/21]',
+    '21/9': 'aspect-[21/9]'
+};

@@ -3,7 +3,8 @@
  */
 
 import { getProvider, BloggerProvider } from '../services/providers.js';
-import { parseBlockConfig, calculateLayout, BLOCK_SHOWCASE } from '../utils/config-parser.js';
+import { parseBlockConfig, calculateLayout } from '../utils/config-parser.js';
+import { BLOCK_SHOWCASE } from '../core/config.js';
 import { loadOptimalImages } from '../utils/image-loader.js';
 import { injectSvgSprite } from '../components/icons.js';
 
