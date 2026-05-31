@@ -1,4 +1,5 @@
 import { BLOCK_SHOWCASE, BLOCK_PANCAKE, BLOCK_COMMENT, BLOCK_QUOTE, BLOCK_STACK, BLOCK_COVER, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, noImg } from '../core/config.js';
+import { getVideoIcon, getShowcaseVideoIcon } from './video.js';
 
 export function renderImage(finalType, postID, config, data) {
     if (!config.showImage) return { imageCode: '', showcaseImageCode: '', videoThumbnailURL: '', highResImageURL: '' };
@@ -19,7 +20,7 @@ export function renderImage(finalType, postID, config, data) {
     if (!videoThumbnailURL) videoThumbnailURL = imageURL;
     let highResImageURL = imageURL;
     if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
-    else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg'); 
+    else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
 
     let imageCoverStyle = "object-fit:cover !important;height:100% !important;", imageBSClass = ' w-full h-auto', tooltipAttributes = ``;
     let showcaseImageCode = '';
@@ -27,7 +28,8 @@ export function renderImage(finalType, postID, config, data) {
     switch (finalType) {
         case BLOCK_SHOWCASE:
             tooltipAttributes = `data-toggle="tooltip" data-vidid="${videoID}"`;
-            if (postID === 0) showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-t-3xl' : config.cornerStyle} m-blox-image-to-load" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}></figure>`;
+            const showcaseYoutubeIcon = getShowcaseVideoIcon(videoID);
+            if (postID === 0) showcaseImageCode = `<figure class="m-0${imageBSClass}${config.cornerStyle == " rounded" ? ' rounded-t-3xl' : config.cornerStyle} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
             imageBSClass += `${config.aspectRatio} shadow-sm`;
             break;
         case BLOCK_PANCAKE: imageBSClass += ` ${config.aspectRatio.trim()}`; break;
@@ -43,9 +45,11 @@ export function renderImage(finalType, postID, config, data) {
     const canBeFixed = isComplexBlock ? postID === 0 && config.isImageFixed : config.isImageFixed;
     const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
     const imageSrc = config.isBloggerFeed ? placeholderSrc : imageURL;
+    const youtubeIcon = getVideoIcon(videoID);
+
     const imageCode = canBeFixed
-        ? `<figure class="m-0${imageBSClass}${lazyLoadClass}" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}></figure>`
-        : `<img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>`;
+        ? `<figure class="m-0${imageBSClass}${lazyLoadClass} relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${youtubeIcon}</figure>`
+        : `<figure class="m-0 relative w-full h-full flex"><img class="${imageBSClass}${lazyLoadClass}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }

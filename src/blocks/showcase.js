@@ -6,28 +6,16 @@ import { renderTitle } from '../components/title.js';
 import { renderSnippet } from '../components/snippet.js';
 import { BLOCK_SHOWCASE, noImg } from '../core/config.js';
 
-function _getYouTubeVideoId(post) {
-    if (post.videoId) return post.videoId;
-    if (post.thumbnailUrl && (post.thumbnailUrl.includes("ytimg.com/vi/") || post.thumbnailUrl.includes("youtube.com/vi/"))) {
-        const idStartIndex = post.thumbnailUrl.indexOf("/vi/") + 4;
-        const nextSlashIndex = post.thumbnailUrl.indexOf('/', idStartIndex);
-        if (nextSlashIndex !== -1) return post.thumbnailUrl.substring(idStartIndex, nextSlashIndex);
-    }
-    if (post.content && post.content.includes('youtube.com/embed/')) {
-        const match = post.content.match(/youtube\.com\/embed\/([^?"]+)/);
-        return (match && match[1]) ? match[1] : "noVideo";
-    }
-    return "noVideo";
-}
+import { getYouTubeVideoId, getVideoIcon } from '../components/video.js';
 
 export function render(post, postID, config) {
     const finalType = BLOCK_SHOWCASE;
-    const videoID = _getYouTubeVideoId(post);
-    
+    const videoID = getYouTubeVideoId(post);
+
     // Render parts
     const titleCode = renderTitle(finalType, config, post.title);
     const snippetCode = renderSnippet(finalType, config, post.content);
-    
+
     let snippetText = '';
     if (post.content) {
         const doc = new DOMParser().parseFromString(post.content, 'text/html');
@@ -38,7 +26,7 @@ export function render(post, postID, config) {
     }
 
     const ctaButtonCode = renderCTA(finalType, config, post.title);
-    
+
     const { imageCode, showcaseImageCode } = renderImage(finalType, postID, config, {
         postSnippet: post.content,
         videoID: videoID,
@@ -51,7 +39,7 @@ export function render(post, postID, config) {
         // Large feature block
         const cornerClass = config.cornerStyle === " rounded-none" ? "rounded-none" : "rounded-t-3xl";
         const showcaseContent = config.showHeader
-            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-md ${config.theme.text}">${titleCode} ${snippetCode}</div></div>`
+            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-md ${config.theme.text} pointer-events-auto">${titleCode} ${snippetCode}</div></div>`
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
         const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
@@ -63,12 +51,12 @@ export function render(post, postID, config) {
     const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative`;
     const imageHigh = post.thumbnailUrl ? post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600') : noImg;
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
-    
+
     return `<article class="${articleClasses}" ${articleDataAttributes} role="article" title="${post.title}">${config.showImage ? imageCode : ''}</article>`;
 }
 
 export function renderThumbnail(post, config) {
-    const videoID = _getYouTubeVideoId(post);
+    const videoID = getYouTubeVideoId(post);
     let thumbnailUrl = post.thumbnailUrl || noImg;
     let highResUrl = thumbnailUrl;
 
@@ -86,7 +74,8 @@ export function renderThumbnail(post, config) {
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-toggle="tooltip"`;
     const imageTag = `<img class="w-full h-full object-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
-    const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} shadow-sm overflow-hidden ${config.cornerStyle}">${imageTag}</figure>`;
+    const youtubeIcon = getVideoIcon(videoID);
+    const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} shadow-sm overflow-hidden ${config.cornerStyle} relative">${imageTag}${youtubeIcon}</figure>`;
 
     return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative" ${articleDataAttributes} role="article">${figureTag}</article>`;
 }

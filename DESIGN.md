@@ -85,7 +85,7 @@ To ensure we align with M3E nomenclature, we map our site sections/features to t
 *   **Typography Casing:** Strict adherence to Sentence Case or Title Case for all UI elements (buttons, labels, badges). **All-caps utilities (e.g., `uppercase`) are strictly forbidden** as they violate Material 3 Expressive guidelines and severely reduce readability and scannability.
 
 ### Glassmorphism & Depth
-*   Use `bg-primary-container-fixed/60` with `backdrop-blur-xl` for sticky headers, navigation bars, and overlays to create a premium glassmorphic effect.
+*   Use `backdrop-blur-xl` for sticky headers, navigation bars, and overlays to create a premium glassmorphic effect.
 
 ### Brand-Tinted Surface Model (Dark Mode)
 To avoid a stark, monochrome "white/black" aesthetic, Dark Mode surfaces completely abandon flat greys (`#1a1a1a`, `#2b2b2b`) in favor of deep, rich brand blues strictly from the Primary palette. This creates a cohesive, immersive environment:

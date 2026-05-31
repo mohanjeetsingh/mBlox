@@ -1,5 +1,7 @@
 /**
  * mBlox Configuration & Constants
+ * 
+ * The defaults specified here are as per desktop version and ne
  */
 
 export const BLOCK_COVER = 'v';
@@ -71,7 +73,7 @@ export function getResponsiveGridClass(cols, designSystem) {
 export function fadeIn(el) {
     if (!el) return;
     el.style.opacity = 0;
-    el.classList.remove('d-none');
+    el.classList.remove('d-none', 'hidden');
     el.style.display = '';
     (function fade() {
         let val = parseFloat(el.style.opacity);
@@ -87,8 +89,7 @@ export function fadeOut(el) {
     el.style.opacity = 1;
     (function fade() {
         if ((el.style.opacity -= .1) < 0) {
-            el.classList.add('d-none');
-            el.style.display = '';
+            el.style.display = 'none';
         } else {
             requestAnimationFrame(fade);
         }

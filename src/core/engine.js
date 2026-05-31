@@ -5,6 +5,7 @@
 import { getProvider, BloggerProvider } from '../services/providers.js';
 import { parseBlockConfig, calculateLayout, BLOCK_SHOWCASE } from '../utils/config-parser.js';
 import { loadOptimalImages } from '../utils/image-loader.js';
+import { injectSvgSprite } from '../components/icons.js';
 
 // Global renderer instance
 let rendererInstance = null;
@@ -25,6 +26,7 @@ async function _getRenderer() {
 }
 
 export async function mBlocks(blockItem) {
+    injectSvgSprite();
     const renderer = await _getRenderer();
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
