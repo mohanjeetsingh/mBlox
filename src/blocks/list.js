@@ -28,7 +28,7 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         // "Latest" header bar specific to list type
-        textContentHTML += `<div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-sm rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>`;
+        textContentHTML += `<div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-xl rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>`;
 
         // Falling through to Card content style
         const alignClassMap = {
