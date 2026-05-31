@@ -37,9 +37,9 @@ function getBlockScriptUrl(blockName) {
     let baseUrl = import.meta.url;
     baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
     
-    // In dev: engine/renderer is in src/core or src/renderers, blocks are in src/blocks
-    if (baseUrl.includes('/src/core') || baseUrl.includes('/src/renderers')) {
-        const base = baseUrl.includes('/src/core') ? baseUrl.replace('/src/core', '') : baseUrl.replace('/src/renderers', '');
+    // In dev: engine/renderer is in src/core or src/design, blocks are in src/blocks
+    if (baseUrl.includes('/src/core') || baseUrl.includes('/src/design')) {
+        const base = baseUrl.includes('/src/core') ? baseUrl.replace('/src/core', '') : baseUrl.replace('/src/design', '');
         return `${base}/src/blocks/${blockName}.js`;
     } else {
         // Prod: assets in /dist

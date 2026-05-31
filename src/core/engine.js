@@ -2,7 +2,7 @@
  * mBlox Core Engine
  */
 
-import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapBloggerResponseToStandardFormat } from './data-fetcher.js';
+import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapBloggerResponseToStandardFormat } from '../services/data-fetcher.js';
 
 const BLOCK_COVER = 'v', BLOCK_SHOWCASE = 's', BLOCK_LIST = 'l', BLOCK_CARD = 'c', BLOCK_GALLERY = 'g', BLOCK_PANCAKE = 'p', BLOCK_STACK = 't', BLOCK_QUOTE = 'q', BLOCK_COMMENT = 'm';
 const CACHE_DURATION_MS = 15 * 60 * 1000;
@@ -283,10 +283,12 @@ async function _getRenderer() {
     if (rendererInstance) return rendererInstance;
     const isM3E = (window.mBloxConfig && window.mBloxConfig.designSystem === 'm3e');
     if (isM3E) {
-        const { M3ERenderer } = await import('../renderers/ui-m3e.js');
-        rendererInstance = new M3ERenderer();
+        const { M3ERenderer } = await import('../design/ui-m3e.js');
+        mBlox.m3eRenderer = M3ERenderer;
+        const { BootstrapRenderer } = await import('../design/ui-bootstrap.js');
+        rendererInstance = new BootstrapRenderer();
     } else {
-        const { BootstrapRenderer } = await import('../renderers/ui-bootstrap.js');
+        const { BootstrapRenderer } = await import('../design/ui-bootstrap.js');
         rendererInstance = new BootstrapRenderer();
     }
     return rendererInstance;
