@@ -31,6 +31,9 @@ export async function mBlocks(blockItem) {
     const elements = (typeof blockItem === 'string') ? document.querySelectorAll(blockItem) : [blockItem];
 
     for (const rawElement of elements) {
+        // Designate the block wrapper as a CSS container query root
+        rawElement.classList.add('@container');
+        
         let blockConfig = parseBlockConfig(rawElement);
 
         // Listen for pagination events fired by the renderer
