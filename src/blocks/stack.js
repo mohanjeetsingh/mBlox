@@ -28,13 +28,13 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         if (config.showImage) {
-            textContentHTML += '<div class="col-8 h-full">';
+            textContentHTML += '<div class="w-2/3 h-full flex flex-col">';
         }
         
-        const isDarkTheme = config.dataTheme !== "light";
-        // Stack block's internal layout uses card-body
-        const bodyClass = isDarkTheme ? ` h-full opacity-75 bg-${config.dataTheme} text-on-${config.dataTheme}` : ` text-${config.inverseTheme}`;
-        textContentHTML += `<div class="card-body${bodyClass}">`;
+        const isDarkTheme = config.dataTheme !== "surface";
+        // Stack block's internal layout uses padding instead of card-body
+        const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+        textContentHTML += `<div class="p-4 flex-grow flex flex-col justify-center${bodyClass}">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -47,17 +47,15 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'flex', 'flex-row', 'bg-surface'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push('h-full');
-    classes.push('row', 'g-0');
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

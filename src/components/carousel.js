@@ -4,13 +4,11 @@
 import { renderPaginationButtons } from './pagination.js';
 
 export function renderCarousel(blockBody, carouselIndicators, config, response, controls) {
-    const wrapperId = `carousel-${config.mBlockID}-st${config.stageID}`;
-    const wrapperClass = `overflow-hidden bg-${config.dataTheme}${config.blockType === 's' ? ' sFeature' : ""}${((config.isCarousel || config.containsNavigation) ? ' carousel slide carousel-fade' : " position-relative")}`;
-    
-    let html = `<div id="${wrapperId}" class="${wrapperClass}" data-bs-ride="carousel">`;
+    let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
 
     if (config.isCarousel || config.containsNavigation) {
-        html += `<div class="carousel-inner">${blockBody}</div>`;
+        // Native CSS scroll snap container
+        html += `<div class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
         if (config.isCarousel && carouselIndicators) {
             html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
         }
@@ -34,15 +32,6 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
 }
 
 export function initCarousel(rawElement, config) {
-    if (config.isCarousel && window.bootstrap && window.bootstrap.Carousel) {
-        const carouselEl = rawElement.querySelector(`.st${config.stageID}.carousel, .st${config.stageID} .carousel`);
-        if (carouselEl) {
-            const carousel = window.bootstrap.Carousel.getOrCreateInstance(carouselEl, {
-                interval: 5000,
-                ride: 'carousel',
-                wrap: config.wrap !== false
-            });
-            carousel.cycle();
-        }
-    }
+    // Native CSS scroll snapping handles carousels automatically without JS.
+    // Future enhancements can implement JS-based next/prev buttons interacting with scrollLeft here.
 }

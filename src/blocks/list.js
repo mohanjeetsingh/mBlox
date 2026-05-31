@@ -28,18 +28,18 @@ export function render(post, postID, config) {
     let textContentHTML = '';
     if (config.showHeader) {
         // "Latest" header bar specific to list type
-        textContentHTML += `<div class="position-absolute top-0 bg-${config.dataTheme} text-on-${config.dataTheme} opacity-75 rounded-none ps-5 py-6 w-full z-1 h-auto">Latest</div>`;
+        textContentHTML += `<div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-sm rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>`;
         
         // Falling through to Card content style
-        textContentHTML += `<div class="card-img-overlay flex flex-col p-0 border-0`;
+        textContentHTML += `<div class="absolute inset-0 flex flex-col p-0 z-10`;
         switch (config.textVerticalAlign) {
-            case "top": textContentHTML += ' justify-start"><div class="text-bg-'; break;
-            case "middle": textContentHTML += ' justify-center"><div class="text-bg-'; break;
-            case "bottom": textContentHTML += ' justify-end"><div class="text-bg-'; break;
-            case "overlay": textContentHTML += '"><div class="h-full text-bg-'; break;
-            default: textContentHTML += '"><div class="h-full text-bg-'; break;
+            case "top": textContentHTML += ' justify-start"><div class="'; break;
+            case "middle": textContentHTML += ' justify-center"><div class="'; break;
+            case "bottom": textContentHTML += ' justify-end"><div class="'; break;
+            case "overlay": textContentHTML += '"><div class="h-full '; break;
+            default: textContentHTML += '"><div class="h-full '; break;
         }
-        textContentHTML += `${config.dataTheme} opacity-75 rounded-none p-8">`;
+        textContentHTML += `${config.theme.glass} backdrop-blur-md ${config.theme.text} rounded-none p-8 pt-20">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -48,17 +48,16 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'relative', 'block'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push(config.aspectRatio.trim());
-    classes.push(`mt-${config.gutterSize}`);
+    classes.push(config.layout.mt);
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

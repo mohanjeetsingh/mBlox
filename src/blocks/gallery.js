@@ -13,16 +13,15 @@ export function render(post, postID, config) {
     });
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'block', 'relative'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push(config.aspectRatio.trim());
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${linkWrapperEnd}</article>`;
 }

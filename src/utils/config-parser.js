@@ -26,6 +26,55 @@ const RESPONSIVE_COLUMN_MAP = {
     1: [1, 1, 1, 1, 1], 2: [1, 1, 2, 2, 2], 3: [1, 1, 2, 3, 3], 4: [1, 2, 3, 4, 4], 5: [2, 3, 4, 4, 5], 6: [3, 4, 4, 5, 6]
 };
 
+const M3E_THEMES = {
+    'surface': {
+        bg: 'bg-surface',
+        text: 'text-on-surface',
+        textMuted: 'text-on-surface-variant',
+        glass: 'bg-surface/80'
+    },
+    'surface-variant': {
+        bg: 'bg-surface-variant',
+        text: 'text-on-surface-variant',
+        textMuted: 'text-outline',
+        glass: 'bg-surface-variant/80'
+    },
+    'primary': {
+        bg: 'bg-primary',
+        text: 'text-on-primary',
+        textMuted: 'text-primary-container',
+        glass: 'bg-primary-container-fixed/60'
+    },
+    'secondary': {
+        bg: 'bg-secondary',
+        text: 'text-on-secondary',
+        textMuted: 'text-secondary-container',
+        glass: 'bg-secondary-container/80'
+    },
+    'tertiary': {
+        bg: 'bg-tertiary',
+        text: 'text-on-tertiary',
+        textMuted: 'text-tertiary-container',
+        glass: 'bg-tertiary-container/80'
+    },
+    'error': {
+        bg: 'bg-error',
+        text: 'text-on-error',
+        textMuted: 'text-error-container',
+        glass: 'bg-error/80'
+    }
+};
+
+const LAYOUT_CLASSES = {
+    0: { gap: 'gap-0', mt: 'mt-0', px: 'px-0' },
+    2: { gap: 'gap-2', mt: 'mt-2', px: 'px-2' },
+    4: { gap: 'gap-4', mt: 'mt-4', px: 'px-4' },
+    6: { gap: 'gap-6', mt: 'mt-6', px: 'px-6' },
+    8: { gap: 'gap-8', mt: 'mt-8', px: 'px-8' },
+    10: { gap: 'gap-10', mt: 'mt-10', px: 'px-10' },
+    12: { gap: 'gap-12', mt: 'mt-12', px: 'px-12' }
+};
+
 export function calculateLayout(config, postsInFeed) {
     let newConfig = { ...config };
     if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) newConfig.isCarousel = false;
@@ -105,7 +154,7 @@ export function parseBlockConfig(rawElement) {
         dataType = getVal("type", "type", "v-ih").toLowerCase(),
         blockType = dataType.substring(0, 1),
         componentList = dataType.substring(1),
-        dataTheme = getVal("theme", "theme", "light").toLowerCase(),
+        rawTheme = getVal("theme", "theme", "light").toLowerCase(),
         showHeader = componentList.includes("h"),
         showImage = componentList.includes("i"),
         showSnippet = componentList.includes("s"),
@@ -116,7 +165,10 @@ export function parseBlockConfig(rawElement) {
     const firstInstance = !rawElement.hasAttribute("data-s") && jsonConfig.s === undefined;
     const postsPerBlock = getIntVal("posts", "posts", 3);
 
-    const inverseTheme = (dataTheme == "light" ? "primary" : "light");
+    // Map legacy themes to M3E semantic tokens
+    const dataTheme = rawTheme === 'dark' ? 'surface-variant' : (rawTheme === 'light' ? 'surface' : rawTheme);
+    const theme = M3E_THEMES[dataTheme] || M3E_THEMES['surface'];
+    
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
     const dataBlur = getVal("iBlur", "iBlur", "").toLowerCase();
@@ -139,11 +191,11 @@ export function parseBlockConfig(rawElement) {
         sectionHeight: getVal("iHeight", "iHeight", null),
         articleHeight: '',
         blurImage: dataBlur === "true" || jsonConfig.iBlur === true ? true : (dataBlur === "false" || jsonConfig.iBlur === false ? false : null),
-        inverseTheme,
+        theme,
+        gutterSize: getVal("gutter", "gutter", ((blockType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
         cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-2xl",
         aspectRatio: ` aspect-[${getVal("ar", "ar", "1/1").replace('x', '/').toLowerCase()}]`,
-        gutterSize: getVal("gutter", "gutter", ((blockType == "v") ? 0 : 3)),
         isImageFixed: dataIFix === "true" || jsonConfig.iFix === true ? true : (dataIFix === "false" || jsonConfig.iFix === false ? false : null),
         lowContrast: getBoolVal("lowContrast", "lowContrast", false),
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
@@ -153,5 +205,6 @@ export function parseBlockConfig(rawElement) {
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
         containsNavigation: false, actualColumnCount: 0,
     };
+    config.layout = LAYOUT_CLASSES[config.gutterSize * 2] || LAYOUT_CLASSES[6];
     return applyDefaultConfig(config);
 }

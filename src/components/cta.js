@@ -6,23 +6,23 @@ export function renderCTA(finalType, config, postTitle) {
         case BLOCK_GALLERY: 
             return '';
         case BLOCK_COMMENT: 
-            return `<span class="link-${config.dataTheme} small no-underline font-bold">${config.callToAction}</span>`;
+            return `<span class="${config.theme.text} text-label-md no-underline font-bold">${config.callToAction}</span>`;
         default:
-            let ctaClasses = `btn font-bold no-underline ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-none' : '')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
+            let ctaClasses = `inline-block text-label-lg font-bold no-underline text-center px-4 py-2 hover:opacity-80 transition-opacity ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-none' : 'rounded-full')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
             switch (finalType) {
-                case BLOCK_SHOWCASE: ctaClasses += " p-6 px-lg-5 float-end"; break;
-                case BLOCK_COVER: ctaClasses += ' p-2 px-6 mx-lg-5 mt-6'; break;
+                case BLOCK_SHOWCASE: ctaClasses += " p-6 md:px-12 float-right"; break;
+                case BLOCK_COVER: ctaClasses += ' p-2 px-6 mx-0 md:mx-10 mt-6'; break;
                 case BLOCK_PANCAKE: 
                 case BLOCK_QUOTE: 
-                    ctaClasses += ` py-2 px-6 w-full text-end link-${config.inverseTheme}`; 
+                    ctaClasses += ` py-2 px-6 w-full text-right`; 
                     break;
                 case BLOCK_STACK: ctaClasses += ' mt-6'; break;
                 case BLOCK_CARD: 
                 case BLOCK_LIST: 
-                    ctaClasses += ' bottom-0 end-0 mr-4 mb-6 d-block position-absolute w-auto'; 
+                    ctaClasses += ' bottom-0 right-0 mr-4 mb-6 block absolute w-auto'; 
                     break;
             }
-            ctaClasses += ` border-0 btn-${config.dataTheme}`;
+            ctaClasses += ` ${config.theme.bg} ${config.theme.text}`;
             return `<button class="${ctaClasses}" role="button" title="${postTitle}">${config.callToAction}</button>`;
     }
 }

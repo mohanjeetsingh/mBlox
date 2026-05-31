@@ -49,17 +49,18 @@ export function render(post, postID, config) {
 
     if (postID === 0 && config.firstInstance) {
         // Large feature block
+        const cornerClass = config.cornerStyle === " rounded-none" ? "rounded-none" : "rounded-t-3xl";
         const showcaseContent = config.showHeader
-            ? `<div class="card-img-overlay flex flex-col justify-end p-0 border-0"><div class="sContent rounded-none ${config.cornerStyle === " rounded" ? "rounded-top" : ""} mx-md-5 p-6 px-lg-5 bg-${config.dataTheme}">${titleCode} ${snippetCode}</div></div>`
+            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-md ${config.theme.text}">${titleCode} ${snippetCode}</div></div>`
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
         const featureMarginClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image card border-0 text-center bg-${config.dataTheme} overflow-hidden rounded-0${featureMarginClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="link-${config.inverseTheme} no-underline font-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
+        return `<div class="feature-image relative flex flex-col text-center ${config.theme.bg} overflow-hidden rounded-none shadow-sm${featureMarginClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary no-underline font-bold" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
     }
 
     // Showcase grid post
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
-    const articleClasses = `col d-inline-flex sPost`;
+    const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative`;
     const imageHigh = post.thumbnailUrl ? post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600') : noImg;
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
     
@@ -84,8 +85,8 @@ export function renderThumbnail(post, config) {
     const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-toggle="tooltip"`;
-    const imageTag = `<img class="w-full h-full object-fit-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
-    const figureTag = `<figure class="m-0 w-full img-fluid ${config.aspectRatio.trim()} shadow-sm">${imageTag}</figure>`;
+    const imageTag = `<img class="w-full h-full object-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} shadow-sm overflow-hidden ${config.cornerStyle}">${imageTag}</figure>`;
 
-    return `<article class="col d-inline-flex sPost" ${articleDataAttributes} role="article">${figureTag}</article>`;
+    return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative" ${articleDataAttributes} role="article">${figureTag}</article>`;
 }

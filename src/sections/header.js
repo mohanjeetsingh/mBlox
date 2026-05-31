@@ -1,6 +1,7 @@
+import { renderHeaderTitle } from '../components/header-title.js';
+import { renderHeaderDescription } from '../components/header-description.js';
+
 export function renderBlockHeader(config) {
     if (!config.dataTitle) return '';
-    const descriptionHTML = config.dataDescription ? `<span class="pb-3 text-black-50">${config.dataDescription}</span>` : '';
-    const titleClasses = `display-5 font-bold text-${config.inverseTheme} py-6 m-0 ${config.lowContrast ? "opacity-50" : ""}`;
-    return `<div class="text-center m-0 bg-${config.dataTheme} py-8"><h4 class="${titleClasses}">${config.dataTitle}</h4>${descriptionHTML}</div>`;
+    return `<div class="text-center ${config.theme.bg} py-8">${renderHeaderTitle(config)}${renderHeaderDescription(config)}</div>`;
 }

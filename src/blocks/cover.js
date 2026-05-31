@@ -27,14 +27,14 @@ export function render(post, postID, config) {
     // Content container
     let textContentHTML = '';
     if (config.showHeader) {
-        const cornerClass = (config.cornerStyle === " rounded" && config.textVerticalAlign !== "overlay") ? ' rounded-5' : config.cornerStyle;
-        textContentHTML += `<div class="bg-${config.dataTheme} text-on-${config.dataTheme} opacity-75 p-6 p-sm-5 position-absolute w-75 ${cornerClass} start-50 translate-middle`;
+        const cornerClass = (config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl';
+        textContentHTML += `<div class="${config.theme.glass} backdrop-blur-sm ${config.theme.text} p-6 md:p-12 absolute z-10 flex flex-col justify-center items-center`;
         switch (config.textVerticalAlign) {
-            case "top": textContentHTML += '-x mt-8">'; break;
-            case "middle": textContentHTML += ' top-50">'; break;
-            case "bottom": textContentHTML += '-x bottom-0 mb-8">'; break;
-            case "overlay": textContentHTML += ' top-50 h-full w-full">'; break;
-            default: textContentHTML += ' top-50">'; break;
+            case "top": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-8 ${cornerClass}">`; break;
+            case "middle": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${cornerClass}">`; break;
+            case "bottom": textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 bottom-8 ${cornerClass}">`; break;
+            case "overlay": textContentHTML += ` w-full h-full inset-0 rounded-none">`; break;
+            default: textContentHTML += ` w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${cornerClass}">`; break;
         }
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
@@ -44,10 +44,9 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'relative', 'block'];
     classes.push('rounded-none');
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push('text-center');
     classes.push('h-full');
     
@@ -55,7 +54,7 @@ export function render(post, postID, config) {
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     const articleStyle = ` style="${config.articleHeight}"`;
     return `<article class="${articleClasses}"${articleStyle} role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

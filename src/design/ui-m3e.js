@@ -58,9 +58,7 @@ export class M3ERenderer {
         const isComplexLayout = (config.blockType === BLOCK_LIST || config.blockType === BLOCK_SHOWCASE);
 
         if (config.isCarousel) {
-            carouselIndicators = document.createElement("div");
-            carouselIndicators.classList.add('carousel-indicators');
-            if (config.blockType !== BLOCK_COVER) carouselIndicators.classList.add('position-relative', 'm-0');
+            carouselIndicators = null; // Disabled for CSS Scroll Snap implementation
         }
 
         // Determine all block types needed
@@ -93,22 +91,14 @@ export class M3ERenderer {
                 for (let i = 0; i < postsInFeed; i++) {
                     if (i % itemsPerSlide === 0) {
                         if (i > 0) blockBody += `</div></div>`; 
-                        const activeClass = (i === 0) ? ' active' : '';
-                        blockBody += `<div class="carousel-item${activeClass}">`;
-                        blockBody += `<div class="gap-${config.gutterSize * 2} px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
-
-                        if (carouselIndicators) {
-                            const indicatorActiveClass = (currentSlide === 0) ? ' active' : '';
-                            const ariaCurrent = (currentSlide === 0) ? ' aria-current="true"' : '';
-                            carouselIndicators.insertAdjacentHTML('beforeend', `<button type="button" data-bs-target="#carousel-${config.mBlockID}-st${config.stageID}" data-bs-slide-to="${currentSlide}" class="bg-${config.inverseTheme}${indicatorActiveClass}" ${ariaCurrent} aria-label="Slide ${currentSlide + 1}"></button>`);
-                            currentSlide++;
-                        }
+                        blockBody += `<div class="snap-start shrink-0 min-w-full">`;
+                        blockBody += `<div class="${config.layout.gap} px-2 px-sm-3 px-md-4 px-lg-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
                     }
                     blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
                 }
                 blockBody += `</div></div>`; 
             } else {
-                blockBody += `<div class="gap-${config.gutterSize * 2} ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                blockBody += `<div class="${config.layout.gap} ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
                 for (let postID = 0; postID < postsInFeed; postID++) {
                     blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[postID], config);
                 }
@@ -129,17 +119,7 @@ export class M3ERenderer {
 
             const postHTML = renderers[finalType].render(post, postID, config);
 
-            let carouselIndicator = '';
-            if (config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) == 0)) {
-                const slideIndex = postID / (config.actualColumnCount * config.blockRows);
-                const activeClass = postID === 0 ? ' active' : '';
-                const ariaCurrent = postID === 0 ? 'aria-current="true"' : '';
-                 carouselIndicator = `<button type="button" data-bs-target="#carousel-${config.mBlockID}-st${config.stageID}" data-bs-slide-to="${slideIndex}" class="bg-${config.inverseTheme}${activeClass}" ${ariaCurrent} aria-label="Slide ${slideIndex + 1}"></button>`;
-            }
-
-            if (carouselIndicator && config.isCarousel) {
-                carouselIndicators.insertAdjacentHTML('beforeend', carouselIndicator);
-            }
+            // Removed carousel indicator generation
 
             const isFirstItemInLoop = postID === 0;
             const startNewRow = isFirstItemInLoop ||
@@ -154,8 +134,8 @@ export class M3ERenderer {
                         blockBody += `</div>`;
                     }
                 }
-                blockBody += `<div class="gap-${config.gutterSize * 2}`;
-                if (config.isCarousel) blockBody += ' carousel-item' + (postID === 0 ? ' active' : '');
+                blockBody += `<div class="${config.layout.gap}`;
+                if (config.isCarousel) blockBody += ' snap-start shrink-0 min-w-full';
                 if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
                 if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
                 else if (config.blockType !== BLOCK_COVER) blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';

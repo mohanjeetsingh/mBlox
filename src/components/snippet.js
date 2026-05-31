@@ -9,9 +9,5 @@ export function renderSnippet(finalType, config, postContent) {
         snippetText = snippetText.substring(0, config.snippetSize) + "...";
     }
 
-    const paddingClass = (finalType === BLOCK_COVER) ? 'py-6 d-block mx-lg-5' : '';
-    const textMutedClass = (config.dataTheme === 'light') ? 'text-muted' : 'opacity-75';
-    const contrastClass = config.lowContrast ? 'opacity-75' : '';
-
-    return `<summary class="list-unstyled ${textMutedClass} ${paddingClass} ${contrastClass}">${snippetText}</summary>`;
+    return `<summary class="list-none text-body-md text-on-surface-variant ${(finalType === BLOCK_COVER) ? 'py-6 block mx-0 md:mx-10' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
 }

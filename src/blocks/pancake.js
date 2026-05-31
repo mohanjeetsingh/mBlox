@@ -27,8 +27,8 @@ export function render(post, postID, config) {
     // Content container
     let textContentHTML = '';
     if (config.showHeader) {
-        const bgThemeClass = (config.dataTheme !== "light") ? ` h-full opacity-75 bg-${config.dataTheme} text-on-${config.dataTheme}` : ` text-${config.inverseTheme}`;
-        textContentHTML += `<div class="card-body${bgThemeClass}">`;
+        const bgThemeClass = (config.dataTheme !== "surface") ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+        textContentHTML += `<div class="p-4 flex-grow flex flex-col${bgThemeClass}">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -37,16 +37,15 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'flex', 'flex-col', 'bg-surface'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push('h-full');
     
     const linkClasses = classes.join(' ');
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

@@ -27,9 +27,9 @@ export function render(post, postID, config) {
     // Content container
     let textContentHTML = '';
     if (config.showHeader) {
-        const isDarkTheme = config.dataTheme !== "light";
-        const bodyClass = isDarkTheme ? ` h-full opacity-75 bg-${config.dataTheme} text-on-${config.dataTheme}` : ` text-${config.inverseTheme}`;
-        textContentHTML += `<div class="card-body${bodyClass}">`;
+        const isDarkTheme = config.dataTheme !== "surface";
+        const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+        textContentHTML += `<div class="p-6 flex-grow flex flex-col items-center justify-center${bodyClass}">`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
         textContentHTML += `${authorCode}${dateCode}`;
@@ -38,10 +38,9 @@ export function render(post, postID, config) {
     }
 
     // Link wrapper classes
-    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold'];
+    const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'flex', 'flex-col', 'bg-surface'];
     classes.push(config.cornerStyle);
-    classes.push('card');
-    classes.push(config.hasRoundedBorder ? `border border-3 border-opacity-75 border-${config.dataTheme}` : 'border-0');
+
     classes.push('text-center');
     classes.push('h-full');
     
@@ -49,6 +48,6 @@ export function render(post, postID, config) {
     const linkWrapperStart = `<a class="${linkClasses}" href="${post.url}" title="${post.title}">`;
     const linkWrapperEnd = `</a>`;
     
-    const articleClasses = 'col d-inline-flex';
+    const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article">${linkWrapperStart}${config.showImage ? imageCode : ''}${textContentHTML}${linkWrapperEnd}</article>`;
 }

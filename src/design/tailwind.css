@@ -15,7 +15,6 @@
   --color-*: initial;
   --text-*: initial;
   --shadow-*: initial;
-  --ring-*: initial;
 
   /* ─── ESSENTIAL COLORS ───────────────────────────────────────────────────────
      Restore native CSS colors stripped by the purge above. */

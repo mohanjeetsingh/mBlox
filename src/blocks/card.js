@@ -36,8 +36,7 @@ export function render(post, postID, config) {
             default: textContentHTML += '"><div class="h-full '; break;
         }
         
-        let themeClass = config.dataTheme === 'dark' ? 'surface-variant' : (config.dataTheme === 'light' ? 'surface' : config.dataTheme);
-        textContentHTML += `bg-${themeClass}/75 text-on-${themeClass} rounded-none p-8">`;
+        textContentHTML += `${config.theme.glass} backdrop-blur-md ${config.theme.text} rounded-none p-8">`;
         textContentHTML += `${authorCode}${dateCode}`;
         textContentHTML += titleCode;
         textContentHTML += snippetCode;
@@ -48,8 +47,7 @@ export function render(post, postID, config) {
     // Link wrapper classes
     const classes = ['overflow-hidden', 'w-full', 'shadow-sm', 'no-underline', 'font-bold', 'relative', 'block'];
     classes.push(config.cornerStyle);
-    let borderThemeClass = config.dataTheme === 'dark' ? 'surface-variant' : (config.dataTheme === 'light' ? 'surface' : config.dataTheme);
-    classes.push(config.hasRoundedBorder ? `border-4 border-${borderThemeClass}/75` : 'border-0');
+
     classes.push(config.aspectRatio.trim());
     classes.push('h-full');
     
