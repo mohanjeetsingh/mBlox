@@ -9,18 +9,10 @@ import { renderCarousel, initCarousel } from '../components/carousel.js';
 import { 
     BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
+    RESPONSIVE_GRID_CLASSES_M3E,
     fadeIn, fadeOut 
 } from '../core/config.js';
 import { getVideoIframe } from '../components/video.js';
-
-const RESPONSIVE_GRID_CLASSES = {
-    1: 'grid grid-cols-1',
-    2: 'grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2',
-    3: 'grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-    4: 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4',
-    5: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
-    6: 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-};
 
 const BLOCK_NAME_MAP = {
     [BLOCK_COVER]: 'cover',
@@ -92,7 +84,7 @@ export class M3ERenderer {
                     blockBody += thumbHTML;
                 }
             } else {
-                blockBody += `<div class="${config.layout.gap} ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
+                blockBody += `<div class="${config.layout.gap} grid ${RESPONSIVE_GRID_CLASSES_M3E[config.columnCount] || ''}">`;
                 for (let postID = 0; postID < postsInFeed; postID++) {
                     blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[postID], config);
                 }
@@ -125,7 +117,7 @@ export class M3ERenderer {
                     if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
                     if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
                     else if (config.blockType !== BLOCK_COVER) blockBody += ' px-2 sm:px-3 md:px-4 lg:px-5';
-                    blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
+                    blockBody += ` grid ${RESPONSIVE_GRID_CLASSES_M3E[currentColumnCount] || RESPONSIVE_GRID_CLASSES_M3E[6]}">`;
                 }
             }
 
