@@ -12,56 +12,37 @@ const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_SHOWCASE]: 6
 };
 
-const BREAKPOINTS = { sm: 576, md: 768, lg: 992, xl: 1200 };
 
-function getBreakpointIndex(width) {
-    if (width < BREAKPOINTS.sm) return 0;
-    if (width < BREAKPOINTS.md) return 1;
-    if (width < BREAKPOINTS.lg) return 2;
-    if (width < BREAKPOINTS.xl) return 3;
-    return 4;
-}
-
-const RESPONSIVE_COLUMN_MAP = {
-    1: [1, 1, 1, 1, 1], 2: [1, 1, 2, 2, 2], 3: [1, 1, 2, 3, 3], 4: [1, 2, 3, 4, 4], 5: [2, 3, 4, 4, 5], 6: [3, 4, 4, 5, 6]
-};
 
 const M3E_THEMES = {
     'surface': {
         bg: 'bg-surface',
         text: 'text-on-surface',
-        textMuted: 'text-on-surface-variant',
-        glass: 'bg-surface/80'
+        textMuted: 'text-on-surface-variant'
     },
     'surface-variant': {
         bg: 'bg-surface-variant',
         text: 'text-on-surface-variant',
-        textMuted: 'text-outline',
-        glass: 'bg-surface-variant/80'
+        textMuted: 'text-outline'
     },
     'primary': {
         bg: 'bg-primary',
         text: 'text-on-primary',
-        textMuted: 'text-primary-container',
-        glass: 'bg-primary-container-fixed/60'
+        textMuted: 'text-primary-container'
     },
     'secondary': {
         bg: 'bg-secondary',
         text: 'text-on-secondary',
-        textMuted: 'text-secondary-container',
-        glass: 'bg-secondary-container/80'
+        textMuted: 'text-secondary-container'
     },
     'tertiary': {
         bg: 'bg-tertiary',
         text: 'text-on-tertiary',
-        textMuted: 'text-tertiary-container',
-        glass: 'bg-tertiary-container/80'
+        textMuted: 'text-tertiary-container'
     },
     'error': {
         bg: 'bg-error',
-        text: 'text-on-error',
-        textMuted: 'text-error-container',
-        glass: 'bg-error/80'
+        text: 'text-on-error'
     }
 };
 
@@ -79,12 +60,10 @@ export function calculateLayout(config, postsInFeed) {
     let newConfig = { ...config };
     if (newConfig.postsPerBlock <= 1 || newConfig.blockType === BLOCK_LIST) newConfig.isCarousel = false;
     if (newConfig.isCarousel) {
-        const baseCols = Math.max(1, Math.min(6, newConfig.columnCount));
-        const breakpointIndex = getBreakpointIndex(window.innerWidth);
-        const columnMap = RESPONSIVE_COLUMN_MAP[baseCols] || RESPONSIVE_COLUMN_MAP[6];
-        newConfig.actualColumnCount = columnMap[breakpointIndex];
-        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.columnCount)) newConfig.blockRows = Math.ceil(postsInFeed / newConfig.columnCount);
-        if (postsInFeed <= (newConfig.actualColumnCount * newConfig.blockRows)) {
+        if (newConfig.blockRows > Math.ceil(postsInFeed / newConfig.columnCount)) {
+            newConfig.blockRows = Math.ceil(postsInFeed / newConfig.columnCount);
+        }
+        if (postsInFeed <= (newConfig.columnCount * newConfig.blockRows)) {
             newConfig.isCarousel = false;
             newConfig.containsNavigation = true;
         }
@@ -168,7 +147,7 @@ export function parseBlockConfig(rawElement) {
     // Map legacy themes to M3E semantic tokens
     const dataTheme = rawTheme === 'dark' ? 'surface-variant' : (rawTheme === 'light' ? 'surface' : rawTheme);
     const theme = M3E_THEMES[dataTheme] || M3E_THEMES['surface'];
-    
+
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
     const dataBlur = getVal("iBlur", "iBlur", "").toLowerCase();

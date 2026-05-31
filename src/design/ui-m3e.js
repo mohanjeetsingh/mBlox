@@ -85,19 +85,12 @@ export class M3ERenderer {
                 showcaseHTML = renderers[BLOCK_SHOWCASE].render(response.posts[0], 0, config);
             }
 
-            const itemsPerSlide = Math.min(postsInFeed, config.actualColumnCount * config.blockRows);
-            let currentSlide = 0;
-
             if (config.isCarousel) {
                 for (let i = 0; i < postsInFeed; i++) {
-                    if (i % itemsPerSlide === 0) {
-                        if (i > 0) blockBody += `</div></div>`; 
-                        blockBody += `<div class="snap-start shrink-0 min-w-full">`;
-                        blockBody += `<div class="${config.layout.gap} px-2 sm:px-3 md:px-4 lg:px-5 ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
-                    }
-                    blockBody += renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
+                    let thumbHTML = renderers[BLOCK_SHOWCASE].renderThumbnail(response.posts[i], config);
+                    thumbHTML = thumbHTML.replace('<article class="', '<article class="snap-start ');
+                    blockBody += thumbHTML;
                 }
-                blockBody += `</div></div>`; 
             } else {
                 blockBody += `<div class="${config.layout.gap} ${RESPONSIVE_GRID_CLASSES[config.columnCount] || ''}">`;
                 for (let postID = 0; postID < postsInFeed; postID++) {
@@ -118,37 +111,32 @@ export class M3ERenderer {
                 if (postID === 1 && config.showHeader) currentColumnCount--;
             }
 
-            const postHTML = renderers[finalType].render(post, postID, config);
-
-            // Removed carousel indicator generation
+            let postHTML = renderers[finalType].render(post, postID, config);
+            if (config.isCarousel) {
+                postHTML = postHTML.replace('<article class="', '<article class="snap-start ');
+            }
 
             const isFirstItemInLoop = postID === 0;
-            const startNewRow = isFirstItemInLoop ||
-                (config.isCarousel && postID % (config.actualColumnCount * config.blockRows) === 0) ||
-                (config.blockType === BLOCK_LIST && postID === 1);
+            const startNewRow = isFirstItemInLoop || (config.blockType === BLOCK_LIST && postID === 1);
 
-            if (startNewRow) {
-                if (postID > 0) {
-                    const prevPostID = postID - 1;
-                    const wasPrevLastItemInSlide = config.isCarousel && (prevPostID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
-                    if (!wasPrevLastItemInSlide && !(config.blockType === BLOCK_LIST && postID === 1)) {
-                        blockBody += `</div>`;
-                    }
+            if (!config.isCarousel) {
+                if (startNewRow) {
+                    blockBody += `<div class="${config.layout.gap}`;
+                    if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
+                    if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
+                    else if (config.blockType !== BLOCK_COVER) blockBody += ' px-2 sm:px-3 md:px-4 lg:px-5';
+                    blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
                 }
-                blockBody += `<div class="${config.layout.gap}`;
-                if (config.isCarousel) blockBody += ' snap-start shrink-0 min-w-full';
-                if (isComplexLayout && config.blockType === BLOCK_LIST) blockBody += ' col flex-grow-1';
-                if (config.blockType === BLOCK_LIST) blockBody += ' px-0';
-                else if (config.blockType !== BLOCK_COVER) blockBody += ' px-2 px-sm-3 px-md-4 px-lg-5';
-                blockBody += ` ${RESPONSIVE_GRID_CLASSES[currentColumnCount] || RESPONSIVE_GRID_CLASSES[6]}">`;
             }
 
             blockBody += postHTML;
-            const isLastItemInSlide = config.isCarousel && (postID % (config.actualColumnCount * config.blockRows) === (config.actualColumnCount * config.blockRows - 1));
+
             const isLastPostOverall = postID === (postsInFeed - 1);
-            if (isLastPostOverall || isLastItemInSlide) {
-                blockBody += `</div>`;
-                if (config.blockType === BLOCK_LIST) blockBody += `</div>`;
+            if (isLastPostOverall) {
+                if (!config.isCarousel) {
+                    blockBody += `</div>`;
+                    if (config.blockType === BLOCK_LIST) blockBody += `</div>`;
+                }
             }
         }
 

@@ -28,7 +28,14 @@ export const DEFAULT_COLUMN_COUNTS = {
     [BLOCK_SHOWCASE]: 6
 };
 
-export const BREAKPOINTS = { sm: 576, md: 768, lg: 992, xl: 1200 };
+export const RESPONSIVE_CAROUSEL_CLASSES_M3E = {
+    1: 'auto-cols-[100%]',
+    2: 'auto-cols-[100%] sm:auto-cols-[100%] md:auto-cols-[50%]',
+    3: 'auto-cols-[100%] sm:auto-cols-[100%] md:auto-cols-[50%] lg:auto-cols-[33.333333%]',
+    4: 'auto-cols-[100%] sm:auto-cols-[50%] md:auto-cols-[33.333333%] lg:auto-cols-[25%] xl:auto-cols-[25%]',
+    5: 'auto-cols-[50%] sm:auto-cols-[33.333333%] md:auto-cols-[25%] lg:auto-cols-[25%] xl:auto-cols-[20%]',
+    6: 'auto-cols-[33.333333%] sm:auto-cols-[25%] md:auto-cols-[25%] lg:auto-cols-[20%] xl:auto-cols-[16.666667%]'
+};
 
 export const RESPONSIVE_COLUMN_MAP = {
     1: [1, 1, 1, 1, 1],
@@ -47,14 +54,6 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
     5: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5',
     6: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
 };
-
-export function getBreakpointIndex(width) {
-    if (width < BREAKPOINTS.sm) return 0;
-    if (width < BREAKPOINTS.md) return 1;
-    if (width < BREAKPOINTS.lg) return 2;
-    if (width < BREAKPOINTS.xl) return 3;
-    return 4;
-}
 
 export function getResponsiveGridClass(cols, designSystem) {
     const map = designSystem === 'm3e' ? RESPONSIVE_GRID_CLASSES_M3E : RESPONSIVE_GRID_CLASSES_BS;

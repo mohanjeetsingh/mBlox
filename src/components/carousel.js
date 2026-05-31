@@ -2,13 +2,15 @@
  * Carousel component for mBlox
  */
 import { renderPaginationButtons } from './pagination.js';
+import { RESPONSIVE_CAROUSEL_CLASSES_M3E } from '../core/config.js';
 
 export function renderCarousel(blockBody, carouselIndicators, config, response, controls) {
     let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
 
     if (config.isCarousel || config.containsNavigation) {
         // Native CSS scroll snap container
-        html += `<div class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
+        const autoColsClass = RESPONSIVE_CAROUSEL_CLASSES_M3E[config.columnCount] || RESPONSIVE_CAROUSEL_CLASSES_M3E[6];
+        html += `<div class="grid grid-flow-col grid-rows-[${config.blockRows}] ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${blockBody}</div>`;
         if (config.isCarousel && carouselIndicators) {
             html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
         }
@@ -32,6 +34,46 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
 }
 
 export function initCarousel(rawElement, config) {
-    // Native CSS scroll snapping handles carousels automatically without JS.
-    // Future enhancements can implement JS-based next/prev buttons interacting with scrollLeft here.
+    if (!config.isCarousel) return;
+
+    const container = rawElement.querySelector('.overflow-x-auto');
+    const prevBtn = rawElement.querySelector('.js-carousel-prev');
+    const nextBtn = rawElement.querySelector('.js-carousel-next');
+
+    if (!container) return;
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            container.scrollBy({ left: -container.clientWidth, behavior: 'smooth' });
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+        });
+    }
+
+    // Auto-play logic (every 4 seconds)
+    let autoPlayInterval;
+    const startAutoPlay = () => {
+        autoPlayInterval = setInterval(() => {
+            // Check if we reached the end (with a 5px buffer for rounding errors)
+            if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 5) {
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: container.clientWidth, behavior: 'smooth' });
+            }
+        }, 4000);
+    };
+
+    const stopAutoPlay = () => {
+        if (autoPlayInterval) clearInterval(autoPlayInterval);
+    };
+
+    startAutoPlay();
+
+    // Pause on hover
+    rawElement.addEventListener('mouseenter', stopAutoPlay);
+    rawElement.addEventListener('mouseleave', startAutoPlay);
 }
