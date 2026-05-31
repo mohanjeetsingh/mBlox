@@ -16,7 +16,7 @@ export function renderCTA(finalType, config, postTitle) {
                 case BLOCK_QUOTE: 
                     ctaClasses += ` py-2 px-6 w-full text-right`; 
                     break;
-                case BLOCK_STACK: ctaClasses += ' mt-6'; break;
+                case BLOCK_STACK: ctaClasses += ' mt-6 self-start'; break;
                 case BLOCK_CARD: 
                 case BLOCK_LIST: 
                     ctaClasses += ' bottom-0 right-0 mr-4 mb-6 block absolute w-auto'; 
