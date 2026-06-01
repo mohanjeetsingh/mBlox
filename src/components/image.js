@@ -64,7 +64,7 @@ export function renderImage(finalType, postID, config, data) {
         if (postID === 0) showcaseImageCode = `<figure class="m-0 ${imageBSClasses.join(' ')} ${config.aspectRatio} ${corner} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
     }
 
-    if (config.blurImage && config.contentType !== "comments") imageBSClasses.push('blur-5');
+    if (config.blurImage && config.contentType !== "comments") imageBSClasses.push('blur-sm');
 
     const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
     const isComplexBlock = config.blockType === BLOCK_SHOWCASE || config.blockType === BLOCK_LIST;

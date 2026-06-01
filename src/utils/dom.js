@@ -1,25 +1,39 @@
-export function fadeIn(el) {
+export function fadeIn(el, duration = 160) {
     if (!el) return;
-    el.style.opacity = 0;
+    
+    // Ensure element is visible before animating
     el.classList.remove('d-none', 'hidden');
     el.style.display = '';
-    (function fade() {
-        let val = parseFloat(el.style.opacity);
-        if (!((val += .1) > 1)) {
-            el.style.opacity = val;
-            requestAnimationFrame(fade);
-        }
-    })();
+    
+    // Web Animations API
+    const animation = el.animate([
+        { opacity: 0 },
+        { opacity: 1 }
+    ], {
+        duration: duration,
+        easing: 'ease-out',
+        fill: 'forwards' // Keeps the end state until the onfinish handler sets the final style
+    });
+
+    animation.onfinish = () => {
+        el.style.opacity = '1';
+    };
 }
 
-export function fadeOut(el) {
+export function fadeOut(el, duration = 160) {
     if (!el) return;
-    el.style.opacity = 1;
-    (function fade() {
-        if ((el.style.opacity -= .1) < 0) {
-            el.style.display = 'none';
-        } else {
-            requestAnimationFrame(fade);
-        }
-    })();
+    
+    const animation = el.animate([
+        { opacity: 1 },
+        { opacity: 0 }
+    ], {
+        duration: duration,
+        easing: 'ease-in',
+        fill: 'forwards'
+    });
+
+    animation.onfinish = () => {
+        el.style.opacity = '0';
+        el.style.display = 'none';
+    };
 }
