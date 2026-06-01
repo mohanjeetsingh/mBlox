@@ -27,7 +27,7 @@ mBlox/
 ├── config/              # Build configuration
 │   └── classes.yaml     # Manifest of all used Bootstrap classes
 ├── assets/              # Static resources
-│   ├── mCustom.css      # Custom overrides
+│   ├── tailwind.css     # Tailwind configuration and base styles
 │   ├── noImg.js         # Placeholder image script
 │   └── vendor/          # Third-party dependencies (Bootstrap)
 ├── scripts/             # Build pipeline (Node.js)
