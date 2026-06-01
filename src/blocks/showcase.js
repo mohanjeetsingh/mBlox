@@ -48,7 +48,7 @@ export function render(post, postID, config) {
 
     // Showcase grid post
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
-    const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative`;
+    const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}`;
     const imageHigh = post.thumbnailUrl ? post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600') : noImg;
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
 
@@ -77,5 +77,5 @@ export function renderThumbnail(post, config) {
     const youtubeIcon = getVideoIcon(videoID);
     const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} overflow-hidden ${config.cornerStyle} relative">${imageTag}${youtubeIcon}</figure>`;
 
-    return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative" ${articleDataAttributes} role="article">${figureTag}</article>`;
+    return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}" ${articleDataAttributes} role="article">${figureTag}</article>`;
 }
