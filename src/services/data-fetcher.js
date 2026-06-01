@@ -95,6 +95,43 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
     return { posts: standardPosts, totalResults: items.length, feedUrl };
 }
 
+export function mapRssJsonToStandardFormat(jsonDoc) {
+    if (jsonDoc.status !== 'ok' || !jsonDoc.items) return { posts: [], totalResults: 0, feedUrl: '' };
+    
+    const isYouTube = jsonDoc.feed.url.includes('youtube.com');
+    
+    const standardPosts = jsonDoc.items.map(item => {
+        let videoId = '';
+        if (isYouTube) {
+            const match = item.link.match(/v=([^&]+)/);
+            videoId = match ? match[1] : '';
+        }
+        
+        let thumbnailUrl = item.thumbnail || '';
+        if (!thumbnailUrl && item.enclosure && item.enclosure.link && item.enclosure.type && item.enclosure.type.startsWith('image/')) {
+            thumbnailUrl = item.enclosure.link;
+        }
+        if (!thumbnailUrl && item.content) {
+            const match = item.content.match(/<img[^>]+src="([^">]+)"/);
+            if (match) thumbnailUrl = match[1];
+        }
+
+        return {
+            title: item.title,
+            content: item.description || item.content || '',
+            authorName: item.author || 'Unknown',
+            publishedDate: item.pubDate,
+            url: item.link,
+            thumbnailUrl: thumbnailUrl,
+            videoId: videoId,
+            authorUri: '', 
+            authorImage: ''
+        };
+    });
+
+    return { posts: standardPosts, totalResults: jsonDoc.items.length, feedUrl: jsonDoc.feed.link };
+}
+
 export function mapBloggerResponseToStandardFormat(bloggerResponse) {
     if (!bloggerResponse.feed || !bloggerResponse.feed.entry) {
         return { posts: [], totalResults: 0, feedUrl: '' };
