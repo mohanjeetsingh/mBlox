@@ -4,7 +4,6 @@
 
 import { renderBlockHeader } from '../sections/header.js';
 import { renderBlockFooter } from '../sections/footer.js';
-import { renderCarouselControls } from '../components/navigation.js';
 import { renderCarousel, initCarousel } from '../components/carousel.js';
 import { 
     BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
@@ -118,13 +117,8 @@ export class M3ERenderer {
         return renderBlockFooter(config, response);
     }
 
-    createCarouselControls(config) {
-        return renderCarouselControls(config);
-    }
-
     createCarouselWrapper(blockBody, carouselIndicators, config, response) {
-        const controls = this.createCarouselControls(config);
-        return renderCarousel(blockBody, carouselIndicators, config, response, controls);
+        return renderCarousel(blockBody, carouselIndicators, config, response);
     }
 
     bindEvents(rawElement, config) {

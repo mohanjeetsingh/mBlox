@@ -1,10 +1,10 @@
 /**
  * Carousel component for mBlox
  */
-import { renderPaginationButtons } from './pagination.js';
+import { renderNavigationControls } from './navigation.js';
 import { RESPONSIVE_CAROUSEL_CLASSES_M3E } from '../core/config.js';
 
-export function renderCarousel(blockBody, carouselIndicators, config, response, controls) {
+export function renderCarousel(blockBody, carouselIndicators, config, response) {
     let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
 
     if (config.isCarousel) {
@@ -23,16 +23,11 @@ export function renderCarousel(blockBody, carouselIndicators, config, response, 
             html += `</div>`;
         }
         html += blockBody;
-        html += `${controls.prev}${controls.next}`;
+        html += renderNavigationControls(config, response);
 
-    } else if (config.containsNavigation) {
-        html += blockBody;
-        const totalStages = Math.ceil(response.totalResults / config.postsPerBlock);
-        if (config.stageID > 1) html += controls.prev;
-        if (config.stageID < totalStages) html += controls.next;
     } else {
         html += blockBody;
-        html += renderPaginationButtons(config, response);
+        html += renderNavigationControls(config, response);
     }
 
     html += `</div>`;
