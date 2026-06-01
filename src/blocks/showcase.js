@@ -43,7 +43,7 @@ export function render(post, postID, config) {
             : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
         const pbClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image relative flex flex-col text-center ${config.theme.bg} overflow-hidden rounded-none${pbClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
+        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none${pbClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
     }
 
     // Showcase grid post

@@ -22,41 +22,48 @@ export function renderImage(finalType, postID, config, data) {
     if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
     else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
 
-    let imageCoverStyle = "object-fit:cover !important;height:100% !important;";
-    const imageBSClasses = ['w-full', 'h-auto'];
+    const IMAGE_CONFIG_MAP = {
+        [BLOCK_SHOWCASE]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_PANCAKE]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_COMMENT]: { 
+            style: 'object-fit:cover !important;height:3rem!important;width:3rem!important;', 
+            bs: ['rounded-full', 'm-2'], 
+            figure: 'shrink-0 flex items-center justify-center' 
+        },
+        [BLOCK_QUOTE]: { 
+            style: 'object-fit:cover !important;height:6rem!important;width:6rem;', 
+            bs: ['rounded-full', 'mx-auto', 'mt-6'], 
+            figure: 'w-full h-full flex' 
+        },
+        [BLOCK_STACK]: { 
+            bs: ['h-full', 'object-cover'], 
+            figure: 'w-1/3 shrink-0 h-full flex items-center justify-center' 
+        },
+        [BLOCK_COVER]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_LIST]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_CARD]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_GALLERY]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' }
+    };
+
+    const imgConf = IMAGE_CONFIG_MAP[finalType] || { bs: [], figure: 'w-full h-full flex' };
+    
+    let imageCoverStyle = imgConf.style || "object-fit:cover !important;height:100% !important;";
+    const imageBSClasses = imgConf.bs.length > 0 ? [...imgConf.bs] : ['w-full', 'h-auto'];
+    if (finalType !== BLOCK_COMMENT && finalType !== BLOCK_QUOTE && finalType !== BLOCK_STACK) {
+        imageBSClasses.unshift('w-full', 'h-auto');
+    }
+    let figureClass = imgConf.figure;
+    
     let tooltipAttributes = ``;
     let showcaseImageCode = '';
-    let figureClass = 'w-full h-full flex';
 
-    switch (finalType) {
-        case BLOCK_SHOWCASE:
-            tooltipAttributes = `data-toggle="tooltip" data-vidid="${videoID}"`;
-            const showcaseYoutubeIcon = getShowcaseVideoIcon(videoID);
-            const corner = config.cornerStyle === " rounded" ? ' rounded-t-3xl' : config.cornerStyle;
-            if (postID === 0) showcaseImageCode = `<figure class="m-0 ${imageBSClasses.join(' ')} ${config.aspectRatio} ${corner} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
-            imageBSClasses.push(config.aspectRatio.trim());
-            break;
-        case BLOCK_PANCAKE: imageBSClasses.push(config.aspectRatio.trim()); break;
-        case BLOCK_COMMENT: 
-            imageCoverStyle += ' height:3rem!important;width:3rem!important;'; 
-            imageBSClasses.length = 0; 
-            imageBSClasses.push('rounded-full', 'm-2'); 
-            figureClass = 'shrink-0 flex items-center justify-center'; 
-            break;
-        case BLOCK_QUOTE: 
-            imageCoverStyle += ' height:6rem!important;width:6rem;'; 
-            imageBSClasses.length = 0;
-            imageBSClasses.push('rounded-full', 'mx-auto', 'mt-6'); 
-            break;
-        case BLOCK_STACK:
-            imageBSClasses.length = 0;
-            imageBSClasses.push('h-full', 'object-cover');
-            figureClass = `w-1/3 shrink-0 h-full flex items-center justify-center`;
-            break;
-        case BLOCK_COVER: case BLOCK_LIST: case BLOCK_CARD: case BLOCK_GALLERY: 
-            imageBSClasses.push(config.aspectRatio.trim()); 
-            break;
+    if (finalType === BLOCK_SHOWCASE) {
+        tooltipAttributes = `data-toggle="tooltip" data-vidid="${videoID}"`;
+        const showcaseYoutubeIcon = getShowcaseVideoIcon(videoID);
+        const corner = config.cornerStyle === " rounded" ? ' rounded-t-3xl' : config.cornerStyle;
+        if (postID === 0) showcaseImageCode = `<figure class="m-0 ${imageBSClasses.join(' ')} ${config.aspectRatio} ${corner} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
     }
+
     if (config.blurImage && config.contentType !== "comments") imageBSClasses.push('blur-5');
 
     const placeholderSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";

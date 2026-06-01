@@ -1,22 +1,20 @@
 import { BLOCK_QUOTE, BLOCK_COMMENT } from '../core/config.js';
 
+const AUTHOR_RENDERERS = {
+    [BLOCK_QUOTE]: (name) => `<figcaption class="text-label-md font-light">- ${name}</figcaption>`,
+    [BLOCK_COMMENT]: (name, _url, theme) => `<span class="text-label-md ${theme.text}" rel="author">${name}</span>`
+};
+
 export function renderAuthor(finalType, config, authorName, authorUri) {
     if (!config.showAuthor) return '';
-    let authorCode = '';
     const authorURL = (authorName === "Anonymous" || authorName === "Unknown" || !authorUri) ? '' : authorUri;
-    const authorNameHTML = `<span class="text-label-md font-light" rel="author">${authorName}</span>`;
-    const authorLinkHTML = `<span class="text-label-md font-light hover:underline z-20 relative cursor-pointer" rel="author" data-href="${authorURL}">${authorName}</span>`;
-
-    switch (finalType) {
-        case BLOCK_QUOTE: 
-            authorCode = `<figcaption class="text-label-md font-light">- ${authorName}</figcaption>`; 
-            break;
-        case BLOCK_COMMENT: 
-            authorCode = `<span class="text-label-md ${config.theme.text}" rel="author">${authorName}</span>`; 
-            break;
-        default: 
-            authorCode = authorURL ? authorLinkHTML : authorNameHTML; 
-            break;
+    
+    if (AUTHOR_RENDERERS[finalType]) {
+        return AUTHOR_RENDERERS[finalType](authorName, authorURL, config.theme);
     }
-    return authorCode;
+
+    if (authorURL) {
+        return `<span class="text-label-md font-light hover:underline z-20 relative cursor-pointer" rel="author" data-href="${authorURL}">${authorName}</span>`;
+    }
+    return `<span class="text-label-md font-light" rel="author">${authorName}</span>`;
 }
