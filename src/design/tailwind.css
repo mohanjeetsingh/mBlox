@@ -98,7 +98,7 @@
   --color-warning: #b36200;
 
   /* ─── FONTS ──────────────────────────────────────────────────────────────────*/
-  --font-system: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-system: inherit;
 
   --font-primary: var(--font-system);
   --font-secondary: var(--font-system);
@@ -108,19 +108,19 @@
   --font-serif: var(--font-secondary);
 
   /* ─── MATERIAL DESIGN 3 TYPE SCALE ───────────────────────────────────────────*/
-  --text-display-lg: 3.57rem;
-  --text-display-lg--line-height: 4rem;
-  --text-display-md: 2.85rem;
-  --text-display-md--line-height: 3.25rem;
-  --text-display-sm: 2.28rem;
-  --text-display-sm--line-height: 2.75rem;
+  --text-display-lg: clamp(2.5rem, 5vw, 3.57rem);
+  --text-display-lg--line-height: clamp(3rem, 5.5vw, 4rem);
+  --text-display-md: clamp(2rem, 4vw, 2.85rem);
+  --text-display-md--line-height: clamp(2.5rem, 4.5vw, 3.25rem);
+  --text-display-sm: clamp(1.75rem, 3.5vw, 2.28rem);
+  --text-display-sm--line-height: clamp(2.25rem, 4vw, 2.75rem);
 
-  --text-headline-lg: 2rem;
-  --text-headline-lg--line-height: 2.5rem;
-  --text-headline-md: 1.71rem;
-  --text-headline-md--line-height: 2.25rem;
-  --text-headline-sm: 1.42rem;
-  --text-headline-sm--line-height: 2rem;
+  --text-headline-lg: clamp(1.5rem, 3vw, 2rem);
+  --text-headline-lg--line-height: clamp(2rem, 3.5vw, 2.5rem);
+  --text-headline-md: clamp(1.25rem, 2.5vw, 1.71rem);
+  --text-headline-md--line-height: clamp(1.75rem, 3vw, 2.25rem);
+  --text-headline-sm: clamp(1.125rem, 2vw, 1.42rem);
+  --text-headline-sm--line-height: clamp(1.5rem, 2.5vw, 2rem);
 
   --text-title-lg: 1.28rem;
   --text-title-lg--line-height: 1.75rem;
@@ -162,6 +162,7 @@
 
   /* ─── MATERIAL 3 EASING ───────────────────────────────────────────────────*/
   --ease-m3-emphasized: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+  --ease-m3-standard: cubic-bezier(0.2, 0.0, 0, 1.0);
 }
 
 @layer base {
@@ -171,8 +172,13 @@
   }
 
   a {
-    @apply transition-all duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary overflow-hidden w-full no-underline font-bold;
+    @apply transition-opacity duration-300 ease-[--ease-m3-standard] hover:opacity-80 overflow-hidden w-full no-underline font-bold;
   }
+}
+
+/* ─── Colorful Palette Interaction Overrides ────────────────────────────── */
+[data-palette="colorful"] a {
+  @apply transition-colors duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary hover:opacity-100;
 }
 
   /* ─── Dark Mode Overrides ───────────────────────────────────────────

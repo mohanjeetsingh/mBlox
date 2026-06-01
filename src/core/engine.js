@@ -39,6 +39,10 @@ export async function mBlocks(blockItem) {
         rawElement.classList.add('@container');
         
         let blockConfig = parseBlockConfig(rawElement);
+        
+        // Apply the auto-detected theme and palette natively to the wrapper
+        rawElement.setAttribute('data-scheme', blockConfig.dataScheme);
+        rawElement.setAttribute('data-palette', blockConfig.palette);
 
         // Listen for pagination events fired by the renderer
         if (!rawElement._mbloxPaginateListener) {

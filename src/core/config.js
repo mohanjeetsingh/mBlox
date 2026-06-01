@@ -69,7 +69,9 @@ export const M3E_THEMES = {
     'surface': { bg: 'bg-surface', text: 'text-on-surface' },
     'surface-variant': { bg: 'bg-surface-variant', text: 'text-on-surface-variant' },
     'primary': { bg: 'bg-primary', text: 'text-on-primary' },
+    'primary-container': { bg: 'bg-primary-container', text: 'text-on-primary-container' },
     'secondary': { bg: 'bg-secondary', text: 'text-on-secondary' },
+    'secondary-container': { bg: 'bg-secondary-container', text: 'text-on-secondary-container' },
     'tertiary': { bg: 'bg-tertiary', text: 'text-on-tertiary' },
     'error': { bg: 'bg-error', text: 'text-on-error' }
 };

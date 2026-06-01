@@ -87,7 +87,8 @@ export function parseBlockConfig(rawElement) {
         dataType = getVal("type", "type", "v-ih").toLowerCase(),
         blockType = dataType.substring(0, 1),
         componentList = dataType.substring(1),
-        rawTheme = getVal("theme", "theme", "light").toLowerCase(),
+        rawTheme = getVal("theme", "theme", "auto").toLowerCase(),
+        dataPalette = getVal("palette", "palette", "neutral").toLowerCase(),
         showHeader = componentList.includes("h"),
         showImage = componentList.includes("i"),
         showSnippet = componentList.includes("s"),
@@ -98,9 +99,19 @@ export function parseBlockConfig(rawElement) {
     const firstInstance = !rawElement.hasAttribute("data-s") && jsonConfig.s === undefined;
     const postsPerBlock = getIntVal("posts", "posts", 3);
 
-    // Map legacy themes to M3E semantic tokens
-    const dataTheme = rawTheme === 'dark' ? 'surface-variant' : (rawTheme === 'light' ? 'surface' : rawTheme);
-    const theme = M3E_THEMES[dataTheme] || M3E_THEMES['surface'];
+    let finalTheme = rawTheme;
+    if (finalTheme === 'auto') {
+        const isHostDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.getAttribute('data-scheme') === 'dark';
+        const isOsDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        finalTheme = (isHostDark || isOsDark) ? 'dark' : 'light';
+    }
+    const dataTheme = finalTheme;
+
+    // Dual Palette System: map components to secondary-container (neutral) or primary-container (colorful)
+    let defaultThemeKey = dataPalette === 'colorful' ? 'primary-container' : 'secondary-container';
+    
+    // Fallback logic for legacy explicit themes or dynamic override
+    const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary-container'];
 
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
@@ -127,15 +138,15 @@ export function parseBlockConfig(rawElement) {
         theme,
         gutterSize: getVal("gutter", "gutter", ((blockType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
-        cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-2xl",
+        cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
         aspectRatio: ` ${ASPECT_RATIO_CLASSES[getVal("ar", "ar", "1/1").replace('x', '/').toLowerCase()] || 'aspect-square'}`,
         isImageFixed: dataIFix === "true" || jsonConfig.iFix === true ? true : (dataIFix === "false" || jsonConfig.iFix === false ? false : null),
-        lowContrast: getBoolVal("lowContrast", "lowContrast", false),
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
         snippetSize: getIntVal("snippetSize", "snippetSize", 150),
         callToAction: getVal("CTAText", "CTAText", ""),
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
+        palette: dataPalette, dataScheme: dataTheme,
         containsNavigation: false, actualColumnCount: 0,
     };
     config.layout = LAYOUT_CLASSES[config.gutterSize * 2] || LAYOUT_CLASSES[6];

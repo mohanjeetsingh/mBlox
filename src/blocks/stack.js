@@ -45,7 +45,7 @@ export function render(post, postID, config) {
         : '';
 
     // Link wrapper classes
-    const linkClasses = ['flex', 'flex-row', 'bg-surface', config.cornerStyle, 'w-full', 'h-full'].filter(Boolean).join(' ');
+    const linkClasses = ['flex', 'flex-row', config.theme.bg, config.cornerStyle, 'w-full', 'h-full'].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;

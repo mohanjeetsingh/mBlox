@@ -8,7 +8,7 @@ export function renderCTA(finalType, config, postTitle) {
         case BLOCK_COMMENT: 
             return `<span class="${config.theme.text} text-label-md no-underline font-bold">${config.callToAction}</span>`;
         default:
-            let ctaClasses = `inline-block text-label-lg font-bold no-underline text-center px-4 py-2 hover:opacity-80 transition-opacity ${((config.cornerStyle != " rounded" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-none' : 'rounded-full')} ${(config.lowContrast ? "opacity-50" : "opacity-75")}`;
+            let ctaClasses = `inline-block text-label-lg font-bold no-underline text-center px-4 py-2 hover:opacity-80 transition-opacity ${((config.cornerStyle == " rounded-none" || finalType == BLOCK_PANCAKE || finalType == BLOCK_QUOTE) ? 'rounded-none' : 'rounded-full')} opacity-75`;
             switch (finalType) {
                 case BLOCK_SHOWCASE: ctaClasses += " p-6 md:px-12 float-right"; break;
                 case BLOCK_COVER: ctaClasses += ' p-2 px-6 mx-0 md:mx-10 mt-6'; break;
