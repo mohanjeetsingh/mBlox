@@ -32,7 +32,7 @@ export function render(post, postID, config) {
         </div>
     ` : '';
 
-    const linkClasses = `rounded-none ${config.theme.bg} flex flex-row items-start`;
+    const linkClasses = `rounded-none ${config.theme.bg} flex flex-row items-start ${config.interactionClasses}`;
 
     return `
         <article class="col-span-1 inline-flex w-full" role="article">

@@ -40,7 +40,7 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'w-full', 'h-full'].filter(Boolean).join(' ');
+    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'w-full', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
     
     const articleClasses = `col-span-1 inline-flex w-full h-full ${config.layout.mb}`;
     return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;

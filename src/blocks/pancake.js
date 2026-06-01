@@ -36,5 +36,5 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    return `<article class="col-span-1 inline-flex w-full" role="article"><a class="flex flex-col ${config.theme.bg} h-full ${config.cornerStyle}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
+    return `<article class="col-span-1 inline-flex w-full" role="article"><a class="flex flex-col ${config.theme.bg} h-full ${config.cornerStyle} ${config.interactionClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
 }

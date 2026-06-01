@@ -1,4 +1,4 @@
-import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapBloggerResponseToStandardFormat } from './data-fetcher.js';
+import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapRssJsonToStandardFormat, mapBloggerResponseToStandardFormat } from './data-fetcher.js';
 
 const CACHE_DURATION_MS = 15 * 60 * 1000;
 const feedCache = new Map();
@@ -86,6 +86,22 @@ class RssProvider {
     }
 }
 
+class YouTubeProvider {
+    constructor(config) { this.config = config; }
+    _buildFeedUrl() {
+        return `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(this.config.siteURL)}`;
+    }
+    async fetch() {
+        const url = this._buildFeedUrl();
+        const cached = feedCache.get(url);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
+        const rawData = await fetchJSONP(url);
+        const formattedData = mapRssJsonToStandardFormat(rawData);
+        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+        return formattedData;
+    }
+}
+
 export class BloggerProvider {
     constructor(config) { this.config = config; }
     _buildFeedUrl() {
@@ -112,6 +128,7 @@ export class BloggerProvider {
 export function getProvider(config) {
     const url = config.siteURL.toLowerCase();
     if (url.includes('/wp-json')) return new WordPressProvider(config);
+    if (url.includes('youtube.com')) return new YouTubeProvider(config);
     if (url.endsWith('.xml') || url.includes('/feed')) return new RssProvider(config);
     return new BloggerProvider(config);
 }

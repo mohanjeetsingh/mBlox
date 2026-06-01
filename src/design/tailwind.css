@@ -170,15 +170,6 @@
     font-family: var(--font-primary);
     @apply text-on-surface bg-surface;
   }
-
-  a {
-    @apply transition-opacity duration-300 ease-[--ease-m3-standard] hover:opacity-80 overflow-hidden w-full no-underline font-bold;
-  }
-}
-
-/* ─── Colorful Palette Interaction Overrides ────────────────────────────── */
-[data-palette="colorful"] a {
-  @apply transition-colors duration-300 ease-[--ease-m3-emphasized] hover:text-tertiary hover:opacity-100;
 }
 
   /* ─── Dark Mode Overrides ───────────────────────────────────────────

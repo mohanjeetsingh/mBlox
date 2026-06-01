@@ -1,5 +1,5 @@
-import { 
-    BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
+import {
+    BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY,
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
     DEFAULT_COLUMN_COUNTS, M3E_THEMES, LAYOUT_CLASSES, ASPECT_RATIO_CLASSES,
     RESPONSIVE_COLUMN_MAP, getBreakpointIndex
@@ -109,7 +109,7 @@ export function parseBlockConfig(rawElement) {
 
     // Dual Palette System: map components to secondary-container (neutral) or primary-container (colorful)
     let defaultThemeKey = dataPalette === 'colorful' ? 'primary-container' : 'secondary-container';
-    
+
     // Fallback logic for legacy explicit themes or dynamic override
     const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary-container'];
 
@@ -147,6 +147,9 @@ export function parseBlockConfig(rawElement) {
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
         palette: dataPalette, dataScheme: dataTheme,
+        interactionClasses: dataPalette === 'colorful'
+            ? 'transition-colors duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-tertiary hover:text-on-tertiary hover:opacity-100 overflow-hidden no-underline font-bold'
+            : 'transition-opacity duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:opacity-80 overflow-hidden no-underline font-bold',
         containsNavigation: false, actualColumnCount: 0,
     };
     config.layout = LAYOUT_CLASSES[config.gutterSize * 2] || LAYOUT_CLASSES[6];

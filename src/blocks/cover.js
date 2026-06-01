@@ -42,7 +42,7 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    const linkClasses = ['relative', 'block', 'rounded-none', 'text-center', 'h-full'].filter(Boolean).join(' ');
+    const linkClasses = ['relative', 'block', 'rounded-none', 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full';
     const articleStyle = ` style="${config.articleHeight}"`;
