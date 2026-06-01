@@ -38,12 +38,17 @@ export function render(post, postID, config) {
     if (postID === 0 && config.firstInstance) {
         // Large feature block
         const cornerClass = config.cornerStyle === " rounded-none" ? "rounded-none" : "rounded-t-3xl";
-        const showcaseContent = config.showHeader
-            ? `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent ${cornerClass} mx-0 md:mx-10 p-6 md:px-12 ${config.theme.glass} backdrop-blur-xl ${config.theme.text} pointer-events-auto">${titleCode} ${snippetCode}</div></div>`
-            : '';
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
-        const pbClass = config.callToAction === "" ? ' pb-3' : '';
-        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none${pbClass}"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary" href="${post.url}" title="${post.title}">${showcaseContent}${cta}</a></div>`;
+
+        let showcaseContent = '';
+        if (config.showHeader || cta) {
+            const hsCode = config.showHeader ? `<div class="flex-grow text-left">${titleCode} ${snippetCode}</div>` : '';
+            const ctaCode = cta ? `<div class="flex-shrink-0 mt-4 md:mt-0 md:ml-6 flex items-center justify-end w-full md:w-auto">${cta}</div>` : '';
+
+            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between ${cornerClass} p-6 md:px-12 ${config.theme.glass} backdrop-blur-xl ${config.theme.text} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
+        }
+
+        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary block absolute inset-0 z-20" href="${post.url}" title="${post.title}">${showcaseContent}</a></div>`;
     }
 
     // Showcase grid post

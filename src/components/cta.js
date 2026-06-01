@@ -1,7 +1,7 @@
 import { BLOCK_GALLERY, BLOCK_COMMENT, BLOCK_SHOWCASE, BLOCK_COVER, BLOCK_PANCAKE, BLOCK_QUOTE, BLOCK_STACK, BLOCK_CARD, BLOCK_LIST } from '../core/config.js';
 
 const CTA_CLASSES = {
-    [BLOCK_SHOWCASE]: 'p-6 md:px-12 float-right',
+    [BLOCK_SHOWCASE]: '',
     [BLOCK_COVER]: 'p-2 px-6 mx-0 md:mx-10 mt-6',
     [BLOCK_PANCAKE]: 'py-2 px-6 w-full text-right',
     [BLOCK_QUOTE]: 'py-2 px-6 w-full text-right',
