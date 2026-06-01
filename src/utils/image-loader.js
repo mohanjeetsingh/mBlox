@@ -29,7 +29,7 @@ export function loadOptimalImages(rawElement) {
             if (isBg) {
                 const img = new Image();
                 img.onload = () => {
-                    el.style.backgroundImage = `url(${finalUrl})`;
+                    el.style.backgroundImage = `url("${finalUrl}")`;
                     if (isFixed) {
                         el.style.backgroundAttachment = 'fixed';
                         el.style.backgroundPosition = 'center center';
@@ -38,7 +38,8 @@ export function loadOptimalImages(rawElement) {
                 };
                 img.onerror = () => {
                     import('../core/config.js').then(({ noImg }) => {
-                        el.style.backgroundImage = `url(${noImg})`;
+                        el.style.backgroundImage = `url("${noImg}")`;
+                        el.setAttribute('data-img-high', noImg);
                     });
                 };
                 img.src = finalUrl;
@@ -46,6 +47,7 @@ export function loadOptimalImages(rawElement) {
                 el.onerror = () => {
                     import('../core/config.js').then(({ noImg }) => {
                         el.src = noImg;
+                        el.setAttribute('data-img-high', noImg);
                         el.onerror = null;
                     });
                 };

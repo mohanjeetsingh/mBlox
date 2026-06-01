@@ -1,14 +1,16 @@
 export function getYouTubeVideoId(post) {
     if (post.videoId) return post.videoId;
+
     if (post.thumbnailUrl && (post.thumbnailUrl.includes("ytimg.com/vi/") || post.thumbnailUrl.includes("youtube.com/vi/"))) {
-        const idStartIndex = post.thumbnailUrl.indexOf("/vi/") + 4;
-        const nextSlashIndex = post.thumbnailUrl.indexOf('/', idStartIndex);
-        if (nextSlashIndex !== -1) return post.thumbnailUrl.substring(idStartIndex, nextSlashIndex);
+        const match = post.thumbnailUrl.match(/\/vi\/([a-zA-Z0-9_-]{11})/);
+        if (match && match[1]) return match[1];
     }
-    if (post.content && post.content.includes('youtube.com/embed/')) {
-        const match = post.content.match(/youtube\.com\/embed\/([^?"]+)/);
-        return (match && match[1]) ? match[1] : "noVideo";
+
+    if (post.content) {
+        const match = post.content.match(/(?:youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/);
+        if (match && match[1]) return match[1];
     }
+
     return "noVideo";
 }
 

@@ -23,6 +23,7 @@ export function render(post, postID, config) {
         if (snippetText.length > config.snippetSize) {
             snippetText = snippetText.substring(0, config.snippetSize) + "...";
         }
+        snippetText = snippetText.replace(/"/g, '&quot;');
     }
 
     const ctaButtonCode = renderCTA(finalType, config, post.title);
@@ -52,12 +53,17 @@ export function render(post, postID, config) {
     }
 
     // Showcase grid post
-    const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
-    const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}`;
-    const imageHigh = post.thumbnailUrl ? post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600') : noImg;
-    const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
+    const videoAttr = (videoID && videoID !== 'noVideo') ? ` data-vidid="${videoID}"` : '';
+    const ringClasses = (postID === 0 && config.firstInstance) ? ' ring-4 ring-primary ring-inset' : '';
+    const articleClasses = `col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}${ringClasses}`;
+    let imageHigh = noImg;
+    if (videoID && videoID !== 'noVideo') imageHigh = `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
+    else if (post.thumbnailUrl) imageHigh = post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
+    
+    const escapedTitle = post.title.replace(/"/g, '&quot;');
+    const articleDataAttributes = `data-title="${escapedTitle}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
 
-    return `<article class="${articleClasses}" ${articleDataAttributes} role="article" title="${post.title}">${config.showImage ? imageCode : ''}</article>`;
+    return `<article class="${articleClasses}" ${articleDataAttributes} role="article" title="${escapedTitle}">${config.showImage ? imageCode : ''}</article>`;
 }
 
 export function renderThumbnail(post, config) {
@@ -65,7 +71,7 @@ export function renderThumbnail(post, config) {
     let thumbnailUrl = post.thumbnailUrl || noImg;
     let highResUrl = thumbnailUrl;
 
-    if (videoID !== 'noVideo' && highResUrl.includes('ytimg.com')) {
+    if (videoID && videoID !== 'noVideo' && highResUrl.includes('ytimg.com')) {
         highResUrl = highResUrl.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
     } else {
         highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');

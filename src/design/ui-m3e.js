@@ -195,50 +195,65 @@ export class M3ERenderer {
             if (postIndex === null || !postData[postIndex]) return;
 
             const data = postData[postIndex];
+            
+            // Refresh imgHigh dynamically from DOM in case image-loader.js applied a fallback
+            data.imgHigh = clickedPost.getAttribute('data-img-high') || clickedPost.querySelector('img')?.getAttribute('data-img-high') || data.imgHigh;
 
-            // --- Update the main feature image ---
-            if (figureNode) {
-                let playIcon = figureNode.querySelector('svg');
-                if (data.vidid && data.vidid !== 'noVideo') {
-                    // Play video icon logic (adapted from legacy)
-                    if (!playIcon) {
-                        figureNode.insertAdjacentHTML('beforeend', `<svg class="position-absolute top-50 start-50 translate-middle z-10 drop-shadow-md" xmlns="http://www.w3.org/2000/svg" width="75" height="75" fill="#f00" class="bi bi-youtube" viewBox="0 0 16 16"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/></svg>`);
-                    } else if (playIcon.style.display === 'none') {
-                        fadeIn(playIcon);
-                    }
-                    figureNode.title = "Click here to load the video!";
-                } else if (playIcon) {
-                    fadeOut(playIcon);
-                    figureNode.title = data.title;
+            // --- Check for focus state (double-click navigation) ---
+            const isFocused = clickedPost.classList.contains('ring-4');
+            if (isFocused) {
+                window.location.href = data.link;
+                return;
+            }
+
+            // --- Apply focus styling to clicked item ---
+            const allPosts = contentWrapper.querySelectorAll('.sPost');
+            allPosts.forEach(post => {
+                post.classList.remove('ring-4', 'ring-primary', 'ring-inset');
+            });
+            clickedPost.classList.add('ring-4', 'ring-primary', 'ring-inset');
+
+            // --- Update the main feature image or launch video ---
+            if (data.vidid && data.vidid !== 'noVideo') {
+                if (iFrameNode) {
+                    iFrameNode.innerHTML = getVideoIframe(data.vidid, config);
+                    fadeIn(iFrameNode);
                 }
-                figureNode.setAttribute('data-vidid', data.vidid);
-                figureNode.style.backgroundImage = `url(${data.imgHigh})`;
-                figureNode.style.backgroundSize = 'cover';
-            }
+                fadeOut(figureNode);
+                fadeOut(contentNode);
+                const link = featuredImageNode.querySelector('a');
+                if (link) link.style.display = 'none';
+            } else {
+                if (iFrameNode) {
+                    iFrameNode.innerHTML = '';
+                    fadeOut(iFrameNode);
+                }
+                if (figureNode) {
+                    figureNode.removeAttribute('data-vidid');
+                    let playIcon = figureNode.querySelector('svg');
+                    if (playIcon) fadeOut(playIcon);
+                    figureNode.style.backgroundImage = `url("${data.imgHigh}")`;
+                    figureNode.style.backgroundSize = 'cover';
+                    fadeIn(figureNode);
+                }
 
-            // --- Reset any playing video and show the figure ---
-            fadeOut(iFrameNode);
-            if (iFrameNode) iFrameNode.innerHTML = ''; // Ensure iframe is cleared
-            fadeIn(figureNode);
-
-            // --- Update the content overlay ---
-            if (contentNode) {
-                fadeIn(contentNode);
-                const h5 = contentNode.querySelector('h5');
-                if (h5) h5.textContent = data.title;
-                const summary = contentNode.querySelector('.list-none') || contentNode.querySelector('div.text-body-md');
-                if (summary) summary.innerHTML = data.summary;
+                // --- Update the content overlay for non-video items ---
+                if (contentNode) {
+                    fadeIn(contentNode);
+                    const h5 = contentNode.querySelector('h5');
+                    if (h5) h5.textContent = data.title;
+                    const summary = contentNode.querySelector('.list-none') || contentNode.querySelector('div.text-body-md');
+                    if (summary) summary.innerHTML = data.summary;
+                }
+                const link = featuredImageNode.querySelector('a');
+                if (link) {
+                    link.style.display = '';
+                    link.href = data.link;
+                    link.title = data.title;
+                }
+                const button = featuredImageNode.querySelector('button');
+                if (button) button.title = data.title;
             }
-
-            // --- Update the main link and button ---
-            const link = featuredImageNode.querySelector('a');
-            if (link) {
-                link.style.display = ''; // Restore link visibility
-                link.href = data.link;
-                link.title = data.title;
-            }
-            const button = featuredImageNode.querySelector('button');
-            if (button) button.title = data.title;
         });
     }
 

@@ -5,7 +5,7 @@ export function renderImage(finalType, postID, config, data) {
     if (!config.showImage) return { imageCode: '', showcaseImageCode: '', videoThumbnailURL: '', highResImageURL: '' };
     const { postSnippet, videoID, postTitle, thumbnailUrl, authorImage } = data;
     let videoThumbnailURL = thumbnailUrl || "";
-    let imageURL = videoThumbnailURL;
+    let imageURL = videoThumbnailURL || config.imageURL || noImg;
 
     if (!imageURL) {
         if (config.contentType == 'comments') {
@@ -19,8 +19,8 @@ export function renderImage(finalType, postID, config, data) {
     }
     if (!videoThumbnailURL) videoThumbnailURL = imageURL;
     let highResImageURL = imageURL;
-    if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
-    else if (videoID !== 'noVideo' && highResImageURL && highResImageURL.includes('ytimg.com')) highResImageURL = highResImageURL.replace(/\/([^\/]+)$/, '/maxresdefault.jpg');
+    if (videoID && videoID !== 'noVideo') highResImageURL = `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
+    else if (config.isBloggerFeed) highResImageURL = highResImageURL.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
 
     const IMAGE_CONFIG_MAP = {
         [BLOCK_SHOWCASE]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
