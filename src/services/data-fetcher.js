@@ -132,6 +132,57 @@ export function mapRssJsonToStandardFormat(jsonDoc) {
     return { posts: standardPosts, totalResults: jsonDoc.items.length, feedUrl: jsonDoc.feed.link };
 }
 
+export function mapRedditResponseToStandardFormat(redditJson) {
+    if (!redditJson || !redditJson.data || !Array.isArray(redditJson.data.children)) {
+        return { posts: [], totalResults: 0, feedUrl: '' };
+    }
+    
+    const standardPosts = redditJson.data.children.map(child => {
+        const item = child.data;
+        let thumbnailUrl = '';
+        
+        // Reddit thumbnail can be 'self', 'default', 'image', 'nsfw', 'spoiler' or a valid URL
+        if (item.thumbnail && item.thumbnail.startsWith('http')) {
+            thumbnailUrl = item.thumbnail;
+        } else if (item.preview && item.preview.images && item.preview.images.length > 0) {
+            // Get the source image from preview if available, but unescape HTML entities
+            const sourceUrl = item.preview.images[0].source.url;
+            thumbnailUrl = sourceUrl ? sourceUrl.replace(/&amp;/g, '&') : '';
+        }
+        
+        // Use selftext_html if available, otherwise selftext, or fallback to an empty string.
+        let content = '';
+        if (item.selftext_html) {
+            // Reddit encodes HTML entities in selftext_html
+            content = item.selftext_html.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+        } else if (item.selftext) {
+            content = item.selftext;
+        } else if (item.url && !item.url.includes('reddit.com')) {
+            // If it's a link post, include the link in the content
+            content = `<a href="${item.url}" target="_blank">External Link: ${item.title}</a>`;
+            if (item.url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+               content += `<br><img src="${item.url}" />`;
+               if (!thumbnailUrl) thumbnailUrl = item.url;
+            }
+        }
+
+        return {
+            title: item.title,
+            content: content,
+            authorName: item.author || 'Unknown',
+            // created_utc is in seconds
+            publishedDate: item.created_utc ? new Date(item.created_utc * 1000).toISOString() : '',
+            url: `https://www.reddit.com${item.permalink}`,
+            thumbnailUrl: thumbnailUrl,
+            videoId: '',
+            authorUri: `https://www.reddit.com/user/${item.author}`,
+            authorImage: '' // Reddit doesn't provide user avatars in the standard listing JSON
+        };
+    });
+
+    return { posts: standardPosts, totalResults: standardPosts.length, feedUrl: '' };
+}
+
 export function mapBloggerResponseToStandardFormat(bloggerResponse) {
     if (!bloggerResponse.feed || !bloggerResponse.feed.entry) {
         return { posts: [], totalResults: 0, feedUrl: '' };

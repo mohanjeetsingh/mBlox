@@ -1,4 +1,4 @@
-import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapRssJsonToStandardFormat, mapBloggerResponseToStandardFormat } from './data-fetcher.js';
+import { fetchJSONP, mapWordPressResponseToStandardFormat, mapRssResponseToStandardFormat, mapRssJsonToStandardFormat, mapBloggerResponseToStandardFormat, mapRedditResponseToStandardFormat } from './data-fetcher.js';
 
 const CACHE_DURATION_MS = 15 * 60 * 1000;
 const feedCache = new Map();
@@ -125,10 +125,76 @@ export class BloggerProvider {
     }
 }
 
+class RedditProvider {
+    constructor(config) { this.config = config; }
+    _buildFeedUrl() {
+        let url = this.config.siteURL.replace(/\/$/, "");
+        if (!url.endsWith('.json')) url += '.json';
+        return url;
+    }
+    async fetch() {
+        const url = this._buildFeedUrl();
+        const cached = feedCache.get(url);
+        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
+        
+        try {
+            // Reddit sometimes blocks proxies and restricts CORS. Attempt native fetch first.
+            const response = await window.fetch(url);
+            if (!response.ok) throw new Error("Native fetch failed");
+            const responseText = await response.text();
+            const rawData = JSON.parse(responseText);
+            const formattedData = mapRedditResponseToStandardFormat(rawData);
+            feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+            return formattedData;
+        } catch (e) {
+            console.warn("mBlox: Reddit native fetch failed (CORS/403). Falling back to rss2json...");
+            // Fallback to RSS endpoint via rss2json
+            const rssUrl = url.replace('.json', '.rss');
+            const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+            const rawData = await fetchJSONP(rss2jsonUrl);
+            const formattedData = mapRssJsonToStandardFormat(rawData);
+            
+            // Clean up author links
+            formattedData.posts.forEach(post => {
+                if(post.authorName && post.authorName.startsWith('/u/')) {
+                    post.authorUri = `https://www.reddit.com${post.authorName}`;
+                }
+            });
+
+            feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+            return formattedData;
+        }
+    }
+}
+
+class TumblrProvider extends RssProvider {
+    _buildFeedUrl() {
+        let url = this.config.siteURL.replace(/\/$/, "");
+        if (!url.endsWith('/rss')) url += '/rss';
+        return url;
+    }
+}
+
+class FediverseProvider extends RssProvider {
+    _buildFeedUrl() {
+        let url = this.config.siteURL.replace(/\/$/, "");
+        if (!url.endsWith('.rss')) url += '.rss';
+        return url;
+    }
+}
+
 export function getProvider(config) {
     const url = config.siteURL.toLowerCase();
+    const urlWithoutQuery = url.split('?')[0];
+    
+    if (url.includes('reddit.com')) return new RedditProvider(config);
+    if (url.includes('tumblr.com')) return new TumblrProvider(config);
+    if (url.includes('mastodon.social') || url.includes('bsky.app')) return new FediverseProvider(config);
+    if (url.includes('deviantart.com')) return new RssProvider(config);
+    
     if (url.includes('/wp-json')) return new WordPressProvider(config);
     if (url.includes('youtube.com')) return new YouTubeProvider(config);
-    if (url.endsWith('.xml') || url.includes('/feed')) return new RssProvider(config);
+    if (urlWithoutQuery.endsWith('.xml') || url.includes('/feed') || urlWithoutQuery.endsWith('.rss') || urlWithoutQuery.endsWith('/rss')) return new RssProvider(config);
+    
     return new BloggerProvider(config);
 }

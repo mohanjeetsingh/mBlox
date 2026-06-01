@@ -59,6 +59,12 @@
 <body class="bg-gray-100 min-h-screen">
     <script>
         const blockConfigurations = [
+            { class: 'mBlockL', contenttype: 'recent', type: "c-ihs", title: "Reddit Psychology", theme: "primary", feed: 'https://www.reddit.com/r/psychology', cols: "3", isCarousel: "true", moreText: "Read on Reddit" },
+            { class: 'mBlockL bg-dark', contenttype: 'recent', type: "g-i", title: "Tumblr Psychology", theme: "dark", feed: 'https://psychcentral.tumblr.com', cols: "4", rows: "2", iBorder: "true", moreText: "View on Tumblr" },
+            { class: 'mBlockL', contenttype: 'recent', type: "t-ihs", title: "Medium Psychology", theme: "secondary", feed: 'https://medium.com/feed/tag/psychology', isCarousel: "true", moreText: "Read on Medium" },
+            { class: 'mBlockL', contenttype: 'recent', type: "p-ihs", title: "Mastodon Psych", theme: "light", feed: 'https://mastodon.social/tags/psychology', isCarousel: "true", moreText: "View on Mastodon" },
+            { class: 'mBlockL bg-dark', contenttype: 'recent', type: "s-i", title: "Flickr Psychology", theme: "dark", feed: 'https://www.flickr.com/services/feeds/photos_public.gne?tags=psychology&format=rss_200', isCarousel: "true", moreText: "View on Flickr", ar: "16x9" },
+            { class: 'mBlockL', contenttype: 'recent', type: "q-ha", title: "DeviantArt Psych", theme: "tertiary", feed: 'https://backend.deviantart.com/rss.xml?q=psychology', isCarousel: "true", moreText: "View on DeviantArt", cols: "4" },
             { class: 'mBlockL', contenttype: 'recent', corner: "sharp", posts: "4", type: "s-ihs", title: "RSS", theme: "primary", feed: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWA1V8hi8TJm4DlBIfFfYyQ', ar: "16x9", isCarousel: "true", moreText: "Click for more" },
             { class: 'mBlockL bg-dark', contenttype: 'Recent', label: "Recent", posts: "6", type: "t-hs", title: "wp", description: "descr", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", feed: 'https://www.ignouhelp.in/wp-json/' },
             { class: 'mBlockL bg-dark', contenttype: 'Recent', label: "Recent", posts: "6", type: "s-i", title: "iShowcase", description: "descr", isCarousel: "true", moreText: "Click for more", CTAText: "More", theme: "light", ar: "16x9", feed: 'https://mohanjeet.blogspot.com/' },
