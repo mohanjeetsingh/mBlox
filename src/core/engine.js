@@ -73,11 +73,6 @@ export async function mBlocks(blockItem) {
                 const isCurrentStage = blockConfig.stageID === parseInt(rawElement.getAttribute("data-s") || "1", 10);
                 const displayClass = isCurrentStage ? '' : ' d-none';
                 
-                let renderOutput = `<div class="st${blockConfig.stageID}${displayClass}" id="m${blockConfig.mBlockID}-st${blockConfig.stageID}">`;
-                if (blockConfig.blockType === BLOCK_SHOWCASE && blockConfig.firstInstance) {
-                    renderOutput += showcaseHTML;
-                }
-                
                 let blockBody = '';
                 if (blockConfig.isCarousel) {
                     blockBody = renderCarouselGrid(renderedBlocks, blockConfig);
@@ -87,9 +82,11 @@ export async function mBlocks(blockItem) {
                     blockBody = renderGrid(renderedBlocks, blockConfig);
                 }
 
-                renderOutput += renderer.createStageWrapper(blockBody, carouselIndicators, blockConfig, response);
-                renderOutput += renderer.createBlockFooter(blockConfig, response);
-                renderOutput += `</div>`;
+                const showcaseCode = (blockConfig.blockType === BLOCK_SHOWCASE && blockConfig.firstInstance) ? showcaseHTML : '';
+                const wrapperCode = renderer.createStageWrapper(blockBody, carouselIndicators, blockConfig, response);
+                const footerCode = renderer.createBlockFooter(blockConfig, response);
+
+                const renderOutput = `<div class="st${blockConfig.stageID}${displayClass}" id="m${blockConfig.mBlockID}-st${blockConfig.stageID}">${showcaseCode}${wrapperCode}${footerCode}</div>`;
                 
                 rawElement.insertAdjacentHTML('beforeend', renderOutput);
                 renderer.bindEvents(rawElement, blockConfig);

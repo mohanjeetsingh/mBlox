@@ -8,9 +8,5 @@ export function renderCarouselGrid(renderedBlocks, config) {
     const rowClass = rowClassMap[config.blockRows] || 'grid-rows-1';
     const pbClass = config.blockType === BLOCK_COVER ? '' : ' pb-8';
 
-    let html = `<div class="grid grid-flow-col ${rowClass} ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 ${pbClass} [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">`;
-    html += renderedBlocks.join('');
-    html += `</div>`;
-
-    return html;
+    return `<div class="grid grid-flow-col ${rowClass} ${autoColsClass} overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 ${pbClass} [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">${renderedBlocks.join('')}</div>`;
 }

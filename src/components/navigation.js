@@ -16,13 +16,13 @@ export function renderNavigationControls(config, response) {
           </button>`;
 
   if (isCarousel) {
-    return prevBtn + nextBtn;
+    return `${prevBtn}${nextBtn}`;
   }
 
   const totalStages = response ? Math.ceil(response.totalResults / config.postsPerBlock) : 1;
-  let html = '';
-  if (config.stageID > 1) html += prevBtn;
-  if (config.stageID < totalStages) html += nextBtn;
 
-  return html;
+  return [
+    config.stageID > 1 ? prevBtn : '',
+    config.stageID < totalStages ? nextBtn : ''
+  ].join('');
 }

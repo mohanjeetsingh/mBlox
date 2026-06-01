@@ -120,15 +120,9 @@ export class M3ERenderer {
     }
 
     createStageWrapper(blockBody, carouselIndicators, config, response) {
-        let content = '';
-        if (config.isCarousel) {
-            content += renderCarouselIndicators(carouselIndicators, config, response);
-            content += blockBody;
-            content += renderNavigationControls(config, response);
-        } else {
-            content += blockBody;
-            content += renderNavigationControls(config, response);
-        }
+        const indicators = config.isCarousel ? renderCarouselIndicators(carouselIndicators, config, response) : '';
+        const nav = renderNavigationControls(config, response);
+        const content = `${indicators}${blockBody}${nav}`;
         return renderStageLayout(content, config);
     }
 

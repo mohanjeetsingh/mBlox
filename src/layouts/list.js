@@ -17,27 +17,15 @@ export function renderListGrid(renderedBlocks, config) {
     let currentColumnCount = config.columnCount;
     const outerGridColsClass = RESPONSIVE_GRID_CLASSES_M3E[currentColumnCount] || RESPONSIVE_GRID_CLASSES_M3E[6];
 
-    let html = `<div class="${config.layout.gap} col flex-grow-1 grid ${outerGridColsClass}">`;
-
-    // The first block is the feature item (left column). It is naturally col-span-1.
-    html += renderedBlocks[0];
-
-    // The rest of the blocks form a sub-grid (right column)
+    let innerGridHTML = '';
     if (renderedBlocks.length > 1) {
         if (config.showHeader) currentColumnCount--;
 
         const innerGridColsClass = RESPONSIVE_GRID_CLASSES_M3E[currentColumnCount] || RESPONSIVE_GRID_CLASSES_M3E[6];
         const innerSpanClass = SUBGRID_SPAN_CLASSES_M3E[config.columnCount] || 'col-span-1';
 
-        html += `<div class="${config.layout.gap} ${innerSpanClass} px-0 grid ${innerGridColsClass}">`;
-
-        for (let i = 1; i < renderedBlocks.length; i++) {
-            html += renderedBlocks[i];
-        }
-
-        html += `</div>`; // close inner grid
+        innerGridHTML = `<div class="${config.layout.gap} ${innerSpanClass} px-0 grid ${innerGridColsClass}">${renderedBlocks.slice(1).join('')}</div>`;
     }
 
-    html += `</div>`; // close outer grid
-    return html;
+    return `<div class="${config.layout.gap} col flex-grow-1 grid ${outerGridColsClass}">${renderedBlocks[0]}${innerGridHTML}</div>`;
 }
