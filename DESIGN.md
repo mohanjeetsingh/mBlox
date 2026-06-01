@@ -36,6 +36,7 @@ Interactive elements must use strict opacity overlays over the base color:
 M3 Expressive deliberately drops heavy drop shadows and outlines in favor of filled tonal surfaces to create depth. Shadows (`shadow-m3e-*`) are formally deprecated.
 *   Instead of shadows or outlines, we strictly use filled tonal surfaces (`bg-primary-container-fixed`) to separate cards/widgets from the `bg-surface` background.
 *   For floating elements (Dropdowns, Modals), use the `bg-primary-container-fixed` with heavy `backdrop-blur-xl` for distinct z-index layering.
+*   **Hover/Pop Effects**: Interactive cards and images must *not* use box-shadow to indicate a hover state. Instead, use a combination of **scale** (`hover:scale-[1.02]`) and **state layers** (tonal shifts, e.g., `hover:bg-surface-variant`) along with expressive easing (`duration-300 ease-[cubic-bezier(0.2,0,0,1)]`) to create an editorial "pop" effect.
 
 ---
 
