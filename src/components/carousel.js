@@ -1,36 +1,21 @@
-/**
- * Carousel component for mBlox
- */
-import { renderNavigationControls } from './navigation.js';
-import { RESPONSIVE_CAROUSEL_CLASSES_M3E } from '../core/config.js';
-
-export function renderCarousel(blockBody, carouselIndicators, config, response) {
-    let html = `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="overflow-hidden ${config.theme.bg}${config.blockType === 's' ? ' sFeature' : ""} relative">`;
-
-    if (config.isCarousel) {
-        if (carouselIndicators) {
-            html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
-        }
-
-        const numItems = response && response.posts ? response.posts.length : 0;
-        const numCols = Math.ceil(numItems / (config.blockRows || 1));
-        if (numCols > 1) {
-            const dotsPositionClass = config.blockType === 'v' ? 'bottom-12' : 'bottom-3';
-            html += `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute ${dotsPositionClass} left-0 right-0 z-10 pointer-events-none">`;
-            for (let i = 0; i < numCols; i++) {
-                html += `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i + 1}"></button>`;
-            }
-            html += `</div>`;
-        }
-        html += blockBody;
-        html += renderNavigationControls(config, response);
-
-    } else {
-        html += blockBody;
-        html += renderNavigationControls(config, response);
+export function renderCarouselIndicators(carouselIndicators, config, response) {
+    if (!config.isCarousel) return '';
+    let html = '';
+    
+    if (carouselIndicators) {
+        html += (carouselIndicators instanceof HTMLElement) ? carouselIndicators.outerHTML : carouselIndicators;
     }
 
-    html += `</div>`;
+    const numItems = response && response.posts ? response.posts.length : 0;
+    const numCols = Math.ceil(numItems / (config.blockRows || 1));
+    if (numCols > 1) {
+        const dotsPositionClass = config.blockType === 'v' ? 'bottom-12' : 'bottom-3';
+        html += `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute ${dotsPositionClass} left-0 right-0 z-10 pointer-events-none">`;
+        for (let i = 0; i < numCols; i++) {
+            html += `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i + 1}"></button>`;
+        }
+        html += `</div>`;
+    }
     return html;
 }
 
@@ -83,11 +68,9 @@ export function initCarousel(rawElement, config) {
         });
     }
 
-    // Auto-play logic (every 4 seconds)
     let autoPlayInterval;
     const startAutoPlay = () => {
         autoPlayInterval = setInterval(() => {
-            // Check if we reached the end (with a 5px buffer for rounding errors)
             if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 5) {
                 container.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
@@ -102,7 +85,6 @@ export function initCarousel(rawElement, config) {
 
     startAutoPlay();
 
-    // Pause on hover
     rawElement.addEventListener('mouseenter', stopAutoPlay);
     rawElement.addEventListener('mouseleave', startAutoPlay);
 }

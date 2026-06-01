@@ -26,7 +26,8 @@ export function render(post, postID, config) {
 
     // Content container
     const bgThemeClass = (config.dataTheme !== "surface") ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
-    const textContentHTML = config.showHeader ? `
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const textContentHTML = hasText ? `
         <div class="p-4 flex-grow flex flex-col${bgThemeClass}">
             ${authorCode}${dateCode}
             ${titleCode}
@@ -36,5 +37,5 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    return `<article class="col-span-1 inline-flex w-full" role="article"><a class="flex flex-col ${config.theme.bg} h-full ${config.cornerStyle} ${config.interactionClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
+    return `<article class="col-span-1 inline-flex w-full" role="article"><a class="flex flex-col w-full ${config.theme.bg} h-full ${config.cornerStyle} ${config.interactionClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
 }

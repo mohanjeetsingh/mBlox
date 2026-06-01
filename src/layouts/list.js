@@ -17,7 +17,7 @@ export function renderListGrid(renderedBlocks, config) {
     let currentColumnCount = config.columnCount;
     const outerGridColsClass = RESPONSIVE_GRID_CLASSES_M3E[currentColumnCount] || RESPONSIVE_GRID_CLASSES_M3E[6];
 
-    let html = `<div class="${config.layout.gap} col flex-grow-1 px-0 grid ${outerGridColsClass}">`;
+    let html = `<div class="${config.layout.gap} col flex-grow-1 grid ${outerGridColsClass}">`;
 
     // The first block is the feature item (left column). It is naturally col-span-1.
     html += renderedBlocks[0];

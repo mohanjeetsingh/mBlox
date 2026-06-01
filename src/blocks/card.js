@@ -25,7 +25,8 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    const textContentHTML = config.showHeader ? `
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const textContentHTML = hasText ? `
         <div class="absolute inset-0 flex flex-col p-0 border-0 ${
             { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
         }">
@@ -39,7 +40,7 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'h-full', config.interactionClasses].filter(Boolean).join(' ');
+    const linkClasses = ['relative', 'block', 'w-full', config.cornerStyle, config.aspectRatio.trim(), 'h-full', config.interactionClasses].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full';
     return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;

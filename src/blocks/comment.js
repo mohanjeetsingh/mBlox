@@ -23,14 +23,14 @@ export function render(post, postID, config) {
         authorImage: post.authorImage
     });
 
-    const textContentHTML = config.showHeader ? `
-        <div class="flex-1 p-2 pl-0">
+    const textContentHTML = `
+        <div class="w-full pl-14 pt-2">
             ${authorCode}${dateCode}
             ${titleCode}
             ${snippetCode}
             ${ctaButtonCode}
         </div>
-    ` : '';
+    `;
 
     const linkClasses = `rounded-none ${config.theme.bg} flex flex-row items-start ${config.interactionClasses}`;
 

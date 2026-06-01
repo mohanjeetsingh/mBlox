@@ -87,7 +87,7 @@ export async function mBlocks(blockItem) {
                     blockBody = renderGrid(renderedBlocks, blockConfig);
                 }
 
-                renderOutput += renderer.createCarouselWrapper(blockBody, carouselIndicators, blockConfig, response);
+                renderOutput += renderer.createStageWrapper(blockBody, carouselIndicators, blockConfig, response);
                 renderOutput += renderer.createBlockFooter(blockConfig, response);
                 renderOutput += `</div>`;
                 

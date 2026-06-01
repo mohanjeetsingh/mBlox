@@ -25,7 +25,8 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    const textContentHTML = config.showHeader ? `
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const textContentHTML = hasText ? `
         <div class="${config.theme.glass} backdrop-blur-xl ${config.theme.text} p-6 md:p-12 absolute z-10 flex flex-col justify-center items-center ${
             {
                 top: `w-3/4 left-1/2 -translate-x-1/2 top-8 ${(config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl'}`,
@@ -42,7 +43,7 @@ export function render(post, postID, config) {
     ` : '';
 
     // Link wrapper classes
-    const linkClasses = ['relative', 'block', 'rounded-none', 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
+    const linkClasses = ['relative', 'block', 'w-full', 'rounded-none', 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full';
     const articleStyle = ` style="${config.articleHeight}"`;

@@ -28,21 +28,20 @@ export function render(post, postID, config) {
     const isDarkTheme = config.dataTheme !== "surface";
     const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
 
-    const innerContent = `
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const innerContent = hasText ? `
         <div class="p-4 flex-grow flex flex-col justify-center${bodyClass}">
             ${authorCode}${dateCode}
             ${titleCode}
             ${snippetCode}
             ${ctaButtonCode}
         </div>
-    `;
+    ` : '';
 
     const isIndependentStack = config.blockType === BLOCK_STACK;
     const textWidthClass = isIndependentStack ? 'w-3/4' : 'w-2/3';
 
-    const textContentHTML = config.showHeader ?
-        (config.showImage ? `<div class="${textWidthClass} h-full flex flex-col">${innerContent}</div>` : innerContent)
-        : '';
+    const textContentHTML = hasText ? (config.showImage ? `<div class="${textWidthClass} h-full flex flex-col">${innerContent}</div>` : innerContent) : '';
 
     // Link wrapper classes
     const linkClasses = ['flex', 'flex-row', config.theme.bg, config.cornerStyle, 'w-full', 'h-full', config.interactionClasses].filter(Boolean).join(' ');

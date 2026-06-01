@@ -4,9 +4,11 @@
 
 import { renderBlockHeader } from '../sections/header.js';
 import { renderBlockFooter } from '../sections/footer.js';
-import { renderCarousel, initCarousel } from '../components/carousel.js';
+import { renderStageLayout } from '../layouts/stage.js';
+import { renderCarouselIndicators, initCarousel } from '../components/carousel.js';
+import { renderNavigationControls } from '../components/navigation.js';
 import { 
-    BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, 
+    BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY,
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
     RESPONSIVE_GRID_CLASSES_M3E
 } from '../core/config.js';
@@ -117,8 +119,17 @@ export class M3ERenderer {
         return renderBlockFooter(config, response);
     }
 
-    createCarouselWrapper(blockBody, carouselIndicators, config, response) {
-        return renderCarousel(blockBody, carouselIndicators, config, response);
+    createStageWrapper(blockBody, carouselIndicators, config, response) {
+        let content = '';
+        if (config.isCarousel) {
+            content += renderCarouselIndicators(carouselIndicators, config, response);
+            content += blockBody;
+            content += renderNavigationControls(config, response);
+        } else {
+            content += blockBody;
+            content += renderNavigationControls(config, response);
+        }
+        return renderStageLayout(content, config);
     }
 
     bindEvents(rawElement, config) {

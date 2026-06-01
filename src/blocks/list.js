@@ -25,17 +25,13 @@ export function render(post, postID, config) {
     });
 
     // Content container (renders a Latest header bar, then falls through to card content overlay)
-    const textContentHTML = config.showHeader ? `
-        <div class="absolute top-0 left-0 ${config.theme.glass} ${config.theme.text} backdrop-blur-xl rounded-none pl-10 py-6 w-full z-20 h-auto">Latest</div>
-        <div class="absolute inset-0 flex flex-col p-0 z-10 ${
-            { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
-        }">
-            <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${config.theme.glass} backdrop-blur-xl ${config.theme.text} rounded-none p-8 pt-20">
-                ${authorCode}${dateCode}
-                ${titleCode}
-                ${snippetCode}
-                ${ctaButtonCode}
-            </div>
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const textContentHTML = hasText ? `
+        <div class="p-2 pt-0 md:p-4 flex flex-col justify-center">
+            ${authorCode}${dateCode}
+            ${titleCode}
+            ${snippetCode}
+            ${ctaButtonCode}
         </div>
     ` : '';
 
