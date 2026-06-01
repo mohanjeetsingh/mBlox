@@ -41,7 +41,7 @@ export async function mBlocks(blockItem) {
         let blockConfig = parseBlockConfig(rawElement);
         
         // Apply the auto-detected theme and palette natively to the wrapper
-        rawElement.setAttribute('data-scheme', blockConfig.dataScheme);
+        rawElement.setAttribute('data-scheme', blockConfig.mBloxTheme);
         rawElement.setAttribute('data-palette', blockConfig.palette);
 
         // Listen for pagination events fired by the renderer

@@ -25,7 +25,7 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    const bgThemeClass = (config.dataTheme !== "surface") ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+    const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
     const textContentHTML = hasText ? `
         <div class="p-4 flex-grow flex flex-col${bgThemeClass}">

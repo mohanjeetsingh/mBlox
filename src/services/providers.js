@@ -49,7 +49,7 @@ class WordPressProvider {
         baseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
         if (!baseUrl.endsWith('/posts/')) baseUrl += 'wp/v2/posts/';
         let apiUrl = `${baseUrl}?_embed&per_page=${this.config.postsPerBlock}&page=${this.config.stageID}`;
-        if (this.config.contentType === 'label' && !isNaN(parseInt(this.config.dataLabel, 10))) apiUrl += `&categories=${this.config.dataLabel}`;
+        if (this.config.contentType === 'label' && !isNaN(parseInt(this.config.labelName, 10))) apiUrl += `&categories=${this.config.labelName}`;
         return apiUrl;
     }
     async fetch() {
@@ -109,7 +109,7 @@ export class BloggerProvider {
         switch (this.config.contentType) {
             case "recent": feedURL += "posts" + (this.config.showImage ? "/default" : "/summary"); break;
             case "comments": feedURL += "comments" + (this.config.showImage ? "/default" : "/summary"); break;
-            default: feedURL += "posts" + (this.config.showImage ? "/default" : "/summary") + "/-/" + this.config.dataLabel;
+            default: feedURL += "posts" + (this.config.showImage ? "/default" : "/summary") + "/-/" + this.config.labelName;
         }
         feedURL += `?alt=json-in-script&start-index=${(this.config.stageID - 1) * this.config.postsPerBlock + 1}&max-results=${this.config.postsPerBlock}`;
         return feedURL;

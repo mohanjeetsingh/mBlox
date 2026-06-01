@@ -79,16 +79,16 @@ export function parseBlockConfig(rawElement) {
         return attrVal !== null ? parseInt(attrVal, 10) : defaultValue;
     };
 
-    const dataLabel = getVal("label", "label", "Label Name missing"),
+    const labelName = getVal("label", "label", "Label Name missing"),
         contentType = getVal("contentType", "contentType", "recent").toLowerCase(),
         siteURL = getVal("feed", "feed", "/"),
-        dataTitle = getVal("title", "title", ""),
-        dataDescription = getVal("description", "description", ""),
-        dataType = getVal("type", "type", "v-ih").toLowerCase(),
-        blockType = dataType.substring(0, 1),
-        componentList = dataType.substring(1),
+        mBloxTitle = getVal("title", "title", ""),
+        mBloxDescription = getVal("description", "description", ""),
+        mBloxType = getVal("type", "type", "v-ih").toLowerCase(),
+        bloxType = mBloxType.substring(0, 1),
+        componentList = mBloxType.substring(1),
         rawTheme = getVal("theme", "theme", "auto").toLowerCase(),
-        dataPalette = getVal("palette", "palette", "neutral").toLowerCase(),
+        colorPalette = getVal("palette", "palette", "neutral").toLowerCase(),
         showHeader = componentList.includes("h"),
         showImage = componentList.includes("i"),
         showSnippet = componentList.includes("s"),
@@ -105,20 +105,20 @@ export function parseBlockConfig(rawElement) {
         const isOsDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         finalTheme = (isHostDark || isOsDark) ? 'dark' : 'light';
     }
-    const dataTheme = finalTheme;
+    const mBloxTheme = finalTheme;
 
     // Dual Palette System: map components to secondary-container (neutral) or primary-container (colorful)
-    let defaultThemeKey = dataPalette === 'colorful' ? 'primary-container' : 'secondary-container';
+    let defaultThemeKey = colorPalette === 'colorful' ? 'primary-container' : 'secondary-container';
 
     // Fallback logic for legacy explicit themes or dynamic override
     const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary-container'];
 
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
-    const dataBlur = getVal("iBlur", "iBlur", "").toLowerCase();
-    const dataIFix = getVal("iFix", "iFix", "").toLowerCase();
+    const imageBlur = getVal("iBlur", "iBlur", "").toLowerCase();
+    const imageFixed = getVal("iFix", "iFix", "").toLowerCase();
     const widget = rawElement.closest(".widget");
-    const mBlockID = widget ? widget.getAttribute("ID") : (dataTitle + dataType + dataLabel);
+    const mBlockID = widget ? widget.getAttribute("ID") : (mBloxTitle + mBloxType + labelName);
     const sanitizedMBlockID = mBlockID.replace(/[\s#.&?,[\]]/g, '-');
 
     const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
@@ -127,27 +127,27 @@ export function parseBlockConfig(rawElement) {
     const blockRowsVal = getVal("rows", "rows", "1");
 
     let config = {
-        dataLabel, contentType, siteURL, dataTitle, dataDescription, blockType, dataTheme,
+        labelName: labelName, contentType, siteURL, mBlockTitle: mBloxTitle, mBlockDescription: mBloxDescription, blockType: bloxType,
         showHeader, showImage, showSnippet, showAuthor, showDate,
         columnCount: columnCountVal !== null ? parseInt(columnCountVal, 10) : null,
         blockRows: parseInt(blockRowsVal, 10),
         isCarousel: getBoolVal("isCarousel", "isCarousel", false),
         sectionHeight: getVal("iHeight", "iHeight", null),
         articleHeight: '',
-        blurImage: dataBlur === "true" || jsonConfig.iBlur === true ? true : (dataBlur === "false" || jsonConfig.iBlur === false ? false : null),
+        blurImage: imageBlur === "true" || jsonConfig.iBlur === true ? true : (imageBlur === "false" || jsonConfig.iBlur === false ? false : null),
         theme,
-        gutterSize: getVal("gutter", "gutter", ((blockType == "v") ? 0 : 3)),
+        gutterSize: getVal("gutter", "gutter", ((bloxType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
         cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
         aspectRatio: ` ${ASPECT_RATIO_CLASSES[getVal("ar", "ar", "1/1").replace('x', '/').toLowerCase()] || 'aspect-square'}`,
-        isImageFixed: dataIFix === "true" || jsonConfig.iFix === true ? true : (dataIFix === "false" || jsonConfig.iFix === false ? false : null),
+        isImageFixed: imageFixed === "true" || jsonConfig.iFix === true ? true : (imageFixed === "false" || jsonConfig.iFix === false ? false : null),
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
         snippetSize: getIntVal("snippetSize", "snippetSize", 150),
         callToAction: getVal("CTAText", "CTAText", ""),
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
-        palette: dataPalette, dataScheme: dataTheme,
-        interactionClasses: dataPalette === 'colorful'
+        palette: colorPalette, mBloxTheme,
+        interactionClasses: colorPalette === 'colorful'
             ? 'transition-colors duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-tertiary hover:text-on-tertiary hover:opacity-100 overflow-hidden no-underline font-bold'
             : 'transition-opacity duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:opacity-80 overflow-hidden no-underline font-bold',
         containsNavigation: false, actualColumnCount: 0,

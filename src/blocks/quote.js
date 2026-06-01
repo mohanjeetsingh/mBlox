@@ -25,7 +25,7 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    const isDarkTheme = config.dataTheme !== "surface";
+    const isDarkTheme = config.mBloxTheme !== "surface";
     const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
 
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
