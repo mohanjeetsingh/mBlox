@@ -55,7 +55,7 @@ export function render(post, postID, config) {
             finalShowcaseImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${showcaseImageCode}</a>`;
         }
 
-        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4"><div class="sIframe hidden"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
+        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post

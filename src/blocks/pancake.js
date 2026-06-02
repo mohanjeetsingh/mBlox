@@ -1,46 +1,20 @@
-import { renderImage } from '../components/image.js';
-import { renderCTA } from '../components/cta.js';
-import { renderAuthor } from '../components/author.js';
-import { renderDate } from '../components/date.js';
-import { renderTitle } from '../components/title.js';
-import { renderSnippet } from '../components/snippet.js';
 import { BLOCK_PANCAKE } from '../core/config.js';
+import { buildCard } from '../utils/card-builder.js';
 
 export function render(post, postID, config) {
-    const finalType = BLOCK_PANCAKE;
+    return buildCard(BLOCK_PANCAKE, post, postID, config, (parts, config) => {
+        const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.containerBg} ${config.theme.containerText}` : ` ${config.theme.containerText}`;
+        
+        const textContentHTML = parts.hasText ? `
+            <div class="p-4 flex-grow flex flex-col${bgThemeClass}">
+                ${parts.authorCode}${parts.dateCode}
+                ${parts.titleCode}
+                ${parts.snippetCode}
+            </div>
+            ${parts.ctaButtonCode}
+        ` : '';
 
-    // Render parts
-    const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
-    const dateCode = renderDate(config, post.publishedDate);
-    const titleCode = renderTitle(finalType, config, post.title, post.url);
-    const snippetCode = renderSnippet(finalType, config, post.content);
-    const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
-
-    const { imageCode } = renderImage(finalType, postID, config, {
-        postSnippet: post.content,
-        videoID: post.videoId,
-        postTitle: post.title,
-        thumbnailUrl: post.thumbnailUrl,
-        authorImage: post.authorImage
+        return `<article class="col-span-1 inline-flex w-full relative" role="article"><div class="flex flex-col w-full ${config.theme.containerBg} h-full ${config.cornerStyle} ${config.interactionClasses}">${parts.finalImageCode}${textContentHTML}</div></article>`;
     });
-
-    // Content container
-    const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.containerBg} ${config.theme.containerText}` : ` ${config.theme.containerText}`;
-    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
-    const textContentHTML = hasText ? `
-        <div class="p-4 flex-grow flex flex-col${bgThemeClass}">
-            ${authorCode}${dateCode}
-            ${titleCode}
-            ${snippetCode}
-        </div>
-        ${ctaButtonCode}
-    ` : '';
-
-    // Block wrapper classes
-    let finalImageCode = config.showImage ? imageCode : '';
-    if (!config.showHeader && !config.callToAction && config.showImage) {
-        finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
-    }
-
-    return `<article class="col-span-1 inline-flex w-full relative" role="article"><div class="flex flex-col w-full ${config.theme.containerBg} h-full ${config.cornerStyle} ${config.interactionClasses}">${finalImageCode}${textContentHTML}</div></article>`;
 }
+
