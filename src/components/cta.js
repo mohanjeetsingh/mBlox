@@ -19,9 +19,9 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
         else if (align === 'center') specificClasses = 'py-2 px-6 self-center text-center';
         else specificClasses = 'py-2 px-6 self-end text-right';
     } else if (finalType === BLOCK_STACK) {
-        if (align === 'left') specificClasses = 'mt-6 self-start';
-        else if (align === 'center') specificClasses = 'mt-6 self-center';
-        else specificClasses = 'mt-6 self-end';
+        if (align === 'left') specificClasses = 'mt-auto self-start';
+        else if (align === 'center') specificClasses = 'mt-auto self-center';
+        else specificClasses = 'mt-auto self-end';
     } else if (finalType === BLOCK_COVER) {
         if (align === 'left') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-start';
         else if (align === 'center') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-center';

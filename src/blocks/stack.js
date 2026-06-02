@@ -30,7 +30,7 @@ export function render(post, postID, config) {
 
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
     const innerContent = hasText ? `
-        <div class="p-4 flex-grow flex flex-col justify-center${bodyClass}">
+        <div class="p-4 flex-grow flex flex-col${bodyClass}">
             ${authorCode}${dateCode}
             ${titleCode}
             ${snippetCode}
