@@ -4,7 +4,7 @@ import { buildCard } from '../utils/card-builder.js';
 export function render(post, postID, config) {
     return buildCard(BLOCK_COMMENT, post, postID, config, (parts, config) => {
         const textContentHTML = `
-            <div class="w-full pl-14 pt-2">
+            <div class="w-full p-2">
                 ${parts.authorCode}${parts.dateCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}
@@ -12,7 +12,7 @@ export function render(post, postID, config) {
             </div>
         `;
 
-        const blockClasses = `rounded-none ${config.theme.containerBg} flex flex-row items-start ${config.interactionClasses}`;
+        const blockClasses = `rounded-none ${config.theme.containerBg} flex flex-row p-4 w-full items-start ${config.interactionClasses}`;
 
         return `
             <article class="col-span-1 inline-flex w-full relative" role="article">
