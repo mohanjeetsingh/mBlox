@@ -6,7 +6,7 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
     const align = config.ctaAlign || 'right';
     let specificClasses = '';
 
-    if (finalType === BLOCK_CARD || finalType === BLOCK_LIST || finalType === BLOCK_COMMENT) {
+    if (finalType === BLOCK_CARD || finalType === BLOCK_COMMENT) {
         if (align === 'left') specificClasses = 'bottom-0 left-0 ml-4 mb-6 block absolute w-auto';
         else if (align === 'center') specificClasses = 'bottom-0 left-1/2 -translate-x-1/2 mb-6 block absolute w-auto';
         else specificClasses = 'bottom-0 right-0 mr-4 mb-6 block absolute w-auto';
@@ -22,7 +22,7 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
         if (align === 'left') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-start';
         else if (align === 'center') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-center';
         else specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-end';
-    } else if (finalType === BLOCK_SHOWCASE) {
+    } else if (finalType === BLOCK_SHOWCASE || finalType === BLOCK_LIST) {
         specificClasses = ''; // Handled by showcase container
     }
 
