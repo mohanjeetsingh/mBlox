@@ -88,7 +88,13 @@ export async function mBlocks(blockItem) {
 
                 const renderOutput = `<div class="st${blockConfig.stageID}${displayClass}" id="m${blockConfig.mBlockID}-st${blockConfig.stageID}">${showcaseCode}${wrapperCode}${footerCode}</div>`;
                 
+                const loadingSkeleton = rawElement.querySelector(`#m${blockConfig.mBlockID}-st${blockConfig.stageID}-loading`);
+                if (loadingSkeleton) {
+                    loadingSkeleton.remove();
+                }
+
                 rawElement.insertAdjacentHTML('beforeend', renderOutput);
+                rawElement.style.minHeight = '';
                 renderer.bindEvents(rawElement, blockConfig);
 
                 loadOptimalImages(rawElement);

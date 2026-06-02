@@ -271,10 +271,17 @@ export class M3ERenderer {
                 if (currentStage <= 1) return;
                 const prevStage = currentStage - 1;
                 rawElement.setAttribute("data-s", prevStage);
+                
+                rawElement.style.minHeight = rawElement.clientHeight + 'px';
+                
                 fadeOut(rawElement.querySelector(`div#m${config.mBlockID}-st${currentStage}`));
                 fadeOut(rawElement.querySelector(`div.mblox-footer.st${currentStage}`));
-                fadeIn(rawElement.querySelector(`div#m${config.mBlockID}-st${prevStage}`));
-                fadeIn(rawElement.querySelector(`div.mblox-footer.st${prevStage}`));
+                
+                setTimeout(() => {
+                    fadeIn(rawElement.querySelector(`div#m${config.mBlockID}-st${prevStage}`));
+                    fadeIn(rawElement.querySelector(`div.mblox-footer.st${prevStage}`));
+                    rawElement.style.minHeight = '';
+                }, 160);
             });
         });
 
@@ -285,15 +292,28 @@ export class M3ERenderer {
                 const currentStage = parseInt(rawElement.getAttribute("data-s"), 10);
                 const nextStage = currentStage + 1;
                 rawElement.setAttribute("data-s", nextStage);
+                
+                rawElement.style.minHeight = rawElement.clientHeight + 'px';
+                rawElement.classList.add('relative');
+
                 fadeOut(rawElement.querySelector(`div#m${config.mBlockID}-st${currentStage}`));
                 const currentFooter = rawElement.querySelector(`div.mblox-footer.st${currentStage}`);
+                if (currentFooter) fadeOut(currentFooter);
+                
                 const nextStageEl = rawElement.querySelector(`div#m${config.mBlockID}-st${nextStage}`);
+                
                 if (nextStageEl) {
-                    if (currentFooter) fadeOut(currentFooter);
-                    fadeIn(nextStageEl);
-                    fadeIn(rawElement.querySelector(`div.mblox-footer.st${nextStage}`));
+                    setTimeout(() => {
+                        fadeIn(nextStageEl);
+                        fadeIn(rawElement.querySelector(`div.mblox-footer.st${nextStage}`));
+                        rawElement.style.minHeight = '';
+                    }, 160);
                 } else {
-                    if (currentFooter) fadeOut(currentFooter);
+                    const skeletonHtml = `<div id="m${config.mBlockID}-st${nextStage}-loading" class="absolute inset-0 flex items-center justify-center z-10" style="min-height: 200px;">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary border-t-transparent"></div>
+                    </div>`;
+                    rawElement.insertAdjacentHTML('beforeend', skeletonHtml);
+                    
                     const customEvent = new CustomEvent('mblox:loadNextPage', { detail: { element: rawElement } });
                     rawElement.dispatchEvent(customEvent);
                 }
