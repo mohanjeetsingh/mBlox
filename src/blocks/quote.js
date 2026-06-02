@@ -30,10 +30,10 @@ export function render(post, postID, config) {
 
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
     const textContentHTML = hasText ? `
-        <div class="p-8 flex-grow flex flex-col items-center">
+        <div class="p-8 flex-grow flex flex-col">
             ${titleCode}
             ${snippetCode}
-            <span class="mt-4">
+            <span class="mt-4 text-right">
                 ${authorCode} ${dateCode}
             </span>
         </div>
@@ -41,14 +41,14 @@ export function render(post, postID, config) {
     ` : '';
 
     // Block wrapper classes
-    const blockClasses = ['flex', 'flex-col', config.theme.containerBg, config.cornerStyle, 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
+    const blockClasses = ['flex', 'flex-col', 'w-full', config.theme.containerBg, config.cornerStyle, 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
 
     const articleClasses = 'col-span-1 inline-flex w-full relative';
-    
+
     let finalImageCode = config.showImage ? imageCode : '';
     if (!config.showHeader && !config.callToAction && config.showImage) {
         finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
     }
-    
+
     return `<article class="${articleClasses}" role="article"><div class="${blockClasses}">${finalImageCode}${textContentHTML}</div></article>`;
 }
