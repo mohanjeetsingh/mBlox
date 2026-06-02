@@ -66,25 +66,28 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
 };
 
 export const M3E_THEMES = {
-    'surface': { 
+    'surface': {
         bg: 'bg-surface', text: 'text-on-surface', glass: 'bg-surface/20',
-        containerBg: 'bg-surface-variant', containerText: 'text-on-surface-variant', containerGlass: 'bg-surface-variant/20' 
+        hoverBg: 'hover:bg-surface', hoverText: 'hover:text-on-surface',
+        containerBg: 'bg-surface-variant', containerText: 'text-on-surface-variant', containerGlass: 'bg-surface-variant/20'
     },
-    'primary': { 
+    'primary': {
         bg: 'bg-primary', text: 'text-on-primary', glass: 'bg-primary/20',
-        containerBg: 'bg-primary-container', containerText: 'text-on-primary-container', containerGlass: 'bg-primary-container/20' 
+        hoverBg: 'hover:bg-tertiary', hoverText: 'hover:text-on-tertiary',
+        containerBg: 'bg-primary-container', containerText: 'text-on-primary-container', containerGlass: 'bg-primary-container/20'
     },
-    'secondary': { 
+    'secondary': {
         bg: 'bg-secondary', text: 'text-on-secondary', glass: 'bg-secondary/20',
-        containerBg: 'bg-secondary-container', containerText: 'text-on-secondary-container', containerGlass: 'bg-secondary-container/20' 
+        hoverBg: 'hover:bg-secondary', hoverText: 'hover:text-on-secondary',
+        containerBg: 'bg-secondary-container', containerText: 'text-on-secondary-container', containerGlass: 'bg-secondary-container/20'
     },
-    'tertiary': { 
+    'tertiary': {
         bg: 'bg-tertiary', text: 'text-on-tertiary', glass: 'bg-tertiary/20',
-        containerBg: 'bg-tertiary-container', containerText: 'text-on-tertiary-container', containerGlass: 'bg-tertiary-container/20' 
+        containerBg: 'bg-tertiary-container', containerText: 'text-on-tertiary-container', containerGlass: 'bg-tertiary-container/20'
     },
-    'error': { 
+    'error': {
         bg: 'bg-error', text: 'text-on-error', glass: 'bg-error/20',
-        containerBg: 'bg-error-container', containerText: 'text-on-error-container', containerGlass: 'bg-error-container/20' 
+        containerBg: 'bg-error-container', containerText: 'text-on-error-container', containerGlass: 'bg-error-container/20'
     }
 };
 

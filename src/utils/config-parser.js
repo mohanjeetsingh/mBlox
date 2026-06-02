@@ -149,8 +149,8 @@ export function parseBlockConfig(rawElement) {
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
         palette: colorPalette, mBloxTheme,
         interactionClasses: colorPalette === 'colorful'
-            ? 'transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-tertiary hover:text-on-tertiary hover:scale-[1.02] hover:opacity-100 overflow-hidden no-underline font-bold'
-            : 'transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:scale-[1.02] hover:bg-surface-variant overflow-hidden no-underline font-bold',
+            ? `transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${bloxType === 'p' || bloxType === 'q' ? '' : 'hover:bg-tertiary hover:text-on-tertiary '}hover:scale-[1.02] hover:opacity-100 overflow-hidden no-underline font-bold`
+            : `transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:scale-[1.02] ${bloxType === 'p' || bloxType === 'q' ? '' : 'hover:bg-surface-variant '}overflow-hidden no-underline font-bold`,
         containsNavigation: false, actualColumnCount: 0,
     };
     config.layout = LAYOUT_CLASSES[config.gutterSize * 2] || LAYOUT_CLASSES[6];
