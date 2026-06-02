@@ -47,7 +47,8 @@ export function render(post, postID, config) {
             const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
             const ctaCode = cta ? `<div class="flex-shrink-0 mt-4 md:mt-0 md:ml-6 flex items-center ${ctaAlignClass} w-full md:w-auto">${cta}</div>` : '';
 
-            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-6 md:px-12 ${config.theme.containerGlass} backdrop-blur-xl ${config.theme.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
+            const wrapperClasses = config.showHeader ? `${config.theme.containerGlass} backdrop-blur-xl ` : '';
+            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-6 md:px-12 ${wrapperClasses}${config.theme.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
         let finalShowcaseImageCode = showcaseImageCode;

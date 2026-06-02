@@ -36,6 +36,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     const isDarkTheme = config.mBloxTheme !== "surface";
     const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.theme.containerBg} ${config.theme.containerText}` : ` ${config.theme.containerText}`;
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
+    const hasTextContent = Boolean(authorCode || dateCode || titleCode || snippetCode);
 
     // 3. Resolve final fallback image logic (when no header or CTA is present)
     let finalImageCode = config.showImage ? imageCode : '';
@@ -44,7 +45,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     }
 
     const parts = {
-        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, imageCode, finalImageCode, hasText
+        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, imageCode, finalImageCode, hasText, hasTextContent
     };
 
     // 4. Delegate to the specific block's layout strategy
