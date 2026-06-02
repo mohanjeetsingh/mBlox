@@ -3,14 +3,10 @@ import { BLOCK_GALLERY, BLOCK_COMMENT, BLOCK_SHOWCASE, BLOCK_COVER, BLOCK_PANCAK
 export function renderCTA(finalType, config, postTitle, postUrl) {
     if (!config.callToAction || finalType === BLOCK_GALLERY) return '';
 
-    if (finalType === BLOCK_COMMENT) {
-        return `<span class="${config.theme.text} text-label-md no-underline font-bold hover:underline cursor-pointer">${config.callToAction}</span>`;
-    }
-
     const align = config.ctaAlign || 'right';
     let specificClasses = '';
 
-    if (finalType === BLOCK_CARD || finalType === BLOCK_LIST) {
+    if (finalType === BLOCK_CARD || finalType === BLOCK_LIST || finalType === BLOCK_COMMENT) {
         if (align === 'left') specificClasses = 'bottom-0 left-0 ml-4 mb-6 block absolute w-auto';
         else if (align === 'center') specificClasses = 'bottom-0 left-1/2 -translate-x-1/2 mb-6 block absolute w-auto';
         else specificClasses = 'bottom-0 right-0 mr-4 mb-6 block absolute w-auto';

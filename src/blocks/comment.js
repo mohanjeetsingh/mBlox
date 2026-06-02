@@ -4,7 +4,7 @@ import { buildCard } from '../utils/card-builder.js';
 export function render(post, postID, config) {
     return buildCard(BLOCK_COMMENT, post, postID, config, (parts, config) => {
         const textContentHTML = `
-            <div class="w-full p-2">
+            <div class="w-full p-2 ${parts.ctaButtonCode ? 'pb-16' : ''}">
                 ${parts.authorCode}${parts.dateCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}
@@ -24,4 +24,3 @@ export function render(post, postID, config) {
         `;
     });
 }
-
