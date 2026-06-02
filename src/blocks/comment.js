@@ -12,7 +12,7 @@ export function render(post, postID, config) {
             </div>
         `;
 
-        const blockClasses = `rounded-none ${config.theme.containerBg} flex flex-row p-4 w-full items-start ${config.interactionClasses}`;
+        const blockClasses = `${config.cornerStyle} ${config.theme.containerBg} flex flex-row p-4 w-full items-start ${config.interactionClasses}`;
 
         return `
             <article class="col-span-1 inline-flex w-full relative" role="article">
