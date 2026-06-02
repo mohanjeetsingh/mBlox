@@ -13,7 +13,7 @@ export function render(post, postID, config) {
     const videoID = getYouTubeVideoId(post);
 
     // Render parts
-    const titleCode = renderTitle(finalType, config, post.title);
+    const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
 
     let snippetText = '';
@@ -26,7 +26,7 @@ export function render(post, postID, config) {
         snippetText = snippetText.replace(/"/g, '&quot;');
     }
 
-    const ctaButtonCode = renderCTA(finalType, config, post.title);
+    const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
 
     const { imageCode, showcaseImageCode } = renderImage(finalType, postID, config, {
         postSnippet: post.content,
@@ -44,12 +44,18 @@ export function render(post, postID, config) {
         let showcaseContent = '';
         if (config.showHeader || cta) {
             const hsCode = config.showHeader ? `<div class="flex-grow text-left">${titleCode} ${snippetCode}</div>` : '';
-            const ctaCode = cta ? `<div class="flex-shrink-0 mt-4 md:mt-0 md:ml-6 flex items-center justify-end w-full md:w-auto">${cta}</div>` : '';
+            const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
+            const ctaCode = cta ? `<div class="flex-shrink-0 mt-4 md:mt-0 md:ml-6 flex items-center ${ctaAlignClass} w-full md:w-auto">${cta}</div>` : '';
 
-            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between ${cornerClass} p-6 md:px-12 ${config.theme.glass} backdrop-blur-xl ${config.theme.text} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
+            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-6 md:px-12 ${config.theme.containerGlass} backdrop-blur-xl ${config.theme.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
-        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4"><div class="sIframe hidden"></div>${showcaseImageCode}<a class="text-primary block absolute inset-0 z-20" href="${post.url}" title="${post.title}">${showcaseContent}</a></div>`;
+        let finalShowcaseImageCode = showcaseImageCode;
+        if (!config.showHeader && !config.callToAction) {
+            finalShowcaseImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${showcaseImageCode}</a>`;
+        }
+
+        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4"><div class="sIframe hidden"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post
@@ -59,7 +65,7 @@ export function render(post, postID, config) {
     let imageHigh = noImg;
     if (videoID && videoID !== 'noVideo') imageHigh = `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;
     else if (post.thumbnailUrl) imageHigh = post.thumbnailUrl.replace(/\/s\d+(-[a-z]\d+)*(-c)?/, '/s1600');
-    
+
     const escapedTitle = post.title.replace(/"/g, '&quot;');
     const articleDataAttributes = `data-title="${escapedTitle}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-img-high="${imageHigh}" data-toggle="tooltip"`;
 

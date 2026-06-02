@@ -2,7 +2,7 @@ import { BLOCK_QUOTE, BLOCK_COMMENT } from '../core/config.js';
 
 const AUTHOR_RENDERERS = {
     [BLOCK_QUOTE]: (name) => `<figcaption class="text-label-md font-light">- ${name}</figcaption>`,
-    [BLOCK_COMMENT]: (name, _url, theme) => `<span class="text-label-md ${theme.text}" rel="author">${name}</span>`
+    [BLOCK_COMMENT]: (name, _url, theme) => `<span class="text-label-md ${theme.containerText}" rel="author">${name}</span>`
 };
 
 export function renderAuthor(finalType, config, authorName, authorUri) {

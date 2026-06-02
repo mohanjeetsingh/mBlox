@@ -12,9 +12,9 @@ export function render(post, postID, config) {
     // Render parts
     const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
     const dateCode = renderDate(config, post.publishedDate);
-    const titleCode = renderTitle(finalType, config, post.title);
+    const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
-    const ctaButtonCode = renderCTA(finalType, config, post.title);
+    const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
 
     const { imageCode } = renderImage(finalType, postID, config, {
         postSnippet: post.content,
@@ -25,7 +25,7 @@ export function render(post, postID, config) {
     });
 
     // Content container
-    const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.bg} ${config.theme.text}` : ` text-on-surface`;
+    const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.containerBg} ${config.theme.containerText}` : ` ${config.theme.containerText}`;
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
     const textContentHTML = hasText ? `
         <div class="p-4 flex-grow flex flex-col${bgThemeClass}">
@@ -36,6 +36,11 @@ export function render(post, postID, config) {
         ${ctaButtonCode}
     ` : '';
 
-    // Link wrapper classes
-    return `<article class="col-span-1 inline-flex w-full" role="article"><a class="flex flex-col w-full ${config.theme.bg} h-full ${config.cornerStyle} ${config.interactionClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
+    // Block wrapper classes
+    let finalImageCode = config.showImage ? imageCode : '';
+    if (!config.showHeader && !config.callToAction && config.showImage) {
+        finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
+    }
+
+    return `<article class="col-span-1 inline-flex w-full relative" role="article"><div class="flex flex-col w-full ${config.theme.containerBg} h-full ${config.cornerStyle} ${config.interactionClasses}">${finalImageCode}${textContentHTML}</div></article>`;
 }

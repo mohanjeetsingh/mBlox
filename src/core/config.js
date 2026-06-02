@@ -66,14 +66,26 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
 };
 
 export const M3E_THEMES = {
-    'surface': { bg: 'bg-surface', text: 'text-on-surface', glass: 'bg-surface/20' },
-    'surface-variant': { bg: 'bg-surface-variant', text: 'text-on-surface-variant', glass: 'bg-surface-variant/20' },
-    'primary': { bg: 'bg-primary', text: 'text-on-primary', glass: 'bg-primary/20' },
-    'primary-container': { bg: 'bg-primary-container', text: 'text-on-primary-container', glass: 'bg-primary-container/20' },
-    'secondary': { bg: 'bg-secondary', text: 'text-on-secondary', glass: 'bg-secondary/20' },
-    'secondary-container': { bg: 'bg-secondary-container', text: 'text-on-secondary-container', glass: 'bg-secondary-container/20' },
-    'tertiary': { bg: 'bg-tertiary', text: 'text-on-tertiary', glass: 'bg-tertiary/20' },
-    'error': { bg: 'bg-error', text: 'text-on-error', glass: 'bg-error/20' }
+    'surface': { 
+        bg: 'bg-surface', text: 'text-on-surface', glass: 'bg-surface/20',
+        containerBg: 'bg-surface-variant', containerText: 'text-on-surface-variant', containerGlass: 'bg-surface-variant/20' 
+    },
+    'primary': { 
+        bg: 'bg-primary', text: 'text-on-primary', glass: 'bg-primary/20',
+        containerBg: 'bg-primary-container', containerText: 'text-on-primary-container', containerGlass: 'bg-primary-container/20' 
+    },
+    'secondary': { 
+        bg: 'bg-secondary', text: 'text-on-secondary', glass: 'bg-secondary/20',
+        containerBg: 'bg-secondary-container', containerText: 'text-on-secondary-container', containerGlass: 'bg-secondary-container/20' 
+    },
+    'tertiary': { 
+        bg: 'bg-tertiary', text: 'text-on-tertiary', glass: 'bg-tertiary/20',
+        containerBg: 'bg-tertiary-container', containerText: 'text-on-tertiary-container', containerGlass: 'bg-tertiary-container/20' 
+    },
+    'error': { 
+        bg: 'bg-error', text: 'text-on-error', glass: 'bg-error/20',
+        containerBg: 'bg-error-container', containerText: 'text-on-error-container', containerGlass: 'bg-error-container/20' 
+    }
 };
 
 export const LAYOUT_CLASSES = {

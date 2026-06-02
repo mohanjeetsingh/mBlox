@@ -107,11 +107,11 @@ export function parseBlockConfig(rawElement) {
     }
     const mBloxTheme = finalTheme;
 
-    // Dual Palette System: map components to secondary-container (neutral) or primary-container (colorful)
-    let defaultThemeKey = colorPalette === 'colorful' ? 'primary-container' : 'secondary-container';
+    // Dual Palette System: map components to secondary (neutral) or primary (colorful)
+    let defaultThemeKey = colorPalette === 'colorful' ? 'primary' : 'secondary';
 
     // Fallback logic for legacy explicit themes or dynamic override
-    const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary-container'];
+    const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary'];
 
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
@@ -144,6 +144,7 @@ export function parseBlockConfig(rawElement) {
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
         snippetSize: getIntVal("snippetSize", "snippetSize", 150),
         callToAction: getVal("CTAText", "CTAText", ""),
+        ctaAlign: getVal("ctaAlign", "ctaAlign", "right"),
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
         palette: colorPalette, mBloxTheme,

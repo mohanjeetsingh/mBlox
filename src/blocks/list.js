@@ -12,9 +12,9 @@ export function render(post, postID, config) {
     // Render parts
     const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
     const dateCode = renderDate(config, post.publishedDate);
-    const titleCode = renderTitle(finalType, config, post.title);
+    const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
-    const ctaButtonCode = renderCTA(finalType, config, post.title);
+    const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
 
     const { imageCode } = renderImage(finalType, postID, config, {
         postSnippet: post.content,
@@ -35,9 +35,16 @@ export function render(post, postID, config) {
         </div>
     ` : '';
 
-    // Link wrapper classes
-    const linkClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'w-full', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
+    // Block wrapper classes
+    const bgClasses = (postID === 0 && !config.showImage) ? [config.theme.containerBg, config.theme.containerText] : [];
+    const blockClasses = ['relative', 'block', config.cornerStyle, config.aspectRatio.trim(), 'w-full', 'h-full', ...bgClasses, config.interactionClasses].filter(Boolean).join(' ');
     
-    const articleClasses = `col-span-1 inline-flex w-full h-full ${config.layout.mb}`;
-    return `<article class="${articleClasses}" role="article"><a class="${linkClasses}" href="${post.url}" title="${post.title}">${config.showImage ? imageCode : ''}${textContentHTML}</a></article>`;
+    const articleClasses = `col-span-1 inline-flex w-full h-full relative ${config.layout.mb}`;
+
+    let finalImageCode = config.showImage ? imageCode : '';
+    if (!config.showHeader && !config.callToAction && config.showImage) {
+        finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
+    }
+
+    return `<article class="${articleClasses}" role="article"><div class="${blockClasses}">${finalImageCode}${textContentHTML}</div></article>`;
 }
