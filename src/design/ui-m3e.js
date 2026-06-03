@@ -306,8 +306,16 @@ export class M3ERenderer {
                         rawElement.style.minHeight = '';
                     }, 160);
                 } else {
-                    const skeletonHtml = `<div id="m${config.mBlockID}-st${nextStage}-loading" class="absolute inset-0 flex items-center justify-center z-10" style="min-height: 200px;">
-                        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary border-t-transparent"></div>
+                    const skeletonHtml = `
+                    <style>
+                        @keyframes mblox-loader-anim {
+                            0% { transform: rotate(0deg) scale(0.8); }
+                            50% { transform: rotate(180deg) scale(1.1); }
+                            100% { transform: rotate(360deg) scale(0.8); }
+                        }
+                    </style>
+                    <div id="m${config.mBlockID}-st${nextStage}-loading" class="absolute inset-0 flex items-center justify-center z-10" style="min-height: 200px;">
+                        <svg class="w-12 h-12 text-current opacity-80" viewBox="0 0 56 56" style="--scroll-progress: 0; animation: mblox-loader-anim 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;"><use href="#icon-progress-m3e"></use></svg>
                     </div>`;
                     rawElement.insertAdjacentHTML('beforeend', skeletonHtml);
                     
