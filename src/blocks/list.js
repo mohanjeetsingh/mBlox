@@ -4,7 +4,7 @@ import { buildCard } from '../utils/card-builder.js';
 export function render(post, postID, config) {
     return buildCard(BLOCK_LIST, post, postID, config, (parts, config) => {
         let textContentHTML = '';
-        const paddingClass = postID === 0 ? 'p-6 md:p-8' : 'p-4 md:p-6';
+        const paddingClass = postID === 0 ? 'p-4 @xs:p-6 @sm:p-8' : 'p-2 @xs:p-4 @sm:p-6';
 
         if (parts.hasText) {
             const ctaAlignClass = config.ctaAlign === 'left' ? 'text-left' : (config.ctaAlign === 'center' ? 'text-center' : 'text-right');
@@ -24,7 +24,7 @@ export function render(post, postID, config) {
                 `;
             } else {
                 textContentHTML = `
-                    <div class="${paddingClass} w-full text-${config.textHAlign}">
+                    <div class=" ${paddingClass} w-full text-${config.textHAlign}">
                         ${parts.authorCode}${parts.dateCode}
                         ${parts.titleCode}
                         ${parts.snippetCode}
@@ -37,7 +37,7 @@ export function render(post, postID, config) {
         const bgClasses = (!config.showImage) ? [config.theme.containerBg, config.theme.containerText] : [];
         const displayClass = (config.showImage) ? 'block' : 'flex flex-col justify-center';
         const blockClasses = ['relative', displayClass, config.cornerStyle, config.aspectRatio.trim(), 'w-full', 'h-full', ...bgClasses, config.interactionClasses].filter(Boolean).join(' ');
-        const articleClasses = `col-span-1 inline-flex w-full h-full relative ${config.layout.mb}`;
+        const articleClasses = `@container col-span-1 inline-flex w-full h-full relative ${config.layout.mb}`;
 
         const featuredBadgeHTML = (postID === 0) ? `<div class="absolute top-0 left-0 z-20 pointer-events-none backdrop-blur-xl ${config.theme.containerGlass} ${config.theme.containerText} px-6 py-3 text-label-lg font-bold w-full">Featured</div>` : '';
 

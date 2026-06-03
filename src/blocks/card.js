@@ -4,10 +4,9 @@ import { buildCard } from '../utils/card-builder.js';
 export function render(post, postID, config) {
     return buildCard(BLOCK_CARD, post, postID, config, (parts, config) => {
         const textContentHTML = parts.hasText ? `
-            <div class="absolute inset-0 flex flex-col p-0 border-0 ${
-                { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
+            <div class="absolute inset-0 flex flex-col p-0 border-0 ${{ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
             }">
-                <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none p-6 md:p-8 flex flex-col text-${config.textHAlign}">
+                <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none p-2 @xs:p-4 @sm:p-6 flex flex-col text-${config.textHAlign}">
                     ${parts.authorCode}${parts.dateCode}
                     ${parts.titleCode}
                     ${parts.snippetCode}
@@ -17,8 +16,8 @@ export function render(post, postID, config) {
         ` : '';
 
         const blockClasses = ['relative', 'block', 'w-full', config.cornerStyle, config.aspectRatio.trim(), 'h-full', config.interactionClasses].filter(Boolean).join(' ');
-        const articleClasses = 'col-span-1 inline-flex w-full relative';
-        
+        const articleClasses = '@container col-span-1 inline-flex w-full relative';
+
         return `<article class="${articleClasses}" role="article"><div class="${blockClasses}">${parts.finalImageCode}${textContentHTML}</div></article>`;
     });
 }
