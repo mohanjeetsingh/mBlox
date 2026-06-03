@@ -172,9 +172,70 @@
   }
 }
 
+  /* ─── Light Mode Overrides ───────────────────────────────────────────
+     Forces light mode tokens when explicitly requested. */
+  [data-scheme="light"], [data-theme="light"] {
+    --color-primary: #006699;
+    --color-on-primary: #DDD;
+    --color-primary-container: #CCDDFF;
+    --color-on-primary-container: #002233;
+    --color-inverse-primary: #A4CBEB;
+
+    --color-secondary: #5C5C5C;
+    --color-on-secondary: #FFFFFF;
+    --color-secondary-container: #E6E6E6;
+    --color-on-secondary-container: #333333;
+
+    --color-tertiary: #CC7000;
+    --color-on-tertiary: #FFFFFF;
+    --color-tertiary-container: #EECC99;
+    --color-on-tertiary-container: #332200;
+
+    --color-error: #CC3333;
+    --color-on-error: #FFFFFF;
+    --color-error-container: #FFEDEB;
+    --color-on-error-container: #CC1111;
+
+    --color-background: #F9F9FB;
+    --color-on-background: #1A1C1E;
+    --color-surface: #FCF8F8;
+    --color-on-surface: #1C1B1B;
+    --color-surface-variant: #E0E3E3;
+    --color-on-surface-variant: #444748;
+    --color-surface-tint: #3B627E;
+    --color-inverse-surface: #313030;
+    --color-inverse-on-surface: #F4F0EF;
+    --color-surface-dim: #DDD9D9;
+    --color-surface-bright: #FCF8F8;
+    --color-surface-container-lowest: #FFFFFF;
+    --color-surface-container-low: #F7F3F2;
+    --color-surface-container: #F1EDEC;
+    --color-surface-container-high: #EBE7E7;
+    --color-surface-container-highest: #E5E2E1;
+
+    --color-primary-fixed: #006699;
+    --color-on-primary-fixed: #ddd;
+    --color-primary-container-fixed: #00334D;
+    --color-on-primary-container-fixed: #ddd;
+    --color-primary-fixed-dim: #A4CBEB;
+    --color-on-primary-fixed-variant: #214A66;
+    --color-secondary-fixed: #E3E2E2;
+    --color-on-secondary-fixed: #1B1C1C;
+    --color-secondary-fixed-dim: #C7C6C6;
+    --color-on-secondary-fixed-variant: #464747;
+    --color-tertiary-fixed: #FFDCC2;
+    --color-on-tertiary-fixed: #2E1500;
+    --color-tertiary-fixed-dim: #FFB77C;
+    --color-on-tertiary-fixed-variant: #6D3900;
+
+    --color-outline: #747878;
+    --color-outline-variant: #C4C7C7;
+    --color-shadow: #000000;
+    --color-scrim: #000000;
+  }
   /* ─── Dark Mode Overrides ───────────────────────────────────────────
      Remaps all M3E color tokens for dark mode. */
-  [data-scheme="dark"] {
+  [data-scheme="dark"], [data-theme="dark"] {
     --color-surface-tint: #A4CBEB;
     --color-inverse-primary: #3B627E;
 
@@ -229,7 +290,7 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    :root:not([data-scheme="light"]) {
+    :root:not([data-scheme="light"]):not([data-theme="light"]) {
       --color-surface-tint: #A4CBEB;
       --color-inverse-primary: #3B627E;
 

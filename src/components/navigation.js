@@ -2,7 +2,7 @@ import { BLOCK_COVER } from '../core/config.js';
 
 export function renderNavigationControls(config, response) {
   const bottomInset = (config.isCarousel && config.blockType !== BLOCK_COVER) ? "bottom-8" : "bottom-0";
-  const baseClass = `absolute top-0 ${bottomInset} z-10 flex items-center justify-center w-8 cursor-pointer opacity-70 hover:opacity-100 transition-opacity ${config.theme.text} hover:backdrop-blur-xl`;
+  const baseClass = `absolute top-0 ${bottomInset} z-10 flex items-center justify-center w-8 cursor-pointer opacity-70 hover:opacity-100 transition-opacity ${config.palette.text} hover:backdrop-blur-xl`;
 
   const isCarousel = config.isCarousel;
   const prevClass = isCarousel ? "js-carousel-prev" : "nav-prev";

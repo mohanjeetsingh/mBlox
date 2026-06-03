@@ -65,11 +65,11 @@ export const RESPONSIVE_GRID_CLASSES_M3E = {
     6: 'grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6'
 };
 
-export const M3E_THEMES = {
+export const M3E_PALETTES = {
     'surface': {
         bg: 'bg-surface', text: 'text-on-surface', glass: 'bg-surface/20',
         hoverBg: 'hover:bg-surface', hoverText: 'hover:text-on-surface',
-        containerBg: 'bg-surface-variant', containerText: 'text-on-surface-variant', containerGlass: 'bg-surface-variant/20'
+        containerBg: 'bg-surface-container', containerText: 'text-on-surface', containerGlass: 'bg-surface-container/20'
     },
     'primary': {
         bg: 'bg-primary', text: 'text-on-primary', glass: 'bg-primary/20',

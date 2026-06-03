@@ -27,7 +27,7 @@ export function render(post, postID, config) {
     // Content container
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
     const textContentHTML = hasText ? `
-        <div class="${config.theme.containerGlass} backdrop-blur-xl ${config.theme.containerText} p-2 @xs:p-4 @sm:p-8 @md:p-12 absolute z-10 flex flex-col justify-center items-center ${{
+        <div class="${config.palette.containerGlass} backdrop-blur-xl ${config.palette.containerText} p-2 @xs:p-4 @sm:p-8 @md:p-12 absolute z-10 flex flex-col justify-center items-center ${{
             top: `w-3/4 left-1/2 -translate-x-1/2 top-8 ${(config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl'}`,
             middle: `w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${(config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl'}`,
             bottom: `w-3/4 left-1/2 -translate-x-1/2 bottom-8 ${(config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl'}`,

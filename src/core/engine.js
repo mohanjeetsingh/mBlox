@@ -42,7 +42,7 @@ export async function mBlocks(blockItem) {
         
         // Apply the auto-detected theme and palette natively to the wrapper
         rawElement.setAttribute('data-scheme', blockConfig.mBloxTheme);
-        rawElement.setAttribute('data-palette', blockConfig.palette);
+        rawElement.setAttribute('data-palette', blockConfig.paletteName);
 
         // Listen for pagination events fired by the renderer
         if (!rawElement._mbloxPaginateListener) {

@@ -1,7 +1,7 @@
 import {
     BLOCK_COVER, BLOCK_SHOWCASE, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY,
     BLOCK_PANCAKE, BLOCK_STACK, BLOCK_QUOTE, BLOCK_COMMENT,
-    DEFAULT_COLUMN_COUNTS, M3E_THEMES, LAYOUT_CLASSES, ASPECT_RATIO_CLASSES,
+    DEFAULT_COLUMN_COUNTS, M3E_PALETTES, LAYOUT_CLASSES, ASPECT_RATIO_CLASSES,
     RESPONSIVE_COLUMN_MAP, getBreakpointIndex
 } from '../core/config.js';
 
@@ -94,7 +94,7 @@ export function parseBlockConfig(rawElement) {
         bloxType = mBloxType.substring(0, 1),
         componentList = mBloxType.substring(1),
         rawTheme = getVal("theme", "theme", "auto").toLowerCase(),
-        colorPalette = getVal("palette", "palette", "neutral").toLowerCase(),
+
         showHeader = componentList.includes("h"),
         showImage = componentList.includes("i"),
         showSnippet = componentList.includes("s"),
@@ -105,20 +105,16 @@ export function parseBlockConfig(rawElement) {
     const firstInstance = !rawElement.hasAttribute("data-s") && jsonConfig.s === undefined;
     const postsPerBlock = getIntVal("posts", "posts", 3);
 
-    let finalTheme = rawTheme;
-    if (finalTheme === 'auto') {
-        const isHostDark = document.documentElement.classList.contains('dark') || document.documentElement.getAttribute('data-theme') === 'dark' || document.documentElement.getAttribute('data-scheme') === 'dark';
-        const isOsDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        finalTheme = (isHostDark || isOsDark) ? 'dark' : 'light';
+    const validThemes = ['light', 'dark', 'auto'];
+    const mBloxTheme = validThemes.includes(rawTheme) ? rawTheme : 'auto';
+
+    const colorPalette = getVal("palette", "palette", "surface").toLowerCase();
+    
+    let finalPaletteName = colorPalette;
+    if (!M3E_PALETTES[finalPaletteName]) {
+        finalPaletteName = 'surface';
     }
-    const mBloxTheme = finalTheme;
-
-    // Dual Palette System: map components to secondary (neutral) or primary (colorful)
-    let defaultThemeKey = colorPalette === 'colorful' ? 'primary' : 'secondary';
-
-    // Fallback logic for legacy explicit themes or dynamic override
-    const theme = M3E_THEMES[rawTheme] || M3E_THEMES[defaultThemeKey] || M3E_THEMES['secondary'];
-
+    const palette = M3E_PALETTES[finalPaletteName];
     let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
 
     const imageBlur = getVal("iBlur", "iBlur", "").toLowerCase();
@@ -141,7 +137,7 @@ export function parseBlockConfig(rawElement) {
         sectionHeight: getVal("iHeight", "iHeight", null),
         articleHeight: '',
         blurImage: imageBlur === "true" || jsonConfig.iBlur === true ? true : (imageBlur === "false" || jsonConfig.iBlur === false ? false : null),
-        theme,
+        palette,
         gutterSize: getVal("gutter", "gutter", ((bloxType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
         cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
@@ -154,7 +150,7 @@ export function parseBlockConfig(rawElement) {
         textHAlign: getVal("textHAlign", "textHAlign", ""),
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
-        palette: colorPalette, mBloxTheme,
+        paletteName: colorPalette, mBloxTheme,
         interactionClasses: colorPalette === 'colorful'
             ? `transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${bloxType === 'p' || bloxType === 'q' ? '' : 'hover:bg-tertiary hover:text-on-tertiary '}hover:scale-[1.02] hover:opacity-100 overflow-hidden no-underline font-bold`
             : `transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:scale-[1.02] ${bloxType === 'p' || bloxType === 'q' ? '' : 'hover:bg-surface-variant '}overflow-hidden no-underline font-bold`,

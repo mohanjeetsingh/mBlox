@@ -50,8 +50,8 @@ export function render(post, postID, config) {
             const ctaWidth = config.showHeader ? 'w-full md:w-auto' : 'w-full';
             const ctaCode = cta ? `<div class="flex-shrink-0 ${ctaMargin}flex items-center ${ctaAlignClass} ${ctaWidth}">${cta}</div>` : '';
 
-            const wrapperClasses = config.showHeader ? `${config.theme.containerGlass} backdrop-blur-xl ` : '';
-            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.theme.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
+            const wrapperClasses = config.showHeader ? `${config.palette.containerGlass} backdrop-blur-xl ` : '';
+            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.palette.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
         let finalShowcaseImageCode = showcaseImageCode;
@@ -59,12 +59,12 @@ export function render(post, postID, config) {
             finalShowcaseImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${showcaseImageCode}</a>`;
         }
 
-        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
+        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${finalShowcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post
     const videoAttr = (videoID && videoID !== 'noVideo') ? ` data-vidid="${videoID}"` : '';
-    const ringClasses = (postID === 0 && config.firstInstance) ? ' ring-4 ring-primary ring-inset' : '';
+    const ringClasses = (postID === 0 && config.firstInstance) ? ' ring-4 ring-current ring-inset' : '';
     const articleClasses = `@container col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}${ringClasses}`;
     let imageHigh = noImg;
     if (videoID && videoID !== 'noVideo') imageHigh = `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg`;

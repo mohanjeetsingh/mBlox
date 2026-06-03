@@ -204,9 +204,9 @@ export class M3ERenderer {
             // --- Apply focus styling to clicked item ---
             const allPosts = rawElement.querySelectorAll('.sFeature .sPost');
             allPosts.forEach(post => {
-                post.classList.remove('ring-4', 'ring-primary', 'ring-inset');
+                post.classList.remove('ring-4', 'ring-current', 'ring-inset');
             });
-            clickedPost.classList.add('ring-4', 'ring-primary', 'ring-inset');
+            clickedPost.classList.add('ring-4', 'ring-current', 'ring-inset');
 
             // --- Update the main feature image or launch video ---
             if (data.vidid && data.vidid !== 'noVideo') {

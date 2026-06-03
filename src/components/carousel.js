@@ -10,7 +10,7 @@ export function renderCarouselIndicators(carouselIndicators, config, response) {
     if (numCols > 1) {
         const dotsPositionClass = config.blockType === 'v' ? 'bottom-12' : 'bottom-3';
         const dots = Array.from({ length: numCols }, (_, i) =>
-            `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.theme.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100 aria-[current='true']:bg-primary" data-index="${i}" aria-label="Slide ${i + 1}"></button>`
+            `<button type="button" class="carousel-dot pointer-events-auto w-2 h-2 rounded-full bg-current ${config.palette.text} opacity-30 hover:opacity-100 transition-opacity aria-[current='true']:opacity-100" data-index="${i}" aria-label="Slide ${i + 1}"></button>`
         ).join('');
         dotsHTML = `<div class="carousel-indicators flex justify-center gap-2 mt-2 absolute ${dotsPositionClass} left-0 right-0 z-10">${dots}</div>`;
     }
