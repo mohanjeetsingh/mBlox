@@ -18,6 +18,15 @@ export function renderImageOverlay(post, config) {
         ${commentCountText}
     </a>`;
 
+    const bookmarkHTML = `
+    <button aria-label="Save" class="group bm-button relative h-6 rounded-md ${config.palette.glass} ${config.palette.text} backdrop-blur-md flex items-center justify-center ${config.palette.hoverBg || 'hover:bg-tertiary'} ${config.palette.hoverText || 'hover:text-on-tertiary'} transition-all duration-300 ease-in-out pointer-events-auto" data-bm-title="${post.title.replace(/"/g, '&quot;')}" data-bm-url="${post.url}" data-bm-image="${post.thumbnailUrl || ''}" type="button">
+        <span class="bm-text overflow-hidden whitespace-nowrap text-[11px] font-medium transition-all duration-300 max-w-0 opacity-0 group-hover:max-w-[60px] group-hover:opacity-100 group-hover:pl-2.5">Save</span>
+        <div class="w-6 h-6 flex items-center justify-center shrink-0">
+            <svg aria-hidden="true" class="w-4 h-4 bm-add-icon group-[.added]:hidden"><use href="#icon-bookmark-add"></use></svg>
+            <svg aria-hidden="true" class="w-4 h-4 bm-added-icon hidden group-[.added]:block"><use href="#icon-bookmark-added"></use></svg>
+        </div>
+    </button>`;
+
     let authorHTML = '';
     if (post.authorName && post.authorName !== 'Unknown' && post.authorName !== 'Anonymous') {
         const verifiedIcon = `<svg aria-hidden="true" class="w-4 h-4 text-primary"><use href="#icon-verified"></use></svg>`;
@@ -58,6 +67,7 @@ export function renderImageOverlay(post, config) {
         </div>
         <div class="flex items-center gap-2 pointer-events-auto">
             ${commentsHTML}
+            ${bookmarkHTML}
         </div>
     </div>
     <div class="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between pointer-events-none z-20 bg-gradient-to-t from-black/40 to-transparent">
