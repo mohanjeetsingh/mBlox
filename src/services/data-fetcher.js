@@ -40,6 +40,7 @@ export function mapWordPressResponseToStandardFormat(wpResponse, headers) {
         url: post.link,
         thumbnailUrl: post._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url
             || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',
+        labels: post._embedded?.['wp:term'] ? post._embedded?.['wp:term'].flat().map(t => t.name) : [],
         commentCount: post.comment_count ? parseInt(post.comment_count, 10) : (post._embedded?.replies?.[0]?.length || 0),
         commentsUrl: post.link ? `${post.link}#comments` : '',
         viewCount: post.views || post.view_count || post.pageviews || 0
@@ -72,6 +73,7 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
                 videoId: videoId,
                 authorUri: getTagContent('author > uri') || '',
                 authorImage: '',
+                labels: Array.from(item.querySelectorAll('category')).map(c => c.textContent),
                 commentCount: 0,
                 commentsUrl: '',
                 viewCount: getTagContent('media\\:statistics[views]') || 0
@@ -92,6 +94,7 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
                 thumbnailUrl: thumbnailUrl,
                 authorUri: getTagContent('author > uri') || '',
                 authorImage: '',
+                labels: Array.from(item.querySelectorAll('category')).map(c => c.textContent),
                 commentCount: getTagContent('slash\\:comments') ? parseInt(getTagContent('slash\\:comments'), 10) : 0,
                 commentsUrl: getTagContent('comments') || getTagContent('link') || item.querySelector('link[href]')?.getAttribute('href') || '',
                 viewCount: 0
@@ -135,6 +138,7 @@ export function mapRssJsonToStandardFormat(jsonDoc) {
             videoId: videoId,
             authorUri: '', 
             authorImage: '',
+            labels: item.categories || [],
             commentCount: 0,
             commentsUrl: '',
             viewCount: 0
@@ -189,6 +193,7 @@ export function mapRedditResponseToStandardFormat(redditJson) {
             videoId: '',
             authorUri: `https://www.reddit.com/user/${item.author}`,
             authorImage: '', // Reddit doesn't provide user avatars in the standard listing JSON
+            labels: item.link_flair_text ? [item.link_flair_text] : [],
             commentCount: item.num_comments || 0,
             commentsUrl: `https://www.reddit.com${item.permalink}`,
             viewCount: item.view_count || item.score || 0
@@ -219,6 +224,7 @@ export function mapBloggerResponseToStandardFormat(bloggerResponse) {
             publishedDate: post.published.$t,
             url: (post.link.find(l => l.rel === 'alternate') || {}).href || '',
             thumbnailUrl: thumbnailUrl,
+            labels: post.category ? post.category.map(c => c.term) : [],
             commentCount: post.thr$total ? parseInt(post.thr$total.$t, 10) : 0,
             commentsUrl: (post.link.find(l => l.rel === 'replies' && l.type === 'text/html') || {}).href || (post.link.find(l => l.rel === 'alternate') || {}).href || '',
             viewCount: 0

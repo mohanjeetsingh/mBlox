@@ -4,6 +4,7 @@ import { renderAuthor } from '../components/author.js';
 import { renderDate } from '../components/date.js';
 import { renderTitle } from '../components/title.js';
 import { renderSnippet } from '../components/snippet.js';
+import { renderLabels } from '../components/labels.js';
 
 /**
  * buildCard extracts the repetitive boilerplate involved in generating standard M3E block components.
@@ -23,6 +24,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
     const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
+    const labelsCode = renderLabels(config, post.labels, config.siteURL);
 
     const { imageCode } = renderImage(finalType, postID, config, {
         postSnippet: post.content,
@@ -36,17 +38,17 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     // 2. Resolve common styling
     const isDarkTheme = config.mBloxTheme !== "surface";
     const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.palette.containerBg} ${config.palette.containerText}` : ` ${config.palette.containerText}`;
-    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode);
-    const hasTextContent = Boolean(authorCode || dateCode || titleCode || snippetCode);
+    const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode || labelsCode);
+    const hasTextContent = Boolean(authorCode || dateCode || titleCode || snippetCode || labelsCode);
 
     // 3. Resolve final fallback image logic (when no header or CTA is present)
     let finalImageCode = config.showImage ? imageCode : '';
-    if (!config.showHeader && !config.callToAction && config.showImage) {
+    if (!config.showHeader && !config.callToAction && config.showImage && !config.showLabels) {
         finalImageCode = `<a href="${post.url}" class="absolute inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>${imageCode}`;
     }
 
     const parts = {
-        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, imageCode, finalImageCode, hasText, hasTextContent
+        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, imageCode, finalImageCode, labelsCode, hasText, hasTextContent
     };
 
     // 4. Delegate to the specific block's layout strategy

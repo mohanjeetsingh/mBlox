@@ -4,6 +4,7 @@ import { renderAuthor } from '../components/author.js';
 import { renderDate } from '../components/date.js';
 import { renderTitle } from '../components/title.js';
 import { renderSnippet } from '../components/snippet.js';
+import { renderLabels } from '../components/labels.js';
 import { BLOCK_SHOWCASE, noImg } from '../core/config.js';
 
 import { getYouTubeVideoId, getVideoIcon } from '../components/video.js';
@@ -43,8 +44,9 @@ export function render(post, postID, config) {
         const cta = (config.showImage || config.callToAction !== "") ? ctaButtonCode : "";
 
         let showcaseContent = '';
-        if (config.showHeader || cta) {
-            const hsCode = config.showHeader ? `<div class="flex-grow text-${config.textHAlign}">${titleCode} ${snippetCode}</div>` : '';
+        if (config.showHeader || cta || config.showLabels) {
+            const labelsCode = renderLabels(config, post.labels, config.siteURL);
+            const hsCode = config.showHeader || config.showLabels ? `<div class="flex-grow text-${config.textHAlign}">${labelsCode}${titleCode} ${snippetCode}</div>` : '';
             const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
 
             const ctaMargin = config.showHeader ? 'mt-4 md:mt-0 md:ml-6 ' : '';
@@ -57,7 +59,7 @@ export function render(post, postID, config) {
 
         const linkWrapper = `<a href="${post.url}" class="absolute inset-0 z-30" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>`;
 
-        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${linkWrapper}${showcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
+        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${linkWrapper}${showcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-40 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post

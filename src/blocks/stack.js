@@ -6,6 +6,7 @@ export function render(post, postID, config) {
         const innerContent = parts.hasText ? `
             <div class="p-2 @xs:p-4 @sm:p-6 flex-grow flex flex-col${bodyClass} text-${config.textHAlign}">
                 ${parts.authorCode}${parts.dateCode}
+                ${parts.labelsCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}
                 ${parts.ctaButtonCode}

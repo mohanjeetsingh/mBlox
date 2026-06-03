@@ -12,10 +12,11 @@ export function render(post, postID, config) {
 
             if (config.showImage) {
                 textContentHTML = `
-                    <div class="absolute inset-0 flex flex-col p-0 border-0 ${{ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
+                    <div class="absolute inset-0 flex flex-col p-0 border-0 pointer-events-none ${{ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
                     }">
-                        <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.palette.containerGlass} backdrop-blur-xl ` : ''}${config.palette.containerText} rounded-none ${paddingClass} text-${config.textHAlign}">
+                        <div class="pointer-events-auto ${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.palette.containerGlass} backdrop-blur-xl ` : ''}${config.palette.containerText} rounded-none ${paddingClass} text-${config.textHAlign}">
                             ${parts.authorCode}${parts.dateCode}
+                            ${parts.labelsCode}
                             ${parts.titleCode}
                             ${parts.snippetCode}
                             ${ctaHTML}
@@ -26,6 +27,7 @@ export function render(post, postID, config) {
                 textContentHTML = `
                     <div class=" ${paddingClass} w-full text-${config.textHAlign}">
                         ${parts.authorCode}${parts.dateCode}
+                        ${parts.labelsCode}
                         ${parts.titleCode}
                         ${parts.snippetCode}
                         ${ctaHTML}

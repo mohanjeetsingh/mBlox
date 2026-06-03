@@ -100,7 +100,8 @@ export function parseBlockConfig(rawElement) {
         showSnippet = componentList.includes("s"),
         showAuthor = componentList.includes("a"),
         showDate = componentList.includes("d"),
-        showOverlay = componentList.includes("o");
+        showOverlay = componentList.includes("o"),
+        showLabels = componentList.includes("l");
 
     const stageID = getIntVal("s", "s", 1);
     const firstInstance = !rawElement.hasAttribute("data-s") && jsonConfig.s === undefined;
@@ -134,7 +135,7 @@ export function parseBlockConfig(rawElement) {
 
     let config = {
         labelName: labelName, contentType, siteURL, mBlockTitle: mBloxTitle, mBlockDescription: mBloxDescription, blockType: bloxType,
-        showHeader, showImage, showSnippet, showAuthor, showDate, showOverlay,
+        showHeader, showImage, showSnippet, showAuthor, showDate, showOverlay, showLabels,
         columnCount: columnCountVal !== null ? parseInt(columnCountVal, 10) : null,
         blockRows: parseInt(blockRowsVal, 10),
         isCarousel: getBoolVal("isCarousel", "isCarousel", false),
