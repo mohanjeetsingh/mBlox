@@ -6,15 +6,11 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
     const align = config.ctaAlign || 'right';
     let specificClasses = '';
 
-    if (finalType === BLOCK_CARD || finalType === BLOCK_COMMENT) {
-        if (align === 'left') specificClasses = 'bottom-0 left-0 ml-4 mb-6 block absolute w-auto';
-        else if (align === 'center') specificClasses = 'bottom-0 left-1/2 -translate-x-1/2 mb-6 block absolute w-auto';
-        else specificClasses = 'bottom-0 right-0 mr-4 mb-6 block absolute w-auto';
-    } else if (finalType === BLOCK_PANCAKE || finalType === BLOCK_QUOTE) {
+    if (finalType === BLOCK_PANCAKE || finalType === BLOCK_QUOTE) {
         if (align === 'left') specificClasses = 'py-2 px-6 self-start text-left';
         else if (align === 'center') specificClasses = 'py-2 px-6 self-center text-center';
         else specificClasses = 'py-2 px-6 self-end text-right';
-    } else if (finalType === BLOCK_STACK) {
+    } else if (finalType === BLOCK_STACK || finalType === BLOCK_CARD || finalType === BLOCK_COMMENT) {
         if (align === 'left') specificClasses = 'mt-auto self-start';
         else if (align === 'center') specificClasses = 'mt-auto self-center';
         else specificClasses = 'mt-auto self-end';

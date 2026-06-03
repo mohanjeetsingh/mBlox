@@ -7,7 +7,7 @@ export function render(post, postID, config) {
             <div class="absolute inset-0 flex flex-col p-0 border-0 ${
                 { top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
             }">
-                <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none p-6 md:p-8 ${parts.ctaButtonCode ? 'pb-20 md:pb-24' : ''} text-${config.textHAlign}">
+                <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none p-6 md:p-8 flex flex-col text-${config.textHAlign}">
                     ${parts.authorCode}${parts.dateCode}
                     ${parts.titleCode}
                     ${parts.snippetCode}
