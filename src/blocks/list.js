@@ -14,7 +14,7 @@ export function render(post, postID, config) {
                 textContentHTML = `
                     <div class="absolute inset-0 flex flex-col p-0 border-0 ${{ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
                     }">
-                        <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none ${paddingClass}">
+                        <div class="${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.theme.containerGlass} backdrop-blur-xl ` : ''}${config.theme.containerText} rounded-none ${paddingClass} text-${config.textHAlign}">
                             ${parts.authorCode}${parts.dateCode}
                             ${parts.titleCode}
                             ${parts.snippetCode}
@@ -24,7 +24,7 @@ export function render(post, postID, config) {
                 `;
             } else {
                 textContentHTML = `
-                    <div class="${paddingClass} w-full">
+                    <div class="${paddingClass} w-full text-${config.textHAlign}">
                         ${parts.authorCode}${parts.dateCode}
                         ${parts.titleCode}
                         ${parts.snippetCode}

@@ -6,7 +6,7 @@ export function render(post, postID, config) {
         const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.theme.containerBg} ${config.theme.containerText}` : ` ${config.theme.containerText}`;
         
         const textContentHTML = parts.hasText ? `
-            <div class="p-4 flex-grow flex flex-col${bgThemeClass}">
+            <div class="p-4 flex-grow flex flex-col${bgThemeClass} text-${config.textHAlign}">
                 ${parts.authorCode}${parts.dateCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}

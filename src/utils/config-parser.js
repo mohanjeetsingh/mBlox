@@ -42,6 +42,12 @@ export function applyDefaultConfig(config) {
         else if (config.blockType === 'l') config.textVerticalAlign = "bottom";
         else config.textVerticalAlign = 'overlay';
     }
+    if (!config.ctaAlign) {
+        config.ctaAlign = config.blockType === BLOCK_COVER ? "center" : "right";
+    }
+    if (!config.textHAlign) {
+        config.textHAlign = config.blockType === BLOCK_COVER ? "center" : "left";
+    }
     if (config.columnCount === null || typeof config.columnCount === 'undefined') {
         config.columnCount = DEFAULT_COLUMN_COUNTS[config.blockType] || 3;
     } else {
@@ -144,7 +150,8 @@ export function parseBlockConfig(rawElement) {
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
         snippetSize: getIntVal("snippetSize", "snippetSize", 150),
         callToAction: getVal("CTAText", "CTAText", ""),
-        ctaAlign: getVal("ctaAlign", "ctaAlign", "right"),
+        ctaAlign: getVal("ctaAlign", "ctaAlign", ""),
+        textHAlign: getVal("textHAlign", "textHAlign", ""),
         moreText: getVal("moreText", "moreText", ""),
         stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
         palette: colorPalette, mBloxTheme,

@@ -4,7 +4,7 @@ import { buildCard } from '../utils/card-builder.js';
 export function render(post, postID, config) {
     return buildCard(BLOCK_STACK, post, postID, config, (parts, config, bodyClass) => {
         const innerContent = parts.hasText ? `
-            <div class="p-4 flex-grow flex flex-col${bodyClass}">
+            <div class="p-4 flex-grow flex flex-col${bodyClass} text-${config.textHAlign}">
                 ${parts.authorCode}${parts.dateCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}

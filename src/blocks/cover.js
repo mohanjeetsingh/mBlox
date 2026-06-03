@@ -43,7 +43,7 @@ export function render(post, postID, config) {
     ` : '';
 
     // Block wrapper classes
-    const blockClasses = ['relative', 'block', 'w-full', 'rounded-none', 'text-center', 'h-full', config.interactionClasses].filter(Boolean).join(' ');
+    const blockClasses = ['relative', 'block', 'w-full', 'rounded-none', 'text-' + config.textHAlign, 'h-full', config.interactionClasses].filter(Boolean).join(' ');
 
     const articleStyle = config.articleHeight ? ` style="${config.articleHeight.replace(';', '')}"` : '';
     const articleClasses = 'col-span-1 inline-flex w-full relative';
