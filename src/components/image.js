@@ -39,7 +39,7 @@ export function renderImage(finalType, postID, config, data) {
             bs: ['h-full', 'object-cover'], 
             figure: 'w-1/3 shrink-0 h-full flex items-center justify-center' 
         },
-        [BLOCK_COVER]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
+        [BLOCK_COVER]: { bs: ['w-full', 'h-full', 'object-cover'], figure: 'w-full h-full flex' },
         [BLOCK_LIST]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
         [BLOCK_CARD]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' },
         [BLOCK_GALLERY]: { bs: [config.aspectRatio.trim()], figure: 'w-full h-full flex' }
@@ -49,7 +49,7 @@ export function renderImage(finalType, postID, config, data) {
     
     let imageCoverStyle = imgConf.style || "object-fit:cover !important;height:100% !important;";
     const imageBSClasses = imgConf.bs.length > 0 ? [...imgConf.bs] : ['w-full', 'h-auto'];
-    if (finalType !== BLOCK_COMMENT && finalType !== BLOCK_QUOTE && finalType !== BLOCK_STACK) {
+    if (finalType !== BLOCK_COMMENT && finalType !== BLOCK_QUOTE && finalType !== BLOCK_STACK && finalType !== BLOCK_COVER) {
         imageBSClasses.unshift('w-full', 'h-auto');
     }
     let figureClass = imgConf.figure;
