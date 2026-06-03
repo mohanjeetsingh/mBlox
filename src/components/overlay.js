@@ -38,7 +38,7 @@ export function renderImageOverlay(post, config) {
         const verifiedIcon = `<svg aria-hidden="true" class="w-4 h-4 text-primary"><use href="#icon-verified"></use></svg>`;
         
         let authorImageHTML = '';
-        if (post.authorImage) {
+        if (post.authorImage && !post.authorImage.includes('blogblog.com')) {
             let imgUrl = post.authorImage.startsWith('//') ? `https:${post.authorImage}` : post.authorImage;
             authorImageHTML = `<img src="${imgUrl}" alt="${post.authorName}" class="w-4 h-4 rounded-full object-cover">`;
         }
