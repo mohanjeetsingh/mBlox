@@ -70,7 +70,7 @@ export function renderImageOverlay(post, config) {
     }
 
     return `
-    <div class="absolute top-0 left-0 right-0 p-3 flex items-start justify-between pointer-events-none z-20 bg-gradient-to-b from-black/40 to-transparent">
+    <div class="absolute top-0 left-0 right-0 p-3 flex items-start justify-between pointer-events-none z-20">
         <div class="flex items-center gap-2 pointer-events-auto">
             ${viewsHTML}
         </div>
@@ -79,7 +79,7 @@ export function renderImageOverlay(post, config) {
             ${bookmarkHTML}
         </div>
     </div>
-    <div class="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between pointer-events-none z-20 bg-gradient-to-t from-black/40 to-transparent">
+    <div class="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between pointer-events-none z-20">
         <div class="flex items-center gap-2 pointer-events-auto">
             ${authorHTML}
         </div>
