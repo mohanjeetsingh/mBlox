@@ -61,7 +61,7 @@ export function renderImage(finalType, postID, config, data) {
         tooltipAttributes = `data-toggle="tooltip" data-vidid="${videoID}"`;
         const showcaseYoutubeIcon = getShowcaseVideoIcon(videoID);
         const corner = config.cornerStyle === " rounded" ? ' rounded-t-3xl' : config.cornerStyle;
-        if (postID === 0) showcaseImageCode = `<figure class="m-0 ${imageBSClasses.join(' ')} ${config.aspectRatio} ${corner} m-blox-image-to-load relative" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
+        if (postID === 0) showcaseImageCode = `<figure class="m-0 ${imageBSClasses.join(' ')} ${config.aspectRatio} ${corner} m-blox-image-to-load relative cursor-pointer" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" title="${postTitle}" aria-label="${postTitle} image" ${tooltipAttributes}>${showcaseYoutubeIcon}</figure>`;
     }
 
     if (config.blurImage && config.contentType !== "comments") imageBSClasses.push('blur-sm');
