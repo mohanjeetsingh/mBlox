@@ -39,7 +39,10 @@ export function mapWordPressResponseToStandardFormat(wpResponse, headers) {
         publishedDate: post.date_gmt,
         url: post.link,
         thumbnailUrl: post._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.large?.source_url
-            || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+            || post._embedded?.['wp:featuredmedia']?.[0]?.source_url || '',
+        commentCount: post.comment_count ? parseInt(post.comment_count, 10) : (post._embedded?.replies?.[0]?.length || 0),
+        commentsUrl: post.link ? `${post.link}#comments` : '',
+        viewCount: post.views || post.view_count || post.pageviews || 0
     }));
     return { posts: standardPosts, totalResults: parseInt(headers.get('X-WP-Total') || '0', 10) };
 }
@@ -62,13 +65,16 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
             return {
                 title: getTagContent('title'),
                 content: getTagContent('media\\:description') || '',
-                authorName: getTagContent('author > name'),
+                authorName: getTagContent('author > name') || xmlDoc.querySelector('channel > title, feed > title')?.textContent || 'Unknown',
                 publishedDate: getTagContent('published'),
                 url: item.querySelector('link[rel="alternate"]')?.getAttribute('href') || '',
                 thumbnailUrl: thumbnailUrl,
                 videoId: videoId,
                 authorUri: getTagContent('author > uri') || '',
-                authorImage: ''
+                authorImage: '',
+                commentCount: 0,
+                commentsUrl: '',
+                viewCount: getTagContent('media\\:statistics[views]') || 0
             };
         } else {
             let thumbnailUrl = item.querySelector('media\\:thumbnail[url], thumbnail[url]')?.getAttribute('url') || '';
@@ -80,12 +86,15 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
             return {
                 title: getTagContent('title'),
                 content: getTagContent('description') || getTagContent('content'),
-                authorName: getTagContent('dc\\:creator, author > name') || 'Unknown',
+                authorName: getTagContent('dc\\:creator, author > name') || xmlDoc.querySelector('channel > title, feed > title')?.textContent || 'Unknown',
                 publishedDate: getTagContent('pubDate, published'),
                 url: getTagContent('link') || item.querySelector('link[href]')?.getAttribute('href') || '',
                 thumbnailUrl: thumbnailUrl,
                 authorUri: getTagContent('author > uri') || '',
-                authorImage: ''
+                authorImage: '',
+                commentCount: getTagContent('slash\\:comments') ? parseInt(getTagContent('slash\\:comments'), 10) : 0,
+                commentsUrl: getTagContent('comments') || getTagContent('link') || item.querySelector('link[href]')?.getAttribute('href') || '',
+                viewCount: 0
             };
         }
     });
@@ -125,7 +134,10 @@ export function mapRssJsonToStandardFormat(jsonDoc) {
             thumbnailUrl: thumbnailUrl,
             videoId: videoId,
             authorUri: '', 
-            authorImage: ''
+            authorImage: '',
+            commentCount: 0,
+            commentsUrl: '',
+            viewCount: 0
         };
     });
 
@@ -176,7 +188,10 @@ export function mapRedditResponseToStandardFormat(redditJson) {
             thumbnailUrl: thumbnailUrl,
             videoId: '',
             authorUri: `https://www.reddit.com/user/${item.author}`,
-            authorImage: '' // Reddit doesn't provide user avatars in the standard listing JSON
+            authorImage: '', // Reddit doesn't provide user avatars in the standard listing JSON
+            commentCount: item.num_comments || 0,
+            commentsUrl: `https://www.reddit.com${item.permalink}`,
+            viewCount: item.view_count || item.score || 0
         };
     });
 
@@ -203,7 +218,10 @@ export function mapBloggerResponseToStandardFormat(bloggerResponse) {
             authorImage: post.author[0].gd$image ? post.author[0].gd$image.src : '',
             publishedDate: post.published.$t,
             url: (post.link.find(l => l.rel === 'alternate') || {}).href || '',
-            thumbnailUrl: thumbnailUrl
+            thumbnailUrl: thumbnailUrl,
+            commentCount: post.thr$total ? parseInt(post.thr$total.$t, 10) : 0,
+            commentsUrl: (post.link.find(l => l.rel === 'replies' && l.type === 'text/html') || {}).href || (post.link.find(l => l.rel === 'alternate') || {}).href || '',
+            viewCount: 0
         };
     });
     const alternateLink = (bloggerResponse.feed.link.find(l => l.rel === 'alternate') || {}).href || '';

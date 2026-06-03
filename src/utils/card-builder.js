@@ -29,7 +29,8 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
         videoID: post.videoId,
         postTitle: post.title,
         thumbnailUrl: post.thumbnailUrl,
-        authorImage: post.authorImage
+        authorImage: post.authorImage,
+        post: post
     });
 
     // 2. Resolve common styling
@@ -41,7 +42,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     // 3. Resolve final fallback image logic (when no header or CTA is present)
     let finalImageCode = config.showImage ? imageCode : '';
     if (!config.showHeader && !config.callToAction && config.showImage) {
-        finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
+        finalImageCode = `<a href="${post.url}" class="absolute inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>${imageCode}`;
     }
 
     const parts = {

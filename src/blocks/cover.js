@@ -21,7 +21,8 @@ export function render(post, postID, config) {
         videoID: post.videoId,
         postTitle: post.title,
         thumbnailUrl: post.thumbnailUrl,
-        authorImage: post.authorImage
+        authorImage: post.authorImage,
+        post: post
     });
 
     // Content container
@@ -48,8 +49,8 @@ export function render(post, postID, config) {
     const articleClasses = '@container col-span-1 inline-flex w-full relative';
 
     let finalImageCode = config.showImage ? imageCode : '';
-    if (!config.showHeader && !config.callToAction && config.showImage) {
-        finalImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${imageCode}</a>`;
+    if (!config.showHeader && !config.callToAction) {
+        finalImageCode = `<a href="${post.url}" class="absolute inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>${imageCode}`;
     }
 
     return `<article class="${articleClasses}"${articleStyle} role="article"><div class="${blockClasses}">${finalImageCode}${textContentHTML}</div></article>`;

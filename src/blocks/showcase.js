@@ -33,7 +33,8 @@ export function render(post, postID, config) {
         videoID: videoID,
         postTitle: post.title,
         thumbnailUrl: post.thumbnailUrl,
-        authorImage: post.authorImage
+        authorImage: post.authorImage,
+        post: post
     });
 
     if (postID === 0 && config.firstInstance) {
@@ -54,12 +55,9 @@ export function render(post, postID, config) {
             showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.palette.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
-        let finalShowcaseImageCode = showcaseImageCode;
-        if (!config.showHeader && !config.callToAction) {
-            finalShowcaseImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${showcaseImageCode}</a>`;
-        }
+        const linkWrapper = `<a href="${post.url}" class="absolute inset-0 z-30" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>`;
 
-        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${finalShowcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
+        return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${linkWrapper}${showcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post

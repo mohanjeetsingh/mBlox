@@ -129,7 +129,35 @@ export class M3ERenderer {
     bindEvents(rawElement, config) {
         this._bindShowcaseEvents(rawElement, config);
         this._bindPaginationEvents(rawElement, config);
+        this._bindShareEvents(rawElement);
         initCarousel(rawElement, config);
+    }
+
+    _bindShareEvents(rawElement) {
+        if (rawElement.dataset.shareBound) return;
+        rawElement.dataset.shareBound = "true";
+
+        rawElement.addEventListener('click', async (e) => {
+            const shareBtn = e.target.closest('[data-action="share-native"]');
+            if (!shareBtn) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            const title = shareBtn.getAttribute('data-title');
+            const url = shareBtn.getAttribute('data-url');
+            
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: title, url: url });
+                } catch (err) {
+                    console.log('Share failed', err);
+                }
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        });
     }
 
     _bindShowcaseEvents(rawElement, config) {

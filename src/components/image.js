@@ -1,9 +1,10 @@
 import { BLOCK_SHOWCASE, BLOCK_PANCAKE, BLOCK_COMMENT, BLOCK_QUOTE, BLOCK_STACK, BLOCK_COVER, BLOCK_LIST, BLOCK_CARD, BLOCK_GALLERY, noImg } from '../core/config.js';
 import { getVideoIcon, getShowcaseVideoIcon } from './video.js';
+import { renderImageOverlay } from './overlay.js';
 
 export function renderImage(finalType, postID, config, data) {
     if (!config.showImage) return { imageCode: '', showcaseImageCode: '', videoThumbnailURL: '', highResImageURL: '' };
-    const { postSnippet, videoID, postTitle, thumbnailUrl, authorImage } = data;
+    const { postSnippet, videoID, postTitle, thumbnailUrl, authorImage, post } = data;
     let videoThumbnailURL = thumbnailUrl || "";
     let imageURL = videoThumbnailURL || config.imageURL || noImg;
 
@@ -76,9 +77,11 @@ export function renderImage(finalType, postID, config, data) {
     const imgTagClasses = `w-full ${imageBSClasses.join(' ')} ${lazyLoadClass}`.replace(/\s+/g, ' ');
     const fixedFigureClass = `m-0 relative ${figureClass} ${imageBSClasses.join(' ')} ${lazyLoadClass}`.replace(/\s+/g, ' ');
 
+    const overlayCode = post ? renderImageOverlay(post, config) : '';
+
     const imageCode = canBeFixed
-        ? `<figure class="${fixedFigureClass}" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${youtubeIcon}</figure>`
-        : `<figure class="m-0 relative ${figureClass}"><img class="${imgTagClasses}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${youtubeIcon}</figure>`;
+        ? `<figure class="${fixedFigureClass} group" data-img-high="${highResImageURL}" data-is-fixed="true" style="${config.articleHeight}" role="img" loading="lazy" aria-label="${postTitle} image"${tooltipAttributes}>${overlayCode}${youtubeIcon}</figure>`
+        : `<figure class="m-0 relative ${figureClass} group"><img class="${imgTagClasses}" style="${imageCoverStyle}" src="${imageSrc}" data-img-high="${highResImageURL}" alt="${postTitle} image" loading="lazy" title="${postTitle}" ${tooltipAttributes}/>${overlayCode}${youtubeIcon}</figure>`;
 
     return { imageCode, showcaseImageCode, videoThumbnailURL, highResImageURL };
 }

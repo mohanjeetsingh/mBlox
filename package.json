@@ -4,8 +4,9 @@
   "description": "mBlox is a lightweight, dependency-free JavaScript library that enables dynamic, Elementor/Gutentor-like content blocks. It can fetch and display content from various sources like **Blogger**, **WordPress**, and any **RSS feed** (including YouTube) in a variety of customizable layouts.",
   "main": "mBloxScript.js",
   "scripts": {
-    "build": "npm run build:css && npm run build:js",
+    "build": "npm run build:css && npm run build:icons && npm run build:js",
     "build:css": "npx @tailwindcss/cli -i ./src/design/tailwind.css -o ./dist/mBloxM3E.css --minify",
+    "build:icons": "node scripts/build-icons.js",
     "build:js": "node scripts/build-js.js",
     "dev": "npx -y serve .",
     "test": "echo \"Error: no test specified\" && exit 1"
