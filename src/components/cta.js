@@ -15,9 +15,9 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
         else if (align === 'center') specificClasses = 'mt-auto self-center';
         else specificClasses = 'mt-auto self-end';
     } else if (finalType === BLOCK_COVER) {
-        if (align === 'left') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-start';
-        else if (align === 'center') specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-center';
-        else specificClasses = 'p-2 px-6 mx-0 md:mx-10 mt-6 self-end';
+        if (align === 'left') specificClasses = 'mx-0 md:mx-10 mt-8 self-start';
+        else if (align === 'center') specificClasses = 'mx-0 md:mx-10 mt-8 self-center';
+        else specificClasses = 'mx-0 md:mx-10 mt-8 self-end';
     } else if (finalType === BLOCK_SHOWCASE || finalType === BLOCK_LIST) {
         specificClasses = ''; // Handled by showcase container
     }
