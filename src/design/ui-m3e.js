@@ -133,24 +133,16 @@ export class M3ERenderer {
     }
 
     _bindShowcaseEvents(rawElement, config) {
+        if (rawElement.dataset.showcaseBound) return;
+        
         const featuredImageNode = rawElement.closest('.mBlock, .mBlockL')?.querySelector('.feature-image');
-        const contentWrapper = rawElement.querySelector('.sFeature'); 
-        if (!featuredImageNode || !contentWrapper) return;
+        if (!featuredImageNode) return;
+        
+        rawElement.dataset.showcaseBound = "true";
+
         const figureNode = featuredImageNode.querySelector('figure');
         const iFrameNode = featuredImageNode.querySelector('.sIframe');
         const contentNode = featuredImageNode.querySelector('.sContent');
-
-        const postElements = contentWrapper.querySelectorAll('.sPost');
-        const postData = Array.from(postElements).map((el, index) => {
-            el.setAttribute('data-index', index); 
-            return {
-                vidid: el.getAttribute('data-vidid'),
-                title: el.getAttribute('data-title'),
-                summary: el.getAttribute('data-summary'),
-                link: el.getAttribute('data-link'),
-                imgHigh: el.getAttribute('data-img-high') || el.querySelector('img')?.getAttribute('data-img-high') || ''
-            };
-        });
 
         if (figureNode) {
             figureNode.addEventListener('click', function () {
@@ -187,17 +179,20 @@ export class M3ERenderer {
             });
         }
 
-        contentWrapper.addEventListener('click', function (event) {
+        rawElement.addEventListener('click', function (event) {
             const clickedPost = event.target.closest('.sPost');
             if (!clickedPost) return; 
 
-            const postIndex = clickedPost.getAttribute('data-index');
-            if (postIndex === null || !postData[postIndex]) return;
+            // Only act if this post is part of a showcase grid (sFeature)
+            if (!clickedPost.closest('.sFeature')) return;
 
-            const data = postData[postIndex];
-            
-            // Refresh imgHigh dynamically from DOM in case image-loader.js applied a fallback
-            data.imgHigh = clickedPost.getAttribute('data-img-high') || clickedPost.querySelector('img')?.getAttribute('data-img-high') || data.imgHigh;
+            const data = {
+                vidid: clickedPost.getAttribute('data-vidid'),
+                title: clickedPost.getAttribute('data-title'),
+                summary: clickedPost.getAttribute('data-summary'),
+                link: clickedPost.getAttribute('data-link'),
+                imgHigh: clickedPost.getAttribute('data-img-high') || clickedPost.querySelector('img')?.getAttribute('data-img-high') || ''
+            };
 
             // --- Check for focus state (double-click navigation) ---
             const isFocused = clickedPost.classList.contains('ring-4');
@@ -207,7 +202,7 @@ export class M3ERenderer {
             }
 
             // --- Apply focus styling to clicked item ---
-            const allPosts = contentWrapper.querySelectorAll('.sPost');
+            const allPosts = rawElement.querySelectorAll('.sFeature .sPost');
             allPosts.forEach(post => {
                 post.classList.remove('ring-4', 'ring-primary', 'ring-inset');
             });
@@ -229,7 +224,9 @@ export class M3ERenderer {
                     fadeOut(iFrameNode);
                 }
                 if (figureNode) {
-                    figureNode.removeAttribute('data-vidid');
+                    if (data.vidid === 'noVideo' || !data.vidid) {
+                        figureNode.removeAttribute('data-vidid');
+                    }
                     let playIcon = figureNode.querySelector('svg');
                     if (playIcon) fadeOut(playIcon);
                     figureNode.style.backgroundImage = `url("${data.imgHigh}")`;

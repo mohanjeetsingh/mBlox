@@ -45,7 +45,7 @@ export function render(post, postID, config) {
         if (config.showHeader || cta) {
             const hsCode = config.showHeader ? `<div class="flex-grow text-left">${titleCode} ${snippetCode}</div>` : '';
             const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
-            
+
             const ctaMargin = config.showHeader ? 'mt-4 md:mt-0 md:ml-6 ' : '';
             const ctaWidth = config.showHeader ? 'w-full md:w-auto' : 'w-full';
             const ctaCode = cta ? `<div class="flex-shrink-0 ${ctaMargin}flex items-center ${ctaAlignClass} ${ctaWidth}">${cta}</div>` : '';
@@ -59,7 +59,7 @@ export function render(post, postID, config) {
             finalShowcaseImageCode = `<a href="${post.url}" class="block h-full w-full after:absolute after:inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}">${showcaseImageCode}</a>`;
         }
 
-        return `<div class="feature-image relative flex flex-col text-center overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
+        return `<div class="feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-center overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${finalShowcaseImageCode}<div class="text-primary block absolute inset-0 z-20 pointer-events-none">${showcaseContent}</div></div>`;
     }
 
     // Showcase grid post

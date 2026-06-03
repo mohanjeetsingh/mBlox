@@ -70,6 +70,10 @@ export async function mBlocks(blockItem) {
 
                 const { renderedBlocks, carouselIndicators, showcaseHTML } = await renderer.buildBlockBody(response, blockConfig);
 
+                if (blockConfig.firstInstance && blockConfig.blockType === BLOCK_SHOWCASE && showcaseHTML) {
+                    rawElement.insertAdjacentHTML('beforeend', showcaseHTML);
+                }
+
                 const isCurrentStage = blockConfig.stageID === parseInt(rawElement.getAttribute("data-s") || "1", 10);
                 const displayClass = isCurrentStage ? '' : ' d-none';
                 
@@ -82,11 +86,10 @@ export async function mBlocks(blockItem) {
                     blockBody = renderGrid(renderedBlocks, blockConfig);
                 }
 
-                const showcaseCode = (blockConfig.blockType === BLOCK_SHOWCASE && blockConfig.firstInstance) ? showcaseHTML : '';
                 const wrapperCode = renderer.createStageWrapper(blockBody, carouselIndicators, blockConfig, response);
                 const footerCode = renderer.createBlockFooter(blockConfig, response);
 
-                const renderOutput = `<div class="st${blockConfig.stageID}${displayClass}" id="m${blockConfig.mBlockID}-st${blockConfig.stageID}">${showcaseCode}${wrapperCode}${footerCode}</div>`;
+                const renderOutput = `<div class="st${blockConfig.stageID}${displayClass}" id="m${blockConfig.mBlockID}-st${blockConfig.stageID}">${wrapperCode}${footerCode}</div>`;
                 
                 const loadingSkeleton = rawElement.querySelector(`#m${blockConfig.mBlockID}-st${blockConfig.stageID}-loading`);
                 if (loadingSkeleton) {

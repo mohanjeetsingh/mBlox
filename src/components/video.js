@@ -27,5 +27,5 @@ export function getShowcaseVideoIcon(videoID) {
 export function getVideoIframe(videoID, config) {
     if (!videoID || videoID === 'noVideo') return '';
     const src = `https://www.youtube-nocookie.com/embed/${videoID}?autoplay=1`;
-    return `<iframe src="${src}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;" width="100%" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" style="${config.articleHeight}"></iframe>`;
+    return `<iframe class="w-full h-full" src="${src}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;" width="100%" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen="" style="${config.articleHeight}"></iframe>`;
 }
