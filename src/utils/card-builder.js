@@ -37,7 +37,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
 
     // 2. Resolve common styling
     const isDarkTheme = config.mBloxTheme !== "surface";
-    const bodyClass = isDarkTheme ? ` h-full opacity-90 ${config.palette.containerBg} ${config.palette.containerText}` : ` ${config.palette.containerText}`;
+    const bodyClass = isDarkTheme ? ` h-full bg-opacity-90 ${config.palette.containerBg} ${config.palette.containerText}` : ` ${config.palette.containerText}`;
     const hasText = Boolean(authorCode || dateCode || titleCode || snippetCode || ctaButtonCode || labelsCode);
     const hasTextContent = Boolean(authorCode || dateCode || titleCode || snippetCode || labelsCode);
 

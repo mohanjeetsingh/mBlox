@@ -24,4 +24,3 @@ export function render(post, postID, config) {
         return `<article class="${articleClasses}" role="article"><div class="${blockClasses}">${parts.finalImageCode}${textContentHTML}</div></article>`;
     });
 }
-

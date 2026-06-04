@@ -3,7 +3,7 @@ import { buildCard } from '../utils/card-builder.js';
 
 export function render(post, postID, config) {
     return buildCard(BLOCK_PANCAKE, post, postID, config, (parts, config) => {
-        const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full opacity-90 ${config.palette.containerBg}` : ``;
+        const bgThemeClass = (config.mBloxTheme !== "surface") ? ` h-full bg-opacity-90 ${config.palette.containerBg}` : ``;
 
         const textContentHTML = parts.hasText ? `
             <div class="p-2 @xs:p-4 @sm:p-6 flex-grow flex flex-col${bgThemeClass} text-${config.textHAlign}">
