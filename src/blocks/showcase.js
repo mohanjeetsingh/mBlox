@@ -59,7 +59,7 @@ export function render(post, postID, config) {
             showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none w-full overflow-hidden"><div class="sContent w-full flex flex-col @md:flex-row items-start @md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.palette.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
-        const linkWrapper = `<a href="${post.url}" class="absolute inset-0 z-30" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>`;
+        const linkWrapper = `<a href="${post.url}" class="absolute inset-0 z-30" title="${post.title.replace(/"/g, '&quot;')}" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>`;
 
         return `<div class="@container feature-image w-full ${config.aspectRatio.trim()} relative flex flex-col text-${config.textHAlign} overflow-hidden rounded-none mb-4" style="${config.articleHeight.replace(';', '')}"><div class="sIframe hidden absolute inset-0 w-full h-full z-10"></div>${linkWrapper}${showcaseImageCode}<div class="${config.palette.text} block absolute inset-0 z-40 pointer-events-none">${showcaseContent}</div></div>`;
     }
@@ -96,9 +96,9 @@ export function renderThumbnail(post, config) {
     const lazyLoadClass = config.isBloggerFeed ? ' m-blox-image-to-load' : '';
     const videoAttr = videoID !== 'noVideo' ? ` data-vidid="${videoID}"` : '';
     const articleDataAttributes = `data-title="${post.title}" data-link="${post.url}" data-summary="${snippetText}"${videoAttr} data-toggle="tooltip"`;
-    const imageTag = `<img class="w-full h-full object-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title} image" loading="lazy" title="${post.title}" />`;
+    const imageTag = `<img class="w-full h-full object-cover${lazyLoadClass}" src="${thumbnailUrl}" data-img-high="${highResUrl}" alt="${post.title.replace(/"/g, '&quot;')} image" loading="lazy" title="${post.title.replace(/"/g, '&quot;')}" />`;
     const youtubeIcon = getVideoIcon(videoID);
     const figureTag = `<figure class="m-0 w-full ${config.aspectRatio.trim()} overflow-hidden ${config.cornerStyle} relative">${imageTag}${youtubeIcon}</figure>`;
 
-    return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}" ${articleDataAttributes} role="article">${figureTag}</article>`;
+    return `<article class="col-span-1 inline-flex w-full sPost cursor-pointer relative ${config.interactionClasses}" ${articleDataAttributes} title="${post.title.replace(/"/g, '&quot;')}" role="article">${figureTag}</article>`;
 }
