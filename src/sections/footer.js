@@ -4,7 +4,7 @@ export function renderBlockFooter(config, response) {
     let moreLinkHTML = '';
     if (config.moreText !== "") {
         if (response.feedUrl) {
-            moreLinkHTML = `<a class="inline-block border-0 font-bold no-underline" href="${config.siteURL}search?max-results=9" title="View all">
+            moreLinkHTML = `<a class="inline-block border-0 font-bold no-underline transition-opacity duration-300 opacity-75 hover:opacity-100 ${config.palette.text}" href="${config.siteURL}search?max-results=9" title="View all">
                             ${config.moreText} <svg class="inline-block align-text-bottom" fill="currentColor" height="1.2em" viewBox="0 0 16 16" width="1.2em" xmlns="http://www.w3.org/2000/svg"><use href="#icon-caret-right"></use></svg></a>`;
         }
     }
