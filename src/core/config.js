@@ -49,20 +49,20 @@ export function getBreakpointIndex(width) {
 
 export const RESPONSIVE_CAROUSEL_CLASSES_M3E = {
     1: 'auto-cols-[100%]',
-    2: 'auto-cols-[100%] @md:auto-cols-[50%]',
-    3: 'auto-cols-[100%] @md:auto-cols-[50%] @lg:auto-cols-[33.333333%]',
-    4: 'auto-cols-[100%] @sm:auto-cols-[50%] @md:auto-cols-[33.333333%] @lg:auto-cols-[25%]',
-    5: 'auto-cols-[50%] @sm:auto-cols-[33.333333%] @md:auto-cols-[25%] @xl:auto-cols-[20%]',
-    6: 'auto-cols-[33.333333%] @sm:auto-cols-[25%] @lg:auto-cols-[20%] @xl:auto-cols-[16.666667%]'
+    2: 'auto-cols-[100%] @3xl:auto-cols-[50%]',
+    3: 'auto-cols-[100%] @3xl:auto-cols-[50%] @5xl:auto-cols-[33.333333%]',
+    4: 'auto-cols-[100%] @xl:auto-cols-[50%] @3xl:auto-cols-[33.333333%] @5xl:auto-cols-[25%]',
+    5: 'auto-cols-[50%] @xl:auto-cols-[33.333333%] @3xl:auto-cols-[25%] @7xl:auto-cols-[20%]',
+    6: 'auto-cols-[33.333333%] @xl:auto-cols-[25%] @5xl:auto-cols-[20%] @7xl:auto-cols-[16.666667%]'
 };
 
 export const RESPONSIVE_GRID_CLASSES_M3E = {
     1: 'grid-cols-1',
-    2: 'grid-cols-1 @md:grid-cols-2',
-    3: 'grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3',
-    4: 'grid-cols-1 @sm:grid-cols-2 @md:grid-cols-3 @lg:grid-cols-4',
-    5: 'grid-cols-2 @sm:grid-cols-3 @md:grid-cols-4 @xl:grid-cols-5',
-    6: 'grid-cols-3 @sm:grid-cols-4 @lg:grid-cols-5 @xl:grid-cols-6'
+    2: 'grid-cols-1 @3xl:grid-cols-2',
+    3: 'grid-cols-1 @3xl:grid-cols-2 @5xl:grid-cols-3',
+    4: 'grid-cols-1 @xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4',
+    5: 'grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 @7xl:grid-cols-5',
+    6: 'grid-cols-3 @xl:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6'
 };
 
 export const M3E_PALETTES = {
