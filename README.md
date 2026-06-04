@@ -8,7 +8,7 @@ Note: The initial version of this tool was created in the pre-GenAI era. Startin
 
 ## Features
 
-*   **Dynamic Content**: Fetch recent posts, posts by label, or recent comments.
+*   **Dynamic Content**: Fetch recent posts, posts by label, or recent comments. Automatically extracts hashtags from content to use as labels.
 *   **Highly Customizable**: A wide range of `data-*` attributes to control layout, style, and content.
 *   **Variety of Layouts**: Includes showcases, carousels, grids, lists, and more.
 *   **Lazy Loading**: Content blocks are lazy-loaded on scroll for better performance.
