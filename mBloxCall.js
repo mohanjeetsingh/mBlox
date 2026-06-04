@@ -25,18 +25,27 @@ function loadScripts(blockItem, isFirstLoad) {
 
         // 2. Inject mBlox Unified Bundle (Engine + Blocks)
         const jsUrl = config.jsSrc || '../dist/mBloxM3E.js';
-        if (!document.querySelector(`script[src*="${jsUrl}"]`)) {
+        const existingScript = document.querySelector(`script[src*="${jsUrl}"]`);
+        
+        if (!existingScript) {
             const script = document.createElement('script');
             script.src = jsUrl;
             script.type = 'module';
-            script.onload = () => {
+            script.addEventListener('load', () => {
                 if (window.mBlocks) {
                     window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
                 }
-            };
+            });
             document.head.appendChild(script);
         } else if (window.mBlocks) {
             window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+        } else {
+            // Script tag exists but hasn't finished loading. Queue the execution.
+            existingScript.addEventListener('load', () => {
+                if (window.mBlocks) {
+                    window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+                }
+            });
         }
     } else {
         if (window.mBlocks) {
