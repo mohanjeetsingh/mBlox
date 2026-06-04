@@ -92,13 +92,13 @@ export const M3E_PALETTES = {
 };
 
 export const LAYOUT_CLASSES = {
-    0: { gap: 'gap-0', mt: 'mt-0', px: 'px-0' },
-    2: { gap: 'gap-2', mt: 'mt-2', px: 'px-2' },
-    4: { gap: 'gap-4', mt: 'mt-4', px: 'px-4' },
-    6: { gap: 'gap-6', mt: 'mt-6', px: 'px-6' },
-    8: { gap: 'gap-8', mt: 'mt-8', px: 'px-8' },
-    10: { gap: 'gap-10', mt: 'mt-10', px: 'px-10' },
-    12: { gap: 'gap-12', mt: 'mt-12', px: 'px-12' }
+    0: { gap: 'gap-0', mt: 'mt-0', mb: 'mb-0', px: 'px-0' },
+    2: { gap: 'gap-1 @3xl:gap-2', mt: 'mt-1 @3xl:mt-2', mb: 'mb-1 @3xl:mb-2', px: 'px-1 @3xl:px-2' },
+    4: { gap: 'gap-2 @3xl:gap-3 @5xl:gap-4', mt: 'mt-2 @3xl:mt-3 @5xl:mt-4', mb: 'mb-2 @3xl:mb-3 @5xl:mb-4', px: 'px-2 @3xl:px-3 @5xl:px-4' },
+    6: { gap: 'gap-3 @3xl:gap-4 @5xl:gap-6', mt: 'mt-3 @3xl:mt-4 @5xl:mt-6', mb: 'mb-3 @3xl:mb-4 @5xl:mb-6', px: 'px-3 @3xl:px-4 @5xl:px-6' },
+    8: { gap: 'gap-4 @3xl:gap-6 @5xl:gap-8', mt: 'mt-4 @3xl:mt-6 @5xl:mt-8', mb: 'mb-4 @3xl:mb-6 @5xl:mb-8', px: 'px-4 @3xl:px-6 @5xl:px-8' },
+    10: { gap: 'gap-6 @3xl:gap-8 @5xl:gap-10', mt: 'mt-6 @3xl:mt-8 @5xl:mt-10', mb: 'mb-6 @3xl:mb-8 @5xl:mb-10', px: 'px-6 @3xl:px-8 @5xl:px-10' },
+    12: { gap: 'gap-8 @3xl:gap-10 @5xl:gap-12', mt: 'mt-8 @3xl:mt-10 @5xl:mt-12', mb: 'mb-8 @3xl:mb-10 @5xl:mb-12', px: 'px-8 @3xl:px-10 @5xl:px-12' }
 };
 
 export const ASPECT_RATIO_CLASSES = {
