@@ -81,4 +81,4 @@ npm run build
 | `data-ar` | `1x1` |
 | `data-corner` | `rounded` |
 
-*Refer to the source code of `mBloxScript.js` for detailed responsive breakpoint mappings.*
+*Refer to the source code of `mBloxM3E.js` for detailed responsive breakpoint mappings.*

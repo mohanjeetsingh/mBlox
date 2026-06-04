@@ -7,7 +7,7 @@ const DIST_DIR = path.join(PROJECT_ROOT, 'dist');
 const SRC_DIR = path.join(PROJECT_ROOT, 'src');
 
 async function run() {
-    console.log('🚀 Cleaning JS assets and generating modular mBlox builds...');
+    console.log('🚀 Cleaning JS assets and generating unified mBlox builds...');
 
     try {
         // Clean JS files only, keeping mBloxBS.css compiled by build-css.js
@@ -38,17 +38,7 @@ async function run() {
 
     const entryPoints = {
         mBloxCall: path.join(PROJECT_ROOT, 'mBloxCall.js'),
-        mBloxEngine: path.join(SRC_DIR, 'core', 'engine.js'),
-        uiM3e: path.join(SRC_DIR, 'design', 'ui-m3e.js'),
-        mBloxCard: path.join(SRC_DIR, 'blocks', 'card.js'),
-        mBloxList: path.join(SRC_DIR, 'blocks', 'list.js'),
-        mBloxCover: path.join(SRC_DIR, 'blocks', 'cover.js'),
-        mBloxPancake: path.join(SRC_DIR, 'blocks', 'pancake.js'),
-        mBloxStack: path.join(SRC_DIR, 'blocks', 'stack.js'),
-        mBloxQuote: path.join(SRC_DIR, 'blocks', 'quote.js'),
-        mBloxComment: path.join(SRC_DIR, 'blocks', 'comment.js'),
-        mBloxShowcase: path.join(SRC_DIR, 'blocks', 'showcase.js'),
-        mBloxGallery: path.join(SRC_DIR, 'blocks', 'gallery.js')
+        mBloxM3E: path.join(SRC_DIR, 'mBloxM3E.js')
     };
 
     // Filter to only compile files that actually exist
@@ -76,7 +66,7 @@ async function run() {
             target: ['es2020'],
             outdir: DIST_DIR,
             banner: {
-                js: `/*! mBlox Modular JS | Generated: ${new Date().toISOString()} */`,
+                js: `/*! mBlox Unified JS | Generated: ${new Date().toISOString()} */`,
             },
         });
 

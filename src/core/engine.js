@@ -10,6 +10,7 @@ import { injectSvgSprite } from '../components/icons.js';
 import { renderGrid } from '../layouts/grid.js';
 import { renderCarouselGrid } from '../layouts/carousel.js';
 import { renderListGrid } from '../layouts/list.js';
+import { M3ERenderer } from '../design/ui-m3e.js';
 
 // Global renderer instance
 let rendererInstance = null;
@@ -18,12 +19,10 @@ async function _getRenderer() {
     if (rendererInstance) return rendererInstance;
     const isM3E = (window.mBloxConfig && window.mBloxConfig.designSystem === 'm3e');
     if (isM3E) {
-        const { M3ERenderer } = await import('../design/ui-m3e.js');
         window.mBlox = window.mBlox || {};
         window.mBlox.m3eRenderer = M3ERenderer;
         rendererInstance = new M3ERenderer();
     } else {
-        const { M3ERenderer } = await import('../design/ui-m3e.js');
         rendererInstance = new M3ERenderer();
     }
     return rendererInstance;

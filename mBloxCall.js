@@ -1,24 +1,21 @@
 /*!
- * mBlocks for Blogger - Modular Entry Point
+ * mBlocks for Blogger - Initializer
  * CIA.RealHappinessCenter.com
  * @version 2.0.0
  */
 
-import { mBlocks } from './src/core/engine.js';
-
 let isFirstScriptLoad = true;
 
 /**
- * Loads the core engine and initializes blocks.
+ * Loads the core library and initializes blocks.
  * Uses window.mBloxConfig to determine the design system.
  */
 function loadScripts(blockItem, isFirstLoad) {
     if (isFirstLoad) {
-        const config = window.mBloxConfig || { designSystem: 'bs' };
-        const isM3E = config.designSystem === 'm3e';
+        const config = window.mBloxConfig || {};
 
-        // 1. Inject CSS for the chosen design system
-        const cssUrl = isM3E ? (config.cssSrc || '../dist/mBloxM3E.css') : (config.cssSrc || '../dist/mBloxBS.css');
+        // 1. Inject CSS for M3E
+        const cssUrl = config.cssSrc || '../dist/mBloxM3E.css';
         if (!document.querySelector(`link[href*="${cssUrl}"]`)) {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
@@ -26,20 +23,25 @@ function loadScripts(blockItem, isFirstLoad) {
             document.head.appendChild(link);
         }
 
-        // 2. Inject Bootstrap JS if needed (M3E doesn't need Bootstrap JS)
-        if (!isM3E && (!window.bootstrap || !window.bootstrap.Carousel)) {
-            const bsJsUrl = config.bsJsSrc || '../dist/mBloxBS.js';
+        // 2. Inject mBlox Unified Bundle (Engine + Blocks)
+        const jsUrl = config.jsSrc || '../dist/mBloxM3E.js';
+        if (!document.querySelector(`script[src*="${jsUrl}"]`)) {
             const script = document.createElement('script');
-            script.src = bsJsUrl;
+            script.src = jsUrl;
+            script.type = 'module';
             script.onload = () => {
-                mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+                if (window.mBlocks) {
+                    window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+                }
             };
             document.head.appendChild(script);
-        } else {
-            mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+        } else if (window.mBlocks) {
+            window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
         }
     } else {
-        mBlocks(blockItem);
+        if (window.mBlocks) {
+            window.mBlocks(blockItem);
+        }
     }
 }
 
@@ -73,6 +75,4 @@ const intersectionCallback = (entries, observer) => {
     });
 };
 
-// Expose globally for manual calls
-window.mBlocks = mBlocks;
 window.loadScripts = loadScripts;

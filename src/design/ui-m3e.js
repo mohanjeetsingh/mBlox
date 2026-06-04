@@ -15,32 +15,27 @@ import {
 import { fadeIn, fadeOut } from '../utils/dom.js';
 import { getVideoIframe } from '../components/video.js';
 
-const BLOCK_NAME_MAP = {
-    [BLOCK_COVER]: 'cover',
-    [BLOCK_SHOWCASE]: 'showcase',
-    [BLOCK_LIST]: 'list',
-    [BLOCK_CARD]: 'card',
-    [BLOCK_GALLERY]: 'gallery',
-    [BLOCK_PANCAKE]: 'pancake',
-    [BLOCK_STACK]: 'stack',
-    [BLOCK_QUOTE]: 'quote',
-    [BLOCK_COMMENT]: 'comment'
-};
+import * as coverRenderer from '../blocks/cover.js';
+import * as showcaseRenderer from '../blocks/showcase.js';
+import * as listRenderer from '../blocks/list.js';
+import * as cardRenderer from '../blocks/card.js';
+import * as galleryRenderer from '../blocks/gallery.js';
+import * as pancakeRenderer from '../blocks/pancake.js';
+import * as stackRenderer from '../blocks/stack.js';
+import * as quoteRenderer from '../blocks/quote.js';
+import * as commentRenderer from '../blocks/comment.js';
 
-function getBlockScriptUrl(blockName) {
-    let baseUrl = import.meta.url;
-    baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
-    
-    // In dev: engine/renderer is in src/core or src/design, blocks are in src/blocks
-    if (baseUrl.includes('/src/core') || baseUrl.includes('/src/design')) {
-        const base = baseUrl.includes('/src/core') ? baseUrl.replace('/src/core', '') : baseUrl.replace('/src/design', '');
-        return `${base}/src/blocks/${blockName}.js`;
-    } else {
-        // Prod: assets in /dist
-        const capitalizedBlockName = blockName.charAt(0).toUpperCase() + blockName.slice(1);
-        return `${baseUrl}/mBlox${capitalizedBlockName}.js`;
-    }
-}
+const renderers = {
+    [BLOCK_COVER]: coverRenderer,
+    [BLOCK_SHOWCASE]: showcaseRenderer,
+    [BLOCK_LIST]: listRenderer,
+    [BLOCK_CARD]: cardRenderer,
+    [BLOCK_GALLERY]: galleryRenderer,
+    [BLOCK_PANCAKE]: pancakeRenderer,
+    [BLOCK_STACK]: stackRenderer,
+    [BLOCK_QUOTE]: quoteRenderer,
+    [BLOCK_COMMENT]: commentRenderer
+};
 
 export class M3ERenderer {
     
@@ -54,23 +49,6 @@ export class M3ERenderer {
         if (config.isCarousel) {
             carouselIndicators = null; // Disabled for CSS Scroll Snap implementation
         }
-
-        // Determine all block types needed
-        const neededTypes = new Set([config.blockType]);
-        if (config.blockType === BLOCK_LIST) {
-            neededTypes.add(config.showHeader ? BLOCK_STACK : BLOCK_CARD);
-        }
-
-        // Dynamically import all needed block renderers
-        const renderers = {};
-        await Promise.all(Array.from(neededTypes).map(async (type) => {
-            const blockName = BLOCK_NAME_MAP[type];
-            if (blockName) {
-                const url = getBlockScriptUrl(blockName);
-                const module = await import(url);
-                renderers[type] = module;
-            }
-        }));
 
         if (config.blockType === BLOCK_SHOWCASE && postsInFeed > 0) {
             if (config.firstInstance) {

@@ -20,10 +20,10 @@ Note: The initial version of this tool was created in the pre-GenAI era. Startin
 
 ```text
 mBlox/
-├── mBloxScript.js       # Core library logic
-├── mBloxCall.js         # Entry point & lazy-loading helper
+├── mBloxCall.js         # Lightweight entry point & initializer
 ├── dist/                # Production-ready assets
-│   └── mBloxBS.css      # Minimized/Purged CSS bundle
+│   ├── mBloxM3E.js      # Unified JS bundle (Engine + Blocks)
+│   └── mBloxM3E.css     # Tailwind CSS bundle
 ├── config/              # Build configuration
 │   └── classes.yaml     # Manifest of all used Bootstrap classes
 ├── assets/              # Static resources
@@ -47,8 +47,7 @@ mBlox/
     Open `mBloxCall.js` to set the paths for `window.mBloxCssSrc` and `window.mBloxBsJsSrc` if your site does not already use Bootstrap 5.
 
     **Note on Scripts:**
-    *   `mBloxCall.js`: The lightweight entry point. It detects `mBlock` elements and triggers the main library.
-    *   `mBloxScript.js`: The core library loaded automatically by `mBloxCall.js`. No manual inclusion needed.
+    *   `mBloxCall.js`: The lightweight entry point. It detects `mBlock` elements and dynamically injects the unified `mBloxM3E.js` library and CSS. No manual inclusion of the main bundle is needed.
 
 2.  Add an element to your HTML where you want the block to appear.
 3.  Give it the class `mBlock` (standard) or `mBlockL` (lazy-loaded).
