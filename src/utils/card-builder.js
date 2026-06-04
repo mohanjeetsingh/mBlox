@@ -22,7 +22,7 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
     const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
     const dateCode = renderDate(finalType, config, post.publishedDate, post.updatedDate);
     const titleCode = renderTitle(finalType, config, post.title, post.url);
-    const snippetCode = renderSnippet(finalType, config, post.content);
+    const snippetCode = renderSnippet(finalType, config, post.content, post.url);
     const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
     const labelsCode = renderLabels(config, post.labels, config.siteURL);
 

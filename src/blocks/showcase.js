@@ -15,7 +15,7 @@ export function render(post, postID, config) {
 
     // Render parts
     const titleCode = renderTitle(finalType, config, post.title, post.url);
-    const snippetCode = renderSnippet(finalType, config, post.content);
+    const snippetCode = renderSnippet(finalType, config, post.content, post.url);
 
     let snippetText = '';
     if (post.content) {
