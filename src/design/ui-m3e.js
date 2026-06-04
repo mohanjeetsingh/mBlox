@@ -194,7 +194,7 @@ export class M3ERenderer {
             });
         }
 
-        const mainLink = featuredImageNode.querySelector('a');
+        const mainLink = featuredImageNode.querySelector('a.z-30') || featuredImageNode.querySelector('a');
         if (mainLink) {
             mainLink.addEventListener('click', function (e) {
                 if (figureNode) {
@@ -268,15 +268,27 @@ export class M3ERenderer {
                 if (contentNode) {
                     fadeIn(contentNode);
                     const h5 = contentNode.querySelector('h5');
-                    if (h5) h5.textContent = data.title;
+                    if (h5) {
+                        h5.textContent = data.title;
+                        const titleLink = h5.closest('a');
+                        if (titleLink) titleLink.href = data.link;
+                    }
+                    
+                    const ctaLink = contentNode.querySelector('.js-cta-link');
+                    if (ctaLink) {
+                        ctaLink.href = data.link;
+                        ctaLink.setAttribute('aria-label', `View ${data.title}`);
+                    }
+
                     const summary = contentNode.querySelector('.list-none') || contentNode.querySelector('div.text-body-md');
                     if (summary) summary.innerHTML = data.summary;
                 }
-                const link = featuredImageNode.querySelector('a');
+                const link = featuredImageNode.querySelector('a.z-30') || featuredImageNode.querySelector('a');
                 if (link) {
                     link.style.display = '';
                     link.href = data.link;
                     link.title = data.title;
+                    if (link.hasAttribute('aria-label')) link.setAttribute('aria-label', `View ${data.title}`);
                 }
                 const button = featuredImageNode.querySelector('button');
                 if (button) button.title = data.title;
