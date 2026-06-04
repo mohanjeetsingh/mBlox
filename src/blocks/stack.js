@@ -5,11 +5,11 @@ export function render(post, postID, config) {
     return buildCard(BLOCK_STACK, post, postID, config, (parts, config, bodyClass) => {
         const innerContent = parts.hasText ? `
             <div class="p-2 @xs:p-4 @sm:p-6 flex-grow flex flex-col${bodyClass} text-${config.textHAlign}">
-                ${parts.authorCode}${parts.dateCode}
+                ${parts.authorCode}
                 ${parts.labelsCode}
                 ${parts.titleCode}
                 ${parts.snippetCode}
-                ${parts.ctaButtonCode}
+                ${parts.ctaRowCode}
             </div>
         ` : '';
 

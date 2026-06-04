@@ -90,9 +90,11 @@ export function parseBlockConfig(rawElement) {
         siteURL = getVal("feed", "feed", "/"),
         mBloxTitle = getVal("title", "title", ""),
         mBloxDescription = getVal("description", "description", ""),
-        mBloxType = getVal("type", "type", "v-ih").toLowerCase(),
+        rawType = getVal("type", "type", "v-ih"),
+        mBloxType = rawType.toLowerCase(),
         bloxType = mBloxType.substring(0, 1),
         componentList = mBloxType.substring(1),
+        rawComponentList = rawType.substring(1),
         rawTheme = getVal("theme", "theme", "auto").toLowerCase(),
 
         showHeader = componentList.includes("h"),
@@ -102,6 +104,8 @@ export function parseBlockConfig(rawElement) {
         showDate = componentList.includes("d"),
         showOverlay = componentList.includes("o"),
         showLabels = componentList.includes("l");
+
+    const dateStyle = rawComponentList.includes("D") ? 'long' : 'short';
 
     const stageID = getIntVal("s", "s", 1);
     const firstInstance = !rawElement.hasAttribute("data-s") && jsonConfig.s === undefined;
@@ -125,7 +129,10 @@ export function parseBlockConfig(rawElement) {
     const mBlockID = widget ? widget.getAttribute("ID") : (mBloxTitle + mBloxType + labelName);
     const sanitizedMBlockID = mBlockID.replace(/[\s#.&?,[\]]/g, '-');
 
-    const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+    const dateOptions = dateStyle === 'long' 
+        ? { year: 'numeric', month: 'short', day: 'numeric' } 
+        : { month: 'short', day: 'numeric' };
+    const dateFormatter = showDate ? new Intl.DateTimeFormat('en-US', dateOptions) : null;
 
     const columnCountVal = getVal("cols", "cols", null);
     const blockRowsVal = getVal("rows", "rows", "1");
@@ -154,7 +161,7 @@ export function parseBlockConfig(rawElement) {
         ctaAlign: getVal("ctaAlign", "ctaAlign", ""),
         textHAlign: getVal("textHAlign", "textHAlign", ""),
         moreText: getVal("moreText", "moreText", ""),
-        stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter,
+        stageID, firstInstance, postsPerBlock, mBlockID: sanitizedMBlockID, dateFormatter, dateStyle,
         paletteName: colorPalette, mBloxTheme,
         interactionClasses: colorPalette === 'colorful'
             ? `transition-all duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${bloxType === 'p' || bloxType === 'q' ? '' : 'hover:bg-tertiary hover:text-on-tertiary '}hover:scale-[1.02] hover:opacity-100 overflow-hidden no-underline font-bold`

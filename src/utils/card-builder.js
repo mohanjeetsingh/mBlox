@@ -20,7 +20,7 @@ import { renderLabels } from '../components/labels.js';
 export function buildCard(finalType, post, postID, config, layoutStrategy) {
     // 1. Render all modular parts
     const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
-    const dateCode = renderDate(config, post.publishedDate);
+    const dateCode = renderDate(finalType, config, post.publishedDate, post.updatedDate);
     const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
     const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
@@ -47,8 +47,10 @@ export function buildCard(finalType, post, postID, config, layoutStrategy) {
         finalImageCode = `<a href="${post.url}" class="absolute inset-0 z-10" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>${imageCode}`;
     }
 
+    const ctaRowCode = (finalType !== 'comment' && (dateCode || ctaButtonCode)) ? `<div class="flex items-center justify-between mt-auto w-full pt-4">${dateCode}${ctaButtonCode}</div>` : ctaButtonCode;
+
     const parts = {
-        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, imageCode, finalImageCode, labelsCode, hasText, hasTextContent
+        authorCode, dateCode, titleCode, snippetCode, ctaButtonCode, ctaRowCode, imageCode, finalImageCode, labelsCode, hasText, hasTextContent
     };
 
     // 4. Delegate to the specific block's layout strategy

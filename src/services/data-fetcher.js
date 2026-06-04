@@ -43,7 +43,8 @@ export function mapWordPressResponseToStandardFormat(wpResponse, headers) {
         labels: post._embedded?.['wp:term'] ? post._embedded?.['wp:term'].flat().map(t => t.name) : [],
         commentCount: post.comment_count ? parseInt(post.comment_count, 10) : (post._embedded?.replies?.[0]?.length || 0),
         commentsUrl: post.link ? `${post.link}#comments` : '',
-        viewCount: post.views || post.view_count || post.pageviews || 0
+        viewCount: post.views || post.view_count || post.pageviews || 0,
+        updatedDate: post.modified_gmt || ''
     }));
     return { posts: standardPosts, totalResults: parseInt(headers.get('X-WP-Total') || '0', 10) };
 }
@@ -76,7 +77,8 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
                 labels: Array.from(item.querySelectorAll('category')).map(c => c.textContent),
                 commentCount: 0,
                 commentsUrl: '',
-                viewCount: getTagContent('media\\:statistics[views]') || 0
+                viewCount: getTagContent('media\\:statistics[views]') || 0,
+                updatedDate: getTagContent('updated') || ''
             };
         } else {
             let thumbnailUrl = item.querySelector('media\\:thumbnail[url], thumbnail[url]')?.getAttribute('url') || '';
@@ -97,7 +99,8 @@ export function mapRssResponseToStandardFormat(xmlDoc) {
                 labels: Array.from(item.querySelectorAll('category')).map(c => c.textContent),
                 commentCount: getTagContent('slash\\:comments') ? parseInt(getTagContent('slash\\:comments'), 10) : 0,
                 commentsUrl: getTagContent('comments') || getTagContent('link') || item.querySelector('link[href]')?.getAttribute('href') || '',
-                viewCount: 0
+                viewCount: 0,
+                updatedDate: getTagContent('updated') || ''
             };
         }
     });
@@ -141,7 +144,8 @@ export function mapRssJsonToStandardFormat(jsonDoc) {
             labels: item.categories || [],
             commentCount: 0,
             commentsUrl: '',
-            viewCount: 0
+            viewCount: 0,
+            updatedDate: item.updated || ''
         };
     });
 
@@ -196,7 +200,8 @@ export function mapRedditResponseToStandardFormat(redditJson) {
             labels: item.link_flair_text ? [item.link_flair_text] : [],
             commentCount: item.num_comments || 0,
             commentsUrl: `https://www.reddit.com${item.permalink}`,
-            viewCount: item.view_count || item.score || 0
+            viewCount: item.view_count || item.score || 0,
+            updatedDate: item.edited ? new Date(item.edited * 1000).toISOString() : ''
         };
     });
 
@@ -227,7 +232,8 @@ export function mapBloggerResponseToStandardFormat(bloggerResponse) {
             labels: post.category ? post.category.map(c => c.term) : [],
             commentCount: post.thr$total ? parseInt(post.thr$total.$t, 10) : 0,
             commentsUrl: (post.link.find(l => l.rel === 'replies' && l.type === 'text/html') || {}).href || (post.link.find(l => l.rel === 'alternate') || {}).href || '',
-            viewCount: 0
+            viewCount: 0,
+            updatedDate: post.updated ? post.updated.$t : ''
         };
     });
     const alternateLink = (bloggerResponse.feed.link.find(l => l.rel === 'alternate') || {}).href || '';

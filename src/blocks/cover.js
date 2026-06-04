@@ -12,7 +12,7 @@ export function render(post, postID, config) {
 
     // Render parts
     const authorCode = renderAuthor(finalType, config, post.authorName, post.authorUri);
-    const dateCode = renderDate(config, post.publishedDate);
+    const dateCode = renderDate(finalType, config, post.publishedDate, post.updatedDate);
     const titleCode = renderTitle(finalType, config, post.title, post.url);
     const snippetCode = renderSnippet(finalType, config, post.content);
     const ctaButtonCode = renderCTA(finalType, config, post.title, post.url);
@@ -37,8 +37,8 @@ export function render(post, postID, config) {
             overlay: `w-full h-full inset-0 rounded-none`
         }[config.textVerticalAlign] || `w-3/4 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 ${(config.cornerStyle === " rounded-none" || config.textVerticalAlign === "overlay") ? ' rounded-none' : ' rounded-3xl'}`
         }">
-            ${authorCode}${dateCode}
-            ${labelsCode}
+            ${authorCode}
+            <div class="flex flex-wrap items-center justify-center gap-2">${dateCode ? `<div class="mb-3">${dateCode}</div>` : ''}${labelsCode}</div>
             ${titleCode}
             ${snippetCode}
             ${ctaButtonCode}

@@ -45,8 +45,10 @@ export function render(post, postID, config) {
 
         let showcaseContent = '';
         if (config.showHeader || cta || config.showLabels) {
+            const dateCode = renderDate(finalType, config, post.publishedDate, post.updatedDate);
             const labelsCode = renderLabels(config, post.labels, config.siteURL);
-            const hsCode = config.showHeader || config.showLabels ? `<div class="flex-grow text-${config.textHAlign}">${labelsCode}${titleCode} ${snippetCode}</div>` : '';
+            const dateAndLabels = (dateCode || labelsCode) ? `<div class="flex flex-wrap items-center gap-2 mb-2">${dateCode ? `<div class="mb-3">${dateCode}</div>` : ''}${labelsCode}</div>` : '';
+            const hsCode = config.showHeader || config.showLabels ? `<div class="flex-grow text-${config.textHAlign}">${dateAndLabels}${titleCode} ${snippetCode}</div>` : '';
             const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
 
             const ctaMargin = config.showHeader ? 'mt-4 md:mt-0 md:ml-6 ' : '';

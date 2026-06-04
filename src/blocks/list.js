@@ -7,15 +7,14 @@ export function render(post, postID, config) {
         const paddingClass = postID === 0 ? 'p-4 @xs:p-6 @sm:p-8' : 'p-2 @xs:p-4 @sm:p-6';
 
         if (parts.hasText) {
-            const ctaAlignClass = config.ctaAlign === 'left' ? 'text-left' : (config.ctaAlign === 'center' ? 'text-center' : 'text-right');
-            const ctaHTML = parts.ctaButtonCode ? `<div class="mt-4 ${ctaAlignClass}">${parts.ctaButtonCode}</div>` : '';
+            const ctaHTML = parts.ctaRowCode ? `<div class="mt-4 w-full">${parts.ctaRowCode}</div>` : '';
 
             if (config.showImage) {
                 textContentHTML = `
                     <div class="absolute inset-0 flex flex-col p-0 border-0 pointer-events-none ${{ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign] || ''
                     }">
                         <div class="pointer-events-auto ${(config.textVerticalAlign === 'overlay' || !({ top: 'justify-start', middle: 'justify-center', bottom: 'justify-end', overlay: '' }[config.textVerticalAlign])) ? 'h-full ' : ''}${parts.hasTextContent ? `${config.palette.containerGlass} backdrop-blur-xl ` : ''}${config.palette.containerText} rounded-none ${paddingClass} text-${config.textHAlign}">
-                            ${parts.authorCode}${parts.dateCode}
+                            ${parts.authorCode}
                             ${parts.labelsCode}
                             ${parts.titleCode}
                             ${parts.snippetCode}
@@ -26,7 +25,7 @@ export function render(post, postID, config) {
             } else {
                 textContentHTML = `
                     <div class=" ${paddingClass} w-full text-${config.textHAlign}">
-                        ${parts.authorCode}${parts.dateCode}
+                        ${parts.authorCode}
                         ${parts.labelsCode}
                         ${parts.titleCode}
                         ${parts.snippetCode}

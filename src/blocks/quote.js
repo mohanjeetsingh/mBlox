@@ -8,10 +8,10 @@ export function render(post, postID, config) {
                 ${parts.titleCode}
                 ${parts.snippetCode}
                 <span class="mt-4 text-right">
-                    ${parts.authorCode} ${parts.dateCode}
+                    ${parts.authorCode}
                 </span>
+                <div class="mt-auto pt-2">${parts.ctaRowCode}</div>
             </div>
-            ${parts.ctaButtonCode}
         ` : '';
 
         const blockClasses = ['flex', 'flex-col', 'w-full', config.palette.containerBg, config.palette.containerText, config.cornerStyle, `text-${config.textHAlign}`, 'h-full', config.interactionClasses].filter(Boolean).join(' ');
