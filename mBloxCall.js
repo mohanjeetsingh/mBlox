@@ -15,8 +15,14 @@ function loadScripts(blockItem, isFirstLoad) {
         const config = window.mBloxConfig || {};
 
         // 1. Inject CSS for M3E
-        const cssUrl = config.cssSrc || '../dist/mBloxM3E.css';
-        if (!document.querySelector(`link[href*="${cssUrl}"]`)) {
+        let cssUrl = '../dist/mBloxM3E.css';
+        if (config.cssSrc !== undefined) {
+            cssUrl = config.cssSrc;
+        } else if (window.mBloxCssSrc !== undefined) {
+            cssUrl = window.mBloxCssSrc;
+        }
+        
+        if (cssUrl && !document.querySelector(`link[href*="${cssUrl}"]`)) {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = cssUrl;
@@ -24,28 +30,35 @@ function loadScripts(blockItem, isFirstLoad) {
         }
 
         // 2. Inject mBlox Unified Bundle (Engine + Blocks)
-        const jsUrl = config.jsSrc || '../dist/mBloxM3E.js';
-        const existingScript = document.querySelector(`script[src*="${jsUrl}"]`);
+        let jsUrl = '../dist/mBloxM3E.js';
+        if (config.jsSrc !== undefined) {
+            jsUrl = config.jsSrc;
+        }
         
-        if (!existingScript) {
-            const script = document.createElement('script');
-            script.src = jsUrl;
-            script.type = 'module';
-            script.addEventListener('load', () => {
-                if (window.mBlocks) {
-                    window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
-                }
-            });
-            document.head.appendChild(script);
+        if (jsUrl) {
+            const existingScript = document.querySelector(`script[src*="${jsUrl}"]`);
+            if (!existingScript) {
+                const script = document.createElement('script');
+                script.src = jsUrl;
+                script.type = 'module';
+                script.addEventListener('load', () => {
+                    if (window.mBlocks) {
+                        window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+                    }
+                });
+                document.head.appendChild(script);
+            } else if (window.mBlocks) {
+                window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+            } else {
+                // Script tag exists but hasn't finished loading. Queue the execution.
+                existingScript.addEventListener('load', () => {
+                    if (window.mBlocks) {
+                        window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
+                    }
+                });
+            }
         } else if (window.mBlocks) {
             window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
-        } else {
-            // Script tag exists but hasn't finished loading. Queue the execution.
-            existingScript.addEventListener('load', () => {
-                if (window.mBlocks) {
-                    window.mBlocks(blockItem).then(() => { isFirstScriptLoad = false; });
-                }
-            });
         }
     } else {
         if (window.mBlocks) {
@@ -62,7 +75,7 @@ window.addEventListener("load", (event) => {
 
     const config = window.mBloxConfig || {};
     const threshold = config.lazyLoadThreshold !== undefined ? config.lazyLoadThreshold : 0.0;
-    const rootMargin = config.lazyLoadRootMargin || '500px';
+    const rootMargin = config.lazyLoadRootMargin !== undefined ? config.lazyLoadRootMargin : '500px';
 
     const options = { rootMargin: rootMargin, threshold: threshold };
     const lazyLoadTargets = document.getElementsByClassName("mBlockL");
