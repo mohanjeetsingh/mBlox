@@ -1,8 +1,8 @@
 export function renderLabels(config, labels, siteUrl) {
     if (!config.showLabels || !labels || labels.length === 0) return '';
 
-    // Slice to maximum of 3 labels as requested
-    const displayLabels = labels.slice(0, 3);
+    // Select up to 2 random labels
+    const displayLabels = [...labels].sort(() => 0.5 - Math.random()).slice(0, 2);
 
     // Build base URL for searches
     // We use a relative or absolute path based on siteUrl or default to /search/label/
@@ -19,7 +19,7 @@ export function renderLabels(config, labels, siteUrl) {
 
     const labelsHTML = displayLabels.map(label => {
         const encodedLabel = encodeURIComponent(label);
-        return `<a aria-label="${label.replace(/"/g, '&quot;')}" class="relative z-50 pointer-events-auto inline-flex items-center justify-center rounded-full transition-all duration-300 ease-[--ease-m3-emphasized] cursor-pointer ${config.palette.hoverBg} ${config.palette.hoverText} ${config.palette.glass} ${config.palette.text} h-6 px-3 text-label-md" href="${baseSearchUrl}${encodedLabel}"><span>${label}</span></a>`;
+        return `<a aria-label="${label.replace(/"/g, '&quot;')}" class="relative z-50 pointer-events-auto inline-flex items-center justify-center rounded-full transition-opacity duration-300 ease-[--ease-m3-emphasized] cursor-pointer ${config.palette.bg} ${config.palette.text} ${config.palette.hoverBg} ${config.palette.hoverText} opacity-75 hover:opacity-100 h-6 px-3 text-label-md no-underline" href="${baseSearchUrl}${encodedLabel}"><span>${label}</span></a>`;
     }).join('');
 
     return `

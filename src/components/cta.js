@@ -19,7 +19,7 @@ export function renderCTA(finalType, config, postTitle, postUrl) {
     }
 
     const isSharp = config.cornerStyle === " rounded-none";
-    const themeClasses = `${config.palette.bg} ${config.palette.text}`;
+    const themeClasses = `${config.palette.bg} ${config.palette.text} ${config.palette.hoverBg} ${config.palette.hoverText}`;
     const baseClasses = `inline-block text-label-lg font-bold no-underline px-4 py-2 hover:opacity-100 transition-opacity opacity-75 ${themeClasses} ${isSharp ? 'rounded-none' : 'rounded-full'}`;
 
     return `<a href="${postUrl}" class="${baseClasses} ${specificClasses} after:absolute after:inset-0 z-10" aria-label="View ${postTitle.replace(/"/g, '&quot;')}">${config.callToAction}</a>`;
