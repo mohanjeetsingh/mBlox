@@ -259,6 +259,8 @@ export class M3ERenderer {
                     if (playIcon) fadeOut(playIcon);
                     figureNode.style.backgroundImage = `url("${data.imgHigh}")`;
                     figureNode.style.backgroundSize = 'cover';
+                    figureNode.title = data.title;
+                    figureNode.setAttribute('aria-label', data.title + ' image');
                     fadeIn(figureNode);
                 }
 

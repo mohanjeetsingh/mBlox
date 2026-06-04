@@ -47,16 +47,16 @@ export function render(post, postID, config) {
         if (config.showHeader || cta || config.showLabels) {
             const dateCode = renderDate(finalType, config, post.publishedDate, post.updatedDate);
             const labelsCode = renderLabels(config, post.labels, config.siteURL);
-            const dateAndLabels = (dateCode || labelsCode) ? `<div class="flex flex-wrap items-center gap-2 mb-2">${dateCode ? `<div class="mb-3">${dateCode}</div>` : ''}${labelsCode}</div>` : '';
-            const hsCode = config.showHeader || config.showLabels ? `<div class="flex-grow text-${config.textHAlign}">${dateAndLabels}${titleCode} ${snippetCode}</div>` : '';
+            const dateAndLabels = (dateCode || labelsCode) ? `<div class="flex flex-wrap items-center gap-x-4 gap-y-0 mb-2">${dateCode ? `<div class="mb-3 shrink-0">${dateCode}</div>` : ''}<div class="shrink-0">${labelsCode}</div></div>` : '';
+            const hsCode = config.showHeader || config.showLabels ? `<div class="flex-grow min-w-0 w-full @md:w-auto text-${config.textHAlign}">${dateAndLabels}${titleCode} ${snippetCode}</div>` : '';
             const ctaAlignClass = config.ctaAlign === 'left' ? 'justify-start' : (config.ctaAlign === 'center' ? 'justify-center' : 'justify-end');
 
-            const ctaMargin = config.showHeader ? 'mt-4 md:mt-0 md:ml-6 ' : '';
-            const ctaWidth = config.showHeader ? 'w-full md:w-auto' : 'w-full';
+            const ctaMargin = config.showHeader ? 'mt-4 @md:mt-0 @md:ml-6 ' : '';
+            const ctaWidth = config.showHeader ? 'w-full @md:w-auto' : 'w-full';
             const ctaCode = cta ? `<div class="flex-shrink-0 ${ctaMargin}flex items-center ${ctaAlignClass} ${ctaWidth}">${cta}</div>` : '';
 
             const wrapperClasses = config.showHeader ? `${config.palette.containerGlass} backdrop-blur-xl ` : '';
-            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none"><div class="sContent flex flex-col md:flex-row items-start md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.palette.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
+            showcaseContent = `<div class="absolute inset-0 flex flex-col justify-end p-0 z-10 pointer-events-none w-full overflow-hidden"><div class="sContent w-full flex flex-col @md:flex-row items-start @md:items-center justify-between p-2 @xs:p-4 @sm:px-12 ${wrapperClasses}${config.palette.containerText} pointer-events-auto">${hsCode}${ctaCode}</div></div>`;
         }
 
         const linkWrapper = `<a href="${post.url}" class="absolute inset-0 z-30" aria-label="View ${post.title.replace(/"/g, '&quot;')}"></a>`;
