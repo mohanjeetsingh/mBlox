@@ -53,25 +53,90 @@ mBlox/
 3.  Give it the class `mBlock` (standard) or `mBlockL` (lazy-loaded).
 4.  Add `data-*` attributes to configure the block.
 
-### Example
+### Examples
+
+#### 1. Data Attributes Configuration (Full Settings)
+
+You can configure mBlox directly using `data-*` attributes on the block element. Here is an example showing all available settings:
 
 ```html
 <section
     class='mBlockL'
-    data-contenttype='recent'
-    data-posts="6"
-    data-type="s-ih"
+    data-contenttype="recent"
+    data-feed="https://your-blog.blogspot.com/"
+    data-type="v-ihsda"
     data-title="Featured Articles"
-    data-theme="dark"
+    data-description="Check out our latest news and updates."
+    data-label="Technology"
+    data-posts="6"
+    data-cols="3"
+    data-rows="2"
+    data-theme="auto"
+    data-palette="surface"
+    data-ar="16x9"
     data-isCarousel="true"
-    data-feed='https://your-blog.blogspot.com/'
+    data-iHeight="m"
+    data-iBlur="false"
+    data-iFix="false"
+    data-iBorder="true"
+    data-corner="rounded"
+    data-gutter="3"
+    data-textVAlign="bottom"
+    data-textHAlign="left"
+    data-ctaAlign="right"
+    data-CTAText="Read More"
+    data-moreText="View All"
+    data-snippetSize="150"
+    data-overlay-items="vcasb"
+    data-s="1"
     >
 </section>
 ```
 
+#### 2. JSON Configuration (Recommended for Complex Setups)
+
+Alternatively, you can configure the block using an embedded JSON script. This approach is cleaner when you have many settings or dynamic configurations. Simply place a `<script type="application/json">` tag inside the block element.
+
+```html
+<section class="mBlockL">
+    <script type="application/json">
+        {
+            "contentType": "recent",
+            "feed": "https://your-blog.blogspot.com/",
+            "type": "v-ihsda",
+            "title": "Featured Articles",
+            "description": "Check out our latest news and updates.",
+            "label": "Technology",
+            "posts": 6,
+            "cols": 3,
+            "rows": 2,
+            "theme": "auto",
+            "palette": "surface",
+            "ar": "16x9",
+            "isCarousel": true,
+            "iHeight": "m",
+            "iBlur": false,
+            "iFix": false,
+            "iBorder": true,
+            "corner": "rounded",
+            "gutter": 3,
+            "textVAlign": "bottom",
+            "textHAlign": "left",
+            "ctaAlign": "right",
+            "CTAText": "Read More",
+            "moreText": "View All",
+            "snippetSize": 150,
+            "overlayItems": "vcasb",
+            "s": 1
+        }
+    </script>
+</section>
+```
+*Note: JSON keys use camelCase (e.g., `overlayItems` instead of `overlay-items`) and values maintain their native data types (booleans, numbers).*
+
 ## Development & Build Pipeline
 
-mBlox uses a specialized build pipeline to ensure the CSS bundle only contains the Bootstrap utilities actually used by the script.
+mBlox uses a specialized build pipeline to ensure the CSS bundle only contains the Tailwind utilities actually used by the script.
 
 ### Requirements
 *   Node.js (LTS)
@@ -82,23 +147,26 @@ mBlox uses a specialized build pipeline to ensure the CSS bundle only contains t
     ```bash
     npm install
     ```
-2.  Update `config/classes.yaml` if you add new Bootstrap classes to your JS logic.
-3.  Run the build command:
+2.  Run the build command:
     ```bash
     npm run build
     ```
-This will compile Bootstrap SCSS, purge unused styles based on `classes.yaml`, apply Autoprefixer, and wrap the output in a `@layer mblox` for isolation.
+This will compile Tailwind CSS based on your template files and generate the unified JS bundle in `/dist`.
 
 ## Configuration
 
-Customize mBlox using the following `data-*` attributes:
+Customize mBlox using `data-*` attributes or embedded JSON. The core attributes include:
 
-| Attribute | Description | Default |
-|---|---|---|
-| `data-ar` | Aspect ratio (e.g., `16x9`, `4x3`, `1x1`) | `1x1` |
-| `data-cols` | Number of columns in the grid. | Varies |
-| `data-contenttype` | `recent`, `label`, or `comments`. | `recent` |
-| `data-theme` | `light`, `dark`, `primary`, `secondary`, etc. | `light` |
-| `data-type` | Visual style code (e.g., `v-ih`, `s-ihs`). | `v-ih` |
+| Attribute | JSON Key | Description | Default |
+|---|---|---|---|
+| `data-feed` | `feed` | Source URL of the blog or feed. | `/` |
+| `data-contenttype` | `contentType` | `recent`, `label`, or `comments`. | `recent` |
+| `data-type` | `type` | Visual style and component layout (e.g., `v-ih`). | `v-ih` |
+| `data-posts` | `posts` | Number of posts to fetch/display. | `3` |
+| `data-cols` | `cols` | Number of columns in the grid. | Varies |
+| `data-theme` | `theme` | `light`, `dark`, or `auto`. | `auto` |
+| `data-palette` | `palette` | Color palette (e.g., `surface`, `colorful`). | `surface` |
+| `data-ar` | `ar` | Aspect ratio (e.g., `16x9`, `4x3`, `1x1`). | `1x1` |
+| `data-isCarousel` | `isCarousel` | Enables carousel navigation. | `false` |
 
 *See [spec.md](spec.md) for the full technical breakdown.*
