@@ -12,7 +12,7 @@ Note: The initial version of this tool was created in the pre-GenAI era. Startin
 *   **Highly Customizable**: A wide range of `data-*` attributes to control layout, style, and content.
 *   **Variety of Layouts**: Includes showcases, carousels, grids, lists, and more.
 *   **Lazy Loading**: Content blocks are lazy-loaded on scroll for better performance.
-*   **Responsive Design**: Built with Bootstrap 5.3+ to be mobile-first and responsive.
+*   **Responsive Design**: Built with modern Tailwind CSS to be mobile-first and fully responsive.
 *   **Style Isolation**: CSS is isolated using `@layer mblox` to prevent conflicts with host websites.
 *   **Easy Integration**: Add a `section` or `div` with the right class and data attributes, and the script does the rest.
 
@@ -24,12 +24,10 @@ mBlox/
 ├── dist/                # Production-ready assets
 │   ├── mBloxM3E.js      # Unified JS bundle (Engine + Blocks)
 │   └── mBloxM3E.css     # Tailwind CSS bundle
-├── config/              # Build configuration
-│   └── classes.yaml     # Manifest of all used Bootstrap classes
 ├── assets/              # Static resources
 │   ├── tailwind.css     # Tailwind configuration and base styles
 │   ├── noImg.js         # Placeholder image script
-│   └── vendor/          # Third-party dependencies (Bootstrap)
+│   └── vendor/          # Third-party vendor dependencies
 ├── scripts/             # Build pipeline (Node.js)
 └── demo/                # Sample implementations
 ```
@@ -40,11 +38,12 @@ mBlox/
 
     ```html
     <!-- 1. Include the mBlox Initializer (Configure paths inside this file) -->
+    <!-- For best performance, it is recommended to inline the contents of mBloxCall.js directly into your HTML -->
     <script src='mBloxCall.js' defer></script>
     ```
 
     **Note on Configuration:**
-    Open `mBloxCall.js` to set the paths for `window.mBloxCssSrc` and `window.mBloxBsJsSrc` if your site does not already use Bootstrap 5.
+    Open `mBloxCall.js` to configure any custom paths for `window.mBloxCssSrc` if necessary.
 
     **Note on Scripts:**
     *   `mBloxCall.js`: The lightweight entry point. It detects `mBlock` elements and dynamically injects the unified `mBloxM3E.js` library and CSS. No manual inclusion of the main bundle is needed.
