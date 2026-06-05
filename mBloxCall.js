@@ -15,7 +15,7 @@ function loadScripts(blockItem, isFirstLoad) {
         const config = window.mBloxConfig || {};
 
         // 1. Inject CSS for M3E
-        let cssUrl = '../dist/mBloxM3E.css';
+        let cssUrl = 'https://cdn.jsdelivr.net/npm/mblox/dist/mBloxM3E.css';
         if (config.cssSrc !== undefined) {
             cssUrl = config.cssSrc;
         } else if (window.mBloxCssSrc !== undefined) {
@@ -30,7 +30,7 @@ function loadScripts(blockItem, isFirstLoad) {
         }
 
         // 2. Inject mBlox Unified Bundle (Engine + Blocks)
-        let jsUrl = '../dist/mBloxM3E.js';
+        let jsUrl = 'https://cdn.jsdelivr.net/npm/mblox/dist/mBloxM3E.js';
         if (config.jsSrc !== undefined) {
             jsUrl = config.jsSrc;
         }

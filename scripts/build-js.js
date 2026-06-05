@@ -28,7 +28,6 @@ async function run() {
 
 
     const entryPoints = {
-        mBloxCall: path.join(PROJECT_ROOT, 'mBloxCall.js'),
         mBloxM3E: path.join(SRC_DIR, 'mBloxM3E.js')
     };
 
