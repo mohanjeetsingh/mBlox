@@ -26,15 +26,6 @@ async function run() {
         console.warn('⚠️ Warning: Failed to clean dist/ directory:', err.message);
     }
 
-    // Copy Bootstrap JS bundle to dist/mBloxBS.js
-    const bootstrapJsSrc = path.join(PROJECT_ROOT, 'node_modules', 'bootstrap', 'dist', 'js', 'bootstrap.bundle.min.js');
-    const bootstrapJsDest = path.join(DIST_DIR, 'mBloxBS.js');
-    if (fs.existsSync(bootstrapJsSrc)) {
-        fs.copyFileSync(bootstrapJsSrc, bootstrapJsDest);
-        console.log('📦 Copied Bootstrap JS bundle to dist/mBloxBS.js');
-    } else {
-        console.warn('⚠️ Warning: Bootstrap JS bundle not found in node_modules.');
-    }
 
     const entryPoints = {
         mBloxCall: path.join(PROJECT_ROOT, 'mBloxCall.js'),
