@@ -18,11 +18,11 @@ function loadScripts(blockItem, isFirstLoad) {
         const config = window.mBloxConfig || {};
 
         // 1. Inject CSS for M3E
+        // To disable this and use your site's own CSS, you can safely delete this entire CSS injection block (Step 1).
+        // Alternatively, set `window.mBloxConfig = { cssSrc: "" }` in your HTML or change the cssUrl variable below to an empty string ('') before loading this script .
         let cssUrl = 'https://cdn.jsdelivr.net/npm/mblox/dist/mBloxM3E.css';
         if (config.cssSrc !== undefined) {
             cssUrl = config.cssSrc;
-        } else if (window.mBloxCssSrc !== undefined) {
-            cssUrl = window.mBloxCssSrc;
         }
         
         if (cssUrl && !document.querySelector(`link[href*="${cssUrl}"]`)) {
