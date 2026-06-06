@@ -86,16 +86,16 @@ export function parseBlockConfig(rawElement) {
     };
 
     const labelName = getVal("label", "label", "Label Name missing"),
-        contentType = getVal("contentType", "contentType", "recent").toLowerCase(),
+        contentType = String(getVal("contentType", "contentType", "recent")).toLowerCase(),
         siteURL = getVal("feed", "feed", "/"),
         mBloxTitle = getVal("title", "title", ""),
         mBloxDescription = getVal("description", "description", ""),
         rawType = getVal("type", "type", "v-ih"),
-        mBloxType = rawType.toLowerCase(),
+        mBloxType = String(rawType).toLowerCase(),
         bloxType = mBloxType.substring(0, 1),
         componentList = mBloxType.substring(1),
-        rawComponentList = rawType.substring(1),
-        rawTheme = getVal("theme", "theme", "auto").toLowerCase(),
+        rawComponentList = String(rawType).substring(1),
+        rawTheme = String(getVal("theme", "theme", "auto")).toLowerCase(),
 
         showHeader = componentList.includes("h"),
         showImage = componentList.includes("i"),
@@ -114,17 +114,17 @@ export function parseBlockConfig(rawElement) {
     const validThemes = ['light', 'dark', 'auto'];
     const mBloxTheme = validThemes.includes(rawTheme) ? rawTheme : 'auto';
 
-    const colorPalette = getVal("palette", "palette", "surface").toLowerCase();
+    const colorPalette = String(getVal("palette", "palette", "surface")).toLowerCase();
     
     let finalPaletteName = colorPalette;
     if (!M3E_PALETTES[finalPaletteName]) {
         finalPaletteName = 'surface';
     }
     const palette = M3E_PALETTES[finalPaletteName];
-    let textVerticalAlign = getVal("textVAlign", "textVAlign", "").toLowerCase();
+    let textVerticalAlign = String(getVal("textVAlign", "textVAlign", "")).toLowerCase();
 
-    const imageBlur = getVal("iBlur", "iBlur", "").toLowerCase();
-    const imageFixed = getVal("iFix", "iFix", "").toLowerCase();
+    const imageBlur = String(getVal("iBlur", "iBlur", "")).toLowerCase();
+    const imageFixed = String(getVal("iFix", "iFix", "")).toLowerCase();
     const widget = rawElement.closest(".widget");
     const mBlockID = widget ? widget.getAttribute("ID") : (mBloxTitle + mBloxType + labelName);
     const sanitizedMBlockID = mBlockID.replace(/[\s#.&?,[\]]/g, '-');
@@ -137,7 +137,7 @@ export function parseBlockConfig(rawElement) {
     const columnCountVal = getVal("cols", "cols", null);
     const blockRowsVal = getVal("rows", "rows", "1");
     
-    const overlayItemsRaw = getVal("overlay-items", "overlayItems", "vcasb").toLowerCase();
+    const overlayItemsRaw = String(getVal("overlay-items", "overlayItems", "vcasb")).toLowerCase();
     const overlayItems = overlayItemsRaw.split('');
 
     let config = {
@@ -152,8 +152,8 @@ export function parseBlockConfig(rawElement) {
         palette,
         gutterSize: getVal("gutter", "gutter", ((bloxType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
-        cornerStyle: (getVal("corner", "corner", "").toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
-        aspectRatio: ` ${ASPECT_RATIO_CLASSES[getVal("ar", "ar", "1/1").replace('x', '/').toLowerCase()] || 'aspect-square'}`,
+        cornerStyle: (String(getVal("corner", "corner", "")).toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
+        aspectRatio: ` ${ASPECT_RATIO_CLASSES[String(getVal("ar", "ar", "1/1")).replace('x', '/').toLowerCase()] || 'aspect-square'}`,
         isImageFixed: imageFixed === "true" || jsonConfig.iFix === true ? true : (imageFixed === "false" || jsonConfig.iFix === false ? false : null),
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
         snippetSize: getIntVal("snippetSize", "snippetSize", 150),

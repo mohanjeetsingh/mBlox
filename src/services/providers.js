@@ -56,7 +56,15 @@ class WordPressProvider {
         const apiUrl = this._buildFeedUrl();
         const cached = feedCache.get(apiUrl);
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
-        const { text: responseText, response } = await _fetchWithProxy(apiUrl);
+        let responseText, response;
+        try {
+            const result = await _fetchWithProxy(apiUrl);
+            responseText = result.text;
+            response = result.response;
+        } catch (e) {
+            console.error(`mBlox: Failed to fetch WordPress feed: ${e.message}`);
+            return { posts: [], totalResults: 0 };
+        }
         try {
             const rawData = JSON.parse(responseText);
             const formattedData = mapWordPressResponseToStandardFormat(rawData, response.headers);
@@ -76,7 +84,14 @@ class RssProvider {
         const apiUrl = this._buildFeedUrl();
         const cached = feedCache.get(apiUrl);
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
-        const { text: xmlString } = await _fetchWithProxy(apiUrl);
+        let xmlString;
+        try {
+            const result = await _fetchWithProxy(apiUrl);
+            xmlString = result.text;
+        } catch (e) {
+            console.error(`mBlox: Failed to fetch RSS feed: ${e.message}`);
+            return { posts: [], totalResults: 0, feedUrl: '' };
+        }
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(xmlString, "text/xml");
         if (xmlDoc.getElementsByTagName("parsererror").length) throw new Error("Failed to parse RSS feed.");
@@ -95,7 +110,13 @@ class YouTubeProvider {
         const url = this._buildFeedUrl();
         const cached = feedCache.get(url);
         if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
-        const rawData = await fetchJSONP(url);
+        let rawData;
+        try {
+            rawData = await fetchJSONP(url);
+        } catch (e) {
+            console.error(`mBlox: Failed to fetch YouTube JSONP: ${e.message}`);
+            return { posts: [], totalResults: 0, feedUrl: '' };
+        }
         const formattedData = mapRssJsonToStandardFormat(rawData);
         feedCache.set(url, { data: formattedData, timestamp: Date.now() });
         return formattedData;
@@ -104,24 +125,133 @@ class YouTubeProvider {
 
 export class BloggerProvider {
     constructor(config) { this.config = config; }
-    _buildFeedUrl() {
+    _buildFeedUrl(labelName, maxResultsOverride) {
         let feedURL = this.config.siteURL + "feeds/";
-        switch (this.config.contentType) {
+        let contentType = this.config.contentType;
+        let targetLabel = labelName || this.config.labelName;
+        let maxResults = maxResultsOverride || this.config.postsPerBlock;
+        
+        switch (contentType) {
             case "recent": feedURL += "posts" + (this.config.showImage ? "/default" : "/summary"); break;
             case "comments": feedURL += "comments" + (this.config.showImage ? "/default" : "/summary"); break;
-            default: feedURL += "posts" + (this.config.showImage ? "/default" : "/summary") + "/-/" + this.config.labelName;
+            case "related": feedURL += "posts" + (this.config.showImage ? "/default" : "/summary") + "/-/" + encodeURIComponent(targetLabel); break;
+            default: feedURL += "posts" + (this.config.showImage ? "/default" : "/summary") + "/-/" + encodeURIComponent(targetLabel);
         }
-        feedURL += `?alt=json-in-script&start-index=${(this.config.stageID - 1) * this.config.postsPerBlock + 1}&max-results=${this.config.postsPerBlock}`;
+        feedURL += `?alt=json-in-script&start-index=${(this.config.stageID - 1) * this.config.postsPerBlock + 1}&max-results=${maxResults}`;
         return feedURL;
     }
+    async _fetchCurrentPostLabels() {
+        // Try to get from window.config first
+        try {
+            const currentPostId = window.config?.bg?.psId;
+            const currentPost = currentPostId && window.config?.ps?.[currentPostId];
+            if (currentPost && currentPost.lab && Array.isArray(currentPost.lab) && currentPost.lab.length > 0) {
+                return currentPost.lab;
+            }
+        } catch (e) {
+            // ignore
+        }
+        
+        // Fallback to JSON feed via path
+        try {
+            const currentPath = window.location.pathname;
+            const feedURL = this.config.siteURL + `feeds/posts/default?alt=json-in-script&path=${currentPath}`;
+            const rawData = await fetchJSONP(feedURL);
+            const formattedData = mapBloggerResponseToStandardFormat(rawData);
+            if (formattedData.posts && formattedData.posts.length > 0) {
+                const currentPost = formattedData.posts[0];
+                return currentPost.labels || [];
+            }
+        } catch(e) {
+            console.warn("mBlox: Failed to fetch current post labels for related posts.");
+        }
+        return [];
+    }
     async fetch() {
-        const url = this._buildFeedUrl();
-        const cached = feedCache.get(url);
-        if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
-        const rawData = await fetchJSONP(url);
-        const formattedData = mapBloggerResponseToStandardFormat(rawData);
-        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
-        return formattedData;
+        if (this.config.contentType === 'related') {
+            const relatedLabels = await this._fetchCurrentPostLabels();
+            let allPosts = [];
+            const currentUrl = window.location.href.split('#')[0].split('?')[0];
+            
+            if (relatedLabels.length > 0) {
+                let availableLabels = [...relatedLabels];
+                
+                while (allPosts.length < this.config.postsPerBlock && availableLabels.length > 0) {
+                    const randIndex = Math.floor(Math.random() * availableLabels.length);
+                    const chosenLabel = availableLabels.splice(randIndex, 1)[0];
+                    
+                    const fetchLimit = this.config.postsPerBlock + 10;
+                    const url = this._buildFeedUrl(chosenLabel, fetchLimit);
+                    const cached = feedCache.get(url);
+                    let formattedData;
+                    
+                    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+                        formattedData = cached.data;
+                    } else {
+                        let rawData;
+                        try {
+                            rawData = await fetchJSONP(url);
+                        } catch (e) {
+                            console.error(`mBlox: Failed to fetch Blogger feed: ${e.message}`);
+                            break;
+                        }
+                        formattedData = mapBloggerResponseToStandardFormat(rawData);
+                        feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+                    }
+                    
+                    const filtered = formattedData.posts.filter(p => {
+                        const postNormalizedUrl = p.url.split('#')[0].split('?')[0];
+                        return postNormalizedUrl !== currentUrl && !allPosts.some(existing => existing.url === p.url);
+                    });
+                    
+                    // Shuffle filtered posts
+                    filtered.sort(() => Math.random() - 0.5);
+                    allPosts.push(...filtered);
+                }
+            }
+            
+            if (allPosts.length === 0) {
+                // Fallback to recent
+                const url = this.config.siteURL + "feeds/posts" + (this.config.showImage ? "/default" : "/summary") + `?alt=json-in-script&max-results=${this.config.postsPerBlock + 10}`;
+                const cached = feedCache.get(url);
+                let formattedData;
+                if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+                    formattedData = cached.data;
+                } else {
+                    let rawData;
+                    try {
+                        rawData = await fetchJSONP(url);
+                    } catch (e) {
+                        console.error(`mBlox: Failed to fetch Blogger fallback feed: ${e.message}`);
+                        return { posts: [], totalResults: 0, feedUrl: '' };
+                    }
+                    formattedData = mapBloggerResponseToStandardFormat(rawData);
+                    feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+                }
+                const filtered = formattedData.posts.filter(p => {
+                    const postNormalizedUrl = p.url.split('#')[0].split('?')[0];
+                    return postNormalizedUrl !== currentUrl;
+                });
+                filtered.sort(() => Math.random() - 0.5);
+                allPosts.push(...filtered);
+            }
+            
+            return { posts: allPosts.slice(0, this.config.postsPerBlock), totalResults: allPosts.length, feedUrl: '' };
+        } else {
+            const url = this._buildFeedUrl();
+            const cached = feedCache.get(url);
+            if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) return cached.data;
+            let rawData;
+            try {
+                rawData = await fetchJSONP(url);
+            } catch (e) {
+                console.error(`mBlox: Failed to fetch Blogger feed: ${e.message}`);
+                return { posts: [], totalResults: 0, feedUrl: '' };
+            }
+            const formattedData = mapBloggerResponseToStandardFormat(rawData);
+            feedCache.set(url, { data: formattedData, timestamp: Date.now() });
+            return formattedData;
+        }
     }
 }
 
@@ -151,7 +281,13 @@ class RedditProvider {
             // Fallback to RSS endpoint via rss2json
             const rssUrl = url.replace('.json', '.rss');
             const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-            const rawData = await fetchJSONP(rss2jsonUrl);
+            let rawData;
+            try {
+                rawData = await fetchJSONP(rss2jsonUrl);
+            } catch (err) {
+                console.error(`mBlox: Reddit fallback via RSS2JSON failed: ${err.message}`);
+                return { posts: [], totalResults: 0, feedUrl: '' };
+            }
             const formattedData = mapRssJsonToStandardFormat(rawData);
             
             // Clean up author links
