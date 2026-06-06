@@ -152,6 +152,42 @@ mBlox uses a specialized build pipeline to ensure the CSS bundle only contains t
     ```
 This will compile Tailwind CSS based on your template files and generate the unified JS bundle in `/dist`.
 
+## Customizing CSS (Bring Your Own Tailwind) 
+mBlox is styled using Tailwind CSS and Material 3 Expressive (M3E) semantic tokens. If you want to integrate mBlox seamlessly into your own Tailwind compilation pipeline instead of using the default CSS bundle, follow these steps: 
+
+### 1. Disable the Default CSS +Tell the mBlox initializer to skip loading the default CSS. 
+* If linking externally: Add <script>window.mBloxConfig = { cssSrc: "" };</script> before loading mBloxCall.js. 
+* If inlining mBloxCall.js: Simply delete the "Step 1. Inject CSS for M3E" block from the script. 
+
+### 2. Include mBlox in Your Tailwind Compiler 
+Tell your Tailwind compiler to scan the mBlox JS bundle for utility classes. This ensures all classes used by mBlox are included in your final CSS output. 
+
+For Tailwind v4 (CSS-based config): 
+`css 
+
+@import "tailwindcss"; 
+
+/* Scan mBlox for utility classes / 
+@source "../node_modules/mblox/dist/mBloxM3E.js"; 
+
+/ Define your M3E theme variables here */ 
+@theme {
+--color-primary: #006699;
+--color-surface-variant: #e0e3e3;
+/* Add other necessary M3E colors */ 
+} 
+`
+
+For Tailwind v3 (Legacy tailwind.config.js): 
+`javascript +module.exports = { content: [
+// ... your files
+'./node_modules/mblox/dist/mBloxM3E.js'
+],
+} 
+```
+
+Important Note: Because mBlox relies heavily on M3E semantic tokens (e.g., bg-surface-variant, text-on-primary), you must define these custom colors in your Tailwind theme. If you omit them, Tailwind won't output the corresponding styles, resulting in unstyled elements.
+
 ## Configuration
 
 Customize mBlox using `data-*` attributes or embedded JSON. The core attributes include:
