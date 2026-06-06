@@ -6,6 +6,9 @@
 
 let isFirstScriptLoad = true;
 
+const noImgSVG='<svg viewBox="0 0 1461 822" xmlns="http://www.w3.org/2000/svg"> <rect width="1461" height="822" fill="#eee"/> <path d="m918 699c-43 31-135-99-189-99-53 0-146 130-189 99-43-31 53-159 36-210-16-51-169-98-152-149 16-51 168 1 211-30s41-191 94-191c53 0 51 160 94 191 43 31 194-20 211 31 16 51-136 98-153 149-16 51 79 179 36 210z" fill="#fff"/> <path d="m870 437c3 3 18 1 17 6 0 4-13 1-17 3-13 7-30 30-41 40-7 7-24 19-33 24-8 5-24 13-33 16-8 3-24 5-32 5-9 0-25-2-33-5-8-3-24-11-32-16-9-5-26-19-33-25-9-7-27-34-40-40-4-2-17 2-17-2 0-5 14-3 17-6 3-3 3-16 7-15 4 1 0 12 1 16 4 11 23 26 32 33 14 10 41 21 65 23 32 3 32 3 66 0 10-1 52-13 64-24 11-9 28-22 33-32 2-4-3-15 1-16 4-1 4 13 8 15z" fill="#eee"/> <ellipse cx="683" cy="359" rx="20" ry="25" fill="#eee"/> <ellipse cx="781" cy="359" rx="20" ry="25" fill="#eee"/></svg>';
+window.noImg = "data:image/svg+xml," + encodeURIComponent(noImgSVG);
+
 /**
  * Loads the core library and initializes blocks.
  * Uses window.mBloxConfig to determine the design system.
