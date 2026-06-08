@@ -59,10 +59,10 @@ export const RESPONSIVE_CAROUSEL_CLASSES_M3E = {
 export const RESPONSIVE_GRID_CLASSES_M3E = {
     1: 'grid-cols-1',
     2: 'grid-cols-1 @3xl:grid-cols-2',
-    3: 'grid-cols-1 @3xl:grid-cols-2 @5xl:grid-cols-3',
-    4: 'grid-cols-1 @xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4',
-    5: 'grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 @7xl:grid-cols-5',
-    6: 'grid-cols-3 @xl:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6'
+    3: 'grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3',
+    4: 'grid-cols-1 @lg:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4',
+    5: 'grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 @3xl:grid-cols-4 @7xl:grid-cols-5',
+    6: 'grid-cols-3 @lg:grid-cols-4 @5xl:grid-cols-5 @7xl:grid-cols-6'
 };
 
 export const M3E_PALETTES = {
