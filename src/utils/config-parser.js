@@ -61,7 +61,12 @@ export function parseBlockConfig(rawElement) {
     const scriptTag = rawElement.querySelector('script[type="application/json"]');
     if (scriptTag) {
         try {
-            jsonConfig = JSON.parse(scriptTag.textContent);
+            let textContent = scriptTag.textContent || "";
+            // Remove CDATA tags often automatically injected by CMS platforms like Blogger
+            textContent = textContent.replace(/(?:\/\/\s*)?<!\[CDATA\[/g, '')
+                                     .replace(/(?:\/\/\s*)?\]\]>/g, '')
+                                     .trim();
+            jsonConfig = JSON.parse(textContent);
         } catch (e) {
             console.error("mBlox: Failed to parse embedded JSON configuration.", e);
         }
