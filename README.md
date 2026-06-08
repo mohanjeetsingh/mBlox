@@ -79,7 +79,7 @@ You can configure mBlox directly using `data-*` attributes on the block element.
     data-iFix="false"
     data-iBorder="true"
     data-corner="rounded"
-    data-gutter="3"
+    data-space="3"
     data-textVAlign="bottom"
     data-textHAlign="left"
     data-ctaAlign="right"
@@ -118,7 +118,7 @@ Alternatively, you can configure the block using an embedded JSON script. This a
             "iFix": false,
             "iBorder": true,
             "corner": "rounded",
-            "gutter": 3,
+            "space": 3,
             "textVAlign": "bottom",
             "textHAlign": "left",
             "ctaAlign": "right",
@@ -194,14 +194,32 @@ Customize mBlox using `data-*` attributes or embedded JSON. The core attributes 
 
 | Attribute | JSON Key | Description | Default |
 |---|---|---|---|
+| `data-label` | `label` | Label name to fetch posts for (when `contentType` is `label`). | `"Label Name missing"` |
+| `data-contenttype` | `contentType` | Feed type to fetch: `recent`, `label`, or `comments`. | `recent` |
 | `data-feed` | `feed` | Source URL of the blog or feed. | `/` |
-| `data-contenttype` | `contentType` | `recent`, `label`, or `comments`. | `recent` |
+| `data-title` | `title` | Optional title for the block section. | *(empty)* |
+| `data-description`| `description` | Optional description for the block section. | *(empty)* |
 | `data-type` | `type` | Visual style and component layout (e.g., `v-ih`). | `v-ih` |
+| `data-theme` | `theme` | Force theme: `light`, `dark`, or `auto`. | `auto` |
+| `data-s` | `s` | Stage ID for coordinating multiple blocks. | `1` |
 | `data-posts` | `posts` | Number of posts to fetch/display. | `3` |
-| `data-cols` | `cols` | Number of columns in the grid. | Varies |
-| `data-theme` | `theme` | `light`, `dark`, or `auto`. | `auto` |
 | `data-palette` | `palette` | Color palette (e.g., `surface`, `colorful`). | `surface` |
-| `data-ar` | `ar` | Aspect ratio (e.g., `16x9`, `4x3`, `1x1`). | `1x1` |
-| `data-isCarousel` | `isCarousel` | Enables carousel navigation. | `false` |
+| `data-textVAlign` | `textVAlign` | Vertical alignment of text (`top`, `middle`, `bottom`, `overlay`). | Varies |
+| `data-textHAlign` | `textHAlign` | Horizontal alignment of text (`left`, `center`, `right`). | Varies |
+| `data-iBlur` | `iBlur` | Blur the background image (`true` or `false`). | Varies |
+| `data-iFix` | `iFix` | Fixed background image attachment (`true` or `false`). | Varies |
+| `data-cols` | `cols` | Number of columns in the grid layout. | Varies |
+| `data-rows` | `rows` | Number of rows (useful with `isCarousel`). | `1` |
+| `data-overlay-items`| `overlayItems`| Items to display in overlay (e.g., `vcasb`). | `vcasb` |
+| `data-isCarousel` | `isCarousel` | Enables carousel navigation (`true` or `false`). | `false` |
+| `data-iHeight` | `iHeight` | Height of the image or section (e.g., `100vh`, `70vh`, `m`). | Varies |
+| `data-space` | `space` | Gap between grid items. | Varies |
+| `data-corner` | `corner` | Corner style (`sharp` removes rounded corners). | *(rounded)* |
+| `data-ar` | `ar` | Aspect ratio of images (e.g., `16x9`, `4x3`, `1x1`). | `1/1` |
+| `data-iBorder` | `iBorder` | Enables rounded borders on images (`true` or `false`). | `false` |
+| `data-snippetSize`| `snippetSize` | Maximum character length for post snippet. | `150` |
+| `data-CTAText` | `CTAText` | Custom call-to-action button text. | *(empty)* |
+| `data-ctaAlign` | `ctaAlign` | Alignment of the CTA button (`left`, `center`, `right`). | Varies |
+| `data-moreText` | `moreText` | Text for the "Read more" link. | *(empty)* |
 
 *See [spec.md](spec.md) for the full technical breakdown.*
