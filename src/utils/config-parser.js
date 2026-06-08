@@ -91,9 +91,26 @@ export function parseBlockConfig(rawElement) {
     };
 
     const labelName = getVal("label", "label", "Label Name missing"),
-        contentType = String(getVal("contentType", "contentType", "recent")).toLowerCase(),
-        siteURL = getVal("feed", "feed", "/"),
-        mBloxTitle = getVal("title", "title", ""),
+        contentType = String(getVal("contentType", "contentType", "recent")).toLowerCase();
+
+    let siteURL = getVal("feed", "feed", "/");
+    if (!siteURL || siteURL === "/") {
+        siteURL = window.location.origin + "/";
+    } else {
+        if (!/^https?:\/\//i.test(siteURL)) {
+            if (siteURL.startsWith('/')) {
+                siteURL = window.location.origin + siteURL;
+            } else {
+                siteURL = "https://" + siteURL;
+            }
+        }
+        // Ensure trailing slash if it's likely a base URL and not a specific file or query
+        if (!siteURL.endsWith('/') && !siteURL.match(/\.(xml|rss|json)$/i) && !siteURL.includes('?')) {
+            siteURL += '/';
+        }
+    }
+
+    const mBloxTitle = getVal("title", "title", ""),
         mBloxDescription = getVal("description", "description", ""),
         rawType = getVal("type", "type", "v-ih"),
         mBloxType = String(rawType).toLowerCase(),
