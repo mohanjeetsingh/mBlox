@@ -1,4 +1,4 @@
 export function renderStageLayout(content, config) {
-    const pxClass = config.blockType === 'v' ? '' : ' px-8 @lg:px-12';
+    const pxClass = config.blockType === 'v' ? '' : ` ${config.layout.px}`;
     return `<div id="carousel-${config.mBlockID}-st${config.stageID}" class="${config.blockType === 's' ? 'sFeature ' : ""}relative${pxClass}">${content}</div>`;
 }

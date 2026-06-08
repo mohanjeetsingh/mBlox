@@ -172,7 +172,7 @@ export function parseBlockConfig(rawElement) {
         articleHeight: '',
         blurImage: imageBlur === "true" || jsonConfig.iBlur === true ? true : (imageBlur === "false" || jsonConfig.iBlur === false ? false : null),
         palette,
-        gutterSize: getVal("gutter", "gutter", ((bloxType == "v") ? 0 : 3)),
+        spaceSize: getVal("space", "space", ((bloxType == "v") ? 0 : 3)),
         textVerticalAlign: textVerticalAlign,
         cornerStyle: (String(getVal("corner", "corner", "")).toLowerCase() == "sharp") ? " rounded-none" : " rounded-3xl",
         aspectRatio: ` ${ASPECT_RATIO_CLASSES[String(getVal("ar", "ar", "1/1")).replace('x', '/').toLowerCase()] || 'aspect-square'}`,
@@ -191,6 +191,6 @@ export function parseBlockConfig(rawElement) {
         containsNavigation: false, actualColumnCount: 0,
         overlayItems,
     };
-    config.layout = LAYOUT_CLASSES[config.gutterSize * 2] || LAYOUT_CLASSES[6];
+    config.layout = LAYOUT_CLASSES[config.spaceSize * 2] || LAYOUT_CLASSES[6];
     return applyDefaultConfig(config);
 }

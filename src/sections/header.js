@@ -3,5 +3,5 @@ import { renderHeaderDescription } from '../components/header-description.js';
 
 export function renderBlockHeader(config) {
     if (!config.mBlockTitle) return '';
-    return `<div class="p-8 @lg:px-12">${renderHeaderTitle(config)}${renderHeaderDescription(config)}</div>`;
+    return `<div class="py-8 ${config.layout.px}">${renderHeaderTitle(config)}${renderHeaderDescription(config)}</div>`;
 }
