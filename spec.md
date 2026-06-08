@@ -33,7 +33,7 @@ The script normalizes data from various feed sources into a consistent internal 
 
 ### 2.2. Snippet Processing
 - Raw HTML is stripped using `DOMParser().textContent`.
-- Truncation length is controlled by `data-snippetSize` (default: 150).
+- Truncation length is controlled by `data-snippetLines` (default: 3).
 
 ---
 

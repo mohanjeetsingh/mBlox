@@ -85,7 +85,7 @@ You can configure mBlox directly using `data-*` attributes on the block element.
     data-ctaAlign="right"
     data-CTAText="Read More"
     data-moreText="View All"
-    data-snippetSize="150"
+    data-snippetLines="3"
     data-overlay-items="vcasb"
     data-s="1"
     >
@@ -124,7 +124,7 @@ Alternatively, you can configure the block using an embedded JSON script. This a
             "ctaAlign": "right",
             "CTAText": "Read More",
             "moreText": "View All",
-            "snippetSize": 150,
+            "snippetLines": 3,
             "overlayItems": "vcasb",
             "s": 1
         }
@@ -217,7 +217,7 @@ Customize mBlox using `data-*` attributes or embedded JSON. The core attributes 
 | `data-corner` | `corner` | Corner style (`sharp` removes rounded corners). | *(rounded)* |
 | `data-ar` | `ar` | Aspect ratio of images (e.g., `16x9`, `4x3`, `1x1`). | `1/1` |
 | `data-iBorder` | `iBorder` | Enables rounded borders on images (`true` or `false`). | `false` |
-| `data-snippetSize`| `snippetSize` | Maximum character length for post snippet. | `150` |
+| `data-snippetLines`| `snippetLines` | Maximum number of lines for post snippet. | `3` |
 | `data-CTAText` | `CTAText` | Custom call-to-action button text. | *(empty)* |
 | `data-ctaAlign` | `ctaAlign` | Alignment of the CTA button (`left`, `center`, `right`). | Varies |
 | `data-moreText` | `moreText` | Text for the "Read more" link. | *(empty)* |

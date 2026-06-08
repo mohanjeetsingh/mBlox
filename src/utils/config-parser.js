@@ -178,7 +178,7 @@ export function parseBlockConfig(rawElement) {
         aspectRatio: ` ${ASPECT_RATIO_CLASSES[String(getVal("ar", "ar", "1/1")).replace('x', '/').toLowerCase()] || 'aspect-square'}`,
         isImageFixed: imageFixed === "true" || jsonConfig.iFix === true ? true : (imageFixed === "false" || jsonConfig.iFix === false ? false : null),
         hasRoundedBorder: getBoolVal("iBorder", "iBorder", false),
-        snippetSize: getIntVal("snippetSize", "snippetSize", 150),
+        snippetLines: getIntVal("snippetLines", "snippetLines", 3),
         callToAction: getVal("CTAText", "CTAText", ""),
         ctaAlign: getVal("ctaAlign", "ctaAlign", ""),
         textHAlign: getVal("textHAlign", "textHAlign", ""),

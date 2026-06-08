@@ -110,3 +110,12 @@ export const ASPECT_RATIO_CLASSES = {
     '9/21': 'aspect-[9/21]',
     '21/9': 'aspect-[21/9]'
 };
+
+export const LINE_CLAMP_CLASSES = {
+    1: 'line-clamp-1 min-h-[1.5em]',
+    2: 'line-clamp-2 min-h-[3em]',
+    3: 'line-clamp-3 min-h-[4.5em]',
+    4: 'line-clamp-4 min-h-[6em]',
+    5: 'line-clamp-5 min-h-[7.5em]',
+    6: 'line-clamp-6 min-h-[9em]'
+};

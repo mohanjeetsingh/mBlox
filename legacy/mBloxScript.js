@@ -317,7 +317,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
             }
 
-            const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...";
+            const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetLines * 50) + "...";
 
             // Ensure both URLs have a fallback if they are empty or point to the old placeholder.
             if (!thumbnailUrl || thumbnailUrl.includes('no-image.png')) thumbnailUrl = noImg;
@@ -525,7 +525,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
 
             const doc = new DOMParser().parseFromString(postSnippet, 'text/html');
             let snippetText = doc.body.textContent || "";
-            if (snippetText.length > config.snippetSize) snippetText = snippetText.substring(0, config.snippetSize) + "...";
+            if (snippetText.length > config.snippetLines * 50) snippetText = snippetText.substring(0, config.snippetLines * 50) + "...";
 
             const snippetCode = `<summary class="list-unstyled ${config.dataTheme == "light" ? 'text-muted' : 'opacity-75'} ${finalType == BLOCK_COVER ? 'py-3 d-block mx-lg-5' : ''} ${config.lowContrast ? 'opacity-75' : ''}">${snippetText}</summary>`;
             return { snippetText, snippetCode };
@@ -1172,7 +1172,7 @@ if (typeof window.mBloxInitialized === 'undefined') {
                 lowContrast: (rawElement.getAttribute("data-lowContrast") || "").toLowerCase() == "true",
                 hasRoundedBorder: (rawElement.getAttribute("data-iBorder") || "").toLowerCase() == "true",
                 // Content & Text
-                snippetSize: rawElement.getAttribute("data-snippetSize") || 150,
+                snippetLines: rawElement.getAttribute("data-snippetLines") || 3,
                 callToAction: rawElement.getAttribute("data-CTAText") || "",
                 moreText: rawElement.getAttribute("data-moreText") || "",
                 // State & Identity

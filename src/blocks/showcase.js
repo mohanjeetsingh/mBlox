@@ -21,8 +21,8 @@ export function render(post, postID, config) {
     if (post.content) {
         const doc = new DOMParser().parseFromString(post.content, 'text/html');
         snippetText = doc.body.textContent || "";
-        if (snippetText.length > config.snippetSize) {
-            snippetText = snippetText.substring(0, config.snippetSize) + "...";
+        if (snippetText.length > config.snippetLines * 50) {
+            snippetText = snippetText.substring(0, config.snippetLines * 50) + "...";
         }
         snippetText = snippetText.replace(/"/g, '&quot;');
     }
@@ -89,7 +89,7 @@ export function renderThumbnail(post, config) {
         highResUrl = highResUrl.replace(/\/s\d+(-c)?/, '/s1600').replace(/\/w\d+-h\d+(-c)?/, '/s1600');
     }
 
-    const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetSize) + "...";
+    const snippetText = (post.content || "").replace(/<[^>]*>/g, "").substring(0, config.snippetLines * 50) + "...";
     if (!thumbnailUrl || thumbnailUrl.includes('no-image.png')) thumbnailUrl = noImg;
     if (!highResUrl || highResUrl.includes('no-image.png')) highResUrl = noImg;
 
